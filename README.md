@@ -7,7 +7,7 @@
 
 **s'Dart App** ist eine moderne, plattformübergreifende Dart-Scoring- und Tracking-Anwendung, entwickelt mit **Kotlin Multiplatform (KMP)** und **Compose Multiplatform**.
 
-Die App kombiniert klassisches Punktezählen (X01, Cricket, Turniermodi) mit kamerabasierter Scheibenerkennung, interaktiver Kalibrierung und Multicam-Split-Screen-Unterstützung.
+Die App kombiniert klassisches Punktezählen (X01, Cricket, Turniermodi) mit kamerabasierter Scheibenerkennung, automatischer Kalibrierung und Begleit-Kameraanbindung.
 
 ---
 
@@ -23,10 +23,11 @@ Die App kombiniert klassisches Punktezählen (X01, Cricket, Turniermodi) mit kam
 
 - **📷 Computer Vision & Kamera-Tracking:**
   - **Hardwarebeschleunigte Erkennung:** ONNX Runtime mit RTMDet (`rtmdet_tiny.onnx`) auf dem Desktop sowie NCNN Vulkan auf Android
-  - **Interaktive Visier-Hilfen:** Fadenkreuze und Brackets zur perfekten Ausrichtung auf dem Board
+  - **Automatische Scheiben-Kalibrierung:** Erkennt alle Schnittpunkte der Dartboard-Segmente am Spider-Gitter sowie die 20er-Markierung zur automatischen Homographie-Berechnung
+  - **Manuelle Justierung:** Optionale 4-Punkt-Kalibrierung (D20, D6, D3, D11) mit Visier-Brackets und Fadenkreuz
   - **Plattformunabhängige Homographie:** Reine Kotlin-Projektionsmathematik zur Entzerrung ohne externe OpenCV-Abhängigkeiten
-  - **4-Punkt- & Auto-Kalibrierung:** Ausrichtung über D20, D6, D3, D11 mit Abstands- und Rotations-Feedback (*"ZU NAH"*, *"ZU WEIT WEG"*)
-  - **Desktop Dual-Kamera Split-Screen:** Simultane Überwachung und Erfassung aus zwei Kameraperspektiven
+  - **Abstands-Feedback:** Visuelle Rückmeldung bei ungünstigem Kameraabstand (*"ZU NAH"* / *"ZU WEIT WEG"*)
+  - **Desktop-Kamera-Unterstützung:** Direkte USB-Webcam-Anbindung im responsiven Side-by-Side-Layout (Kamera-Ansicht neben Scoreboard und Eingaben)
 
 - **📱 Begleit-Modus (Companion Connection):**
   - Smartphone-Kamera drahtlos als externer Video-Feed für den Desktop per WebSocket
