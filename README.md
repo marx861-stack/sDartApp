@@ -27,10 +27,10 @@ Die App kombiniert klassisches Punktezählen (X01, Cricket, Turniermodi) mit kam
   - **Manuelle Justierung:** Optionale 4-Punkt-Kalibrierung (D20, D6, D3, D11) mit Visier-Brackets und Fadenkreuz
   - **Plattformunabhängige Homographie:** Reine Kotlin-Projektionsmathematik zur Entzerrung ohne externe OpenCV-Abhängigkeiten
   - **Abstands-Feedback:** Visuelle Rückmeldung bei ungünstigem Kameraabstand (*"ZU NAH"* / *"ZU WEIT WEG"*)
-  - **Desktop-Kamera-Unterstützung:** Direkte USB-Webcam-Anbindung im responsiven Side-by-Side-Layout (Kamera-Ansicht neben Scoreboard und Eingaben)
+  - **Kamera-Einblendung:** Live-Kamerabild und Visier-Overlay werden direkt auf der Dartboard-Fläche eingeblendet (Widescreen-Layout: Dartboard links, Scoreboard & Statistiken rechts)
 
 - **📱 Begleit-Modus (Companion Connection):**
-  - Smartphone-Kamera drahtlos als externer Video-Feed für den Desktop per WebSocket
+  - Smartphone-Kamera drahtlos als externer Video-Feed für den Desktop per WebSocket (Haupt-Workflow)
   - Automatische mDNS/UDP Service-Erkennung im lokalen WLAN
 
 - **🎨 100 % Compose Multiplatform:**
@@ -43,7 +43,7 @@ Die App kombiniert klassisches Punktezählen (X01, Cricket, Turniermodi) mit kam
 
 | Plattform | Status | Besonderheiten |
 |---|---|---|
-| **Desktop (Windows)** | ✅ Vollständig | Standalone `.exe` Installer, Webcam-Support (Webcam-Capture / Skia) |
+| **Desktop (Windows)** | ✅ Vollständig | Standalone `.exe` Installer, Begleit-Kamera per WLAN (Companion) & experimenteller Webcam-Support |
 | **Desktop (Linux / macOS)** | ✅ Vollständig | Native Desktop-Ausführung via JVM / Compose Multiplatform |
 | **Android** | ✅ Vollständig | CameraX Live-Stream mit Echtzeit-Canvas-Overlay |
 | **iOS** | 🔄 In Vorbereitung | Framework-Build via Kotlin Native / AVFoundation-Anbindung |
