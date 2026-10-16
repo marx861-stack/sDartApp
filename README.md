@@ -13,25 +13,28 @@ Die App kombiniert klassisches Punktezählen (X01, Cricket, Turniermodi) mit kam
 
 ## ✨ Features
 
-- **🎯 Dart-Spielmodi:**
-  - **X01** (301, 501, 701, Single/Double/Master Out, Sets & Legs)
-  - **Cricket** (Standard, Cut-Throat)
-  - **Around the Clock**, Trainingsmodi und Checkout-Vorschläge
-  - **Turnier-Engine:** K.O.-Turniere und Gruppenphasen mit automatischem Spielplan
+- **🎯 Vielfältige Dart-Spielmodi:**
+  - **X01:** 301, 501, 701, Custom – konfigurierbar mit Single/Double/Master Out, Sets & Legs
+  - **Cricket:** Standard & Cut-Throat Modus
+  - **Around the Clock:** 5 Varianten (Standard, Double, Triple, Quickly, Shanghai)
+  - **All Fives:** Runden- und Leg-basiertes Punktespiel
+  - **Turnier-Engine:** K.O.-Systeme & Gruppenphasen, interaktive Turnierbäume und integrierter lokaler Webserver mit QR-Code zum Live-Teilen des Turnierstands im lokalen Netzwerk
+  - **Statistiken & Historie:** 180er/140er/100er-Tracking, First 9 Average, Checkout-Quote und grafische Dart-Heatmaps
 
-- **📷 Kamera-Tracking & Overlay:**
-  - Visier-Brackets & Fadenkreuze zur präzisen Scheibenausrichtung
-  - Automatische & interaktive 4-Punkt-Kalibrierung (Doppel-20, Doppel-6, Doppel-3, Doppel-11)
-  - Live-Feedback bei falschem Abstand oder Winkel (*"ZU NAH"*, *"ZU WEIT WEG"*)
-  - Desktop Dual-Kamera Split-Screen für simultane Überwachung aus zwei Winkeln
+- **📷 Computer Vision & Kamera-Tracking:**
+  - **Hardwarebeschleunigte Erkennung:** ONNX Runtime mit RTMDet (`rtmdet_tiny.onnx`) auf dem Desktop sowie NCNN Vulkan auf Android
+  - **Interaktive Visier-Hilfen:** Fadenkreuze und Brackets zur perfekten Ausrichtung auf dem Board
+  - **Plattformunabhängige Homographie:** Reine Kotlin-Projektionsmathematik zur Entzerrung ohne externe OpenCV-Abhängigkeiten
+  - **4-Punkt- & Auto-Kalibrierung:** Ausrichtung über D20, D6, D3, D11 mit Abstands- und Rotations-Feedback (*"ZU NAH"*, *"ZU WEIT WEG"*)
+  - **Desktop Dual-Kamera Split-Screen:** Simultane Überwachung und Erfassung aus zwei Kameraperspektiven
 
 - **📱 Begleit-Modus (Companion Connection):**
-  - Smartphone-Kamera als externer Video-Feed für den Desktop-Client
-  - Automatische Kopplung im lokalen WLAN
+  - Smartphone-Kamera drahtlos als externer Video-Feed für den Desktop per WebSocket
+  - Automatische mDNS/UDP Service-Erkennung im lokalen WLAN
 
-- **🎨 Einheitliches UI:**
-  - 100 % geteilter UI- und Zeichencode in `commonMain`
-  - Konsistentes Look & Feel über Desktop, Android und iOS
+- **🎨 100 % Compose Multiplatform:**
+  - Geteilter UI-, Canvas-, Scoring- und Modellcode in `commonMain`
+  - Konsistente Benutzererfahrung auf Desktop, Android und iOS
 
 ---
 
@@ -57,7 +60,7 @@ Die App kombiniert klassisches Punktezählen (X01, Cricket, Turniermodi) mit kam
 ### Repository klonen
 
 ```bash
-git clone https://github.com/<DEIN-BENUTZERNAME>/sDartApp.git
+git clone https://github.com/marx861-stack/sDartApp.git
 cd sDartApp
 ```
 
