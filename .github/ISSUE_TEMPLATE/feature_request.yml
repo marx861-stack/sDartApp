@@ -1,0 +1,28 @@
+name: 💡 Feature-Vorschlag
+description: Schlage eine neue Idee oder Verbesserung für die s'Dart App vor
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hast du eine Idee für ein neues Feature oder eine Verbesserung? Lass es uns wissen!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem oder Bedürfnis soll gelöst werden?
+      description: Eine klare Beschreibung des Problems (z. B. "Ich vermisse den Spielmodus Shanghai...").
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Dein Lösungsvorschlag
+      description: Wie stellst du dir die Umsetzung oder das UI vor?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Bereits bedachte Alternativen
+      description: Welche alternativen Lösungen hast du in Betracht gezogen?

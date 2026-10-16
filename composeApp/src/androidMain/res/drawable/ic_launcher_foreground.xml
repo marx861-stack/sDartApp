@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Äußerer Ring (Dunkel) -->
+    <path
+        android:fillColor="#2C2C2C"
+        android:pathData="M54,8 C78.85,8 100,29.15 100,54 C100,78.85 78.85,100 54,100 C29.15,100 8,78.85 8,54 C8,29.15 29.15,8 54,8 Z" />
+    
+    <!-- Mittlerer Ring (Hell-Beige) -->
+    <path
+        android:fillColor="#F5DEB3"
+        android:pathData="M54,20 C71.12,20 85,33.88 85,51 C85,68.12 71.12,82 54,82 C36.88,82 23,68.12 23,51 C23,33.88 36.88,20 54,20 Z" />
+    
+    <!-- Innerer Ring (Dunkel) -->
+    <path
+        android:fillColor="#2C2C2C"
+        android:pathData="M54,32 C66.15,32 76,41.85 76,54 C76,66.15 66.15,76 54,76 C41.85,76 32,66.15 32,54 C32,41.85 41.85,32 54,32 Z" />
+    
+    <!-- Bullseye (Rot) -->
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M54,44 C61.73,44 68,50.27 68,58 C68,65.73 61.73,72 54,72 C46.27,72 40,65.73 40,58 C40,50.27 46.27,44 54,44 Z" />
+    
+    <!-- Center (Grün) -->
+    <path
+        android:fillColor="#388E3C"
+        android:pathData="M54,50 C56.76,50 59,52.24 59,55 C59,57.76 56.76,60 54,60 C51.24,60 49,57.76 49,55 C49,52.24 51.24,50 54,50 Z" />
+    
+    <!-- Hauptsegment-Linien (vertikal und horizontal) -->
+    <!-- Vertikal -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,54 L54,8" 
+        android:strokeWidth="3"
+        android:strokeColor="#FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,54 L54,100" 
+        android:strokeWidth="3"
+        android:strokeColor="#FFFFFF" />
+    <!-- Horizontal -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,54 L100,54" 
+        android:strokeWidth="3"
+        android:strokeColor="#FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M54,54 L8,54" 
+        android:strokeWidth="3"
+        android:strokeColor="#FFFFFF" />
+    
+    <!-- Dartpfeil (gelber Pfeil, zeigt nach oben zum Dartboard) -->
+    <group>
+        <!-- Pfeilspitze -->
+        <path
+            android:fillColor="#FFD700"
+            android:pathData="M54,16 L59,24 L57,24 L57,30 L51,30 L51,24 L49,24 Z" />
+        <!-- Pfeilschaft -->
+        <path
+            android:fillColor="#FFD700"
+            android:pathData="M53,24 L53,32 L55,32 L55,24 Z" />
+    </group>
+    
+</vector>

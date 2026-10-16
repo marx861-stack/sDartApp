@@ -1,0 +1,61 @@
+# ====================================================================
+# Git Ignore for s'Dart App (Kotlin Multiplatform)
+# ====================================================================
+
+# Gradle & Build Artifacts
+.gradle/
+.kotlin/
+build/
+**/build/
+bin/
+out/
+dist/
+
+# Local & Environment Configuration
+local.properties
+*.local
+.env
+*.env
+
+# IDE & Editor Specifics
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*~
+
+# Android Specifics
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+*.keystore
+*.jks
+captures/
+
+# iOS & Xcode Specifics
+iosApp/Pods/
+iosApp/.build/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+
+# Project-specific Temporary Files & Local Tools
+temp/
+tools/upload_to_drive.*
+tournament_preview.png
+*.log
+
+# Personal AI Assistant / Local Path Configurations
+GEMINI.md
+.gemini/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini

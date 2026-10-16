@@ -1,0 +1,64 @@
+name: 🐛 Fehlerbericht (Bug Report)
+description: Melde ein Problem oder fehlerhaftes Verhalten in der App
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Vielen Dank, dass du dir die Zeit nimmst, einen Fehler zu melden!
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Plattform
+      description: Auf welcher Plattform tritt der Fehler auf?
+      options:
+        - Desktop (Windows)
+        - Desktop (Linux)
+        - Desktop (macOS)
+        - Android
+        - iOS
+    validations:
+      required: true
+  - type: input
+    id: app_version
+    attributes:
+      label: App-Version / Commit-Hash
+      placeholder: z.B. v1.0.0 oder git commit hash
+    validations:
+      required: true
+  - type: textarea
+    id: camera_info
+    attributes:
+      label: Verwendete Kamera & Auflösung
+      description: Falls relevant, bitte Modell und Auflösung angeben (z. B. Logitech C920 1080p, Pixel 7).
+  - type: textarea
+    id: description
+    attributes:
+      label: Fehlerbeschreibung
+      description: Was passiert genau?
+    validations:
+      required: true
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Schritte zur Reproduktion
+      description: Wie kann der Fehler nachgestellt werden?
+      placeholder: |
+        1. App starten
+        2. Spielmodus X01 auswählen
+        3. Kamera aktivieren...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Erwartetes Verhalten
+      description: Was hätte stattdessen passieren sollen?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevante Logs / Screenshots
+      description: Konsolenausgaben oder Screenshots hier einfügen.

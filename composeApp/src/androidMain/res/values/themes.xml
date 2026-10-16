@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.MyApplication" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Prevent the white window flash during app launch by setting a dark background -->
+        <item name="android:windowBackground">#1A1A1A</item>
+        <!-- Style Android 12+ (API 31+) default splash screen background -->
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">#1A1A1A</item>
+        <!-- Hide the default app icon on Android 12+ splash screen to transition immediately to our custom Compose splash -->
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="31">@android:color/transparent</item>
+    </style>
+</resources>

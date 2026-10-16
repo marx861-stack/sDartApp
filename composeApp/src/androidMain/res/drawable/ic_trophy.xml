@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+  <!-- Linker Henkel (mit Loch) -->
+  <path
+      android:fillColor="#FF000000"
+      android:fillType="evenOdd"
+      android:pathData="M18,12 Q4,12 4,28 Q4,40 18,44 L18,12 Z M18,19 Q11,19 11,28 Q11,37 18,37 L18,19 Z"/>
+  <!-- Rechter Henkel (mit Loch) -->
+  <path
+      android:fillColor="#FF000000"
+      android:fillType="evenOdd"
+      android:pathData="M82,12 Q96,12 96,28 Q96,40 82,44 L82,12 Z M82,19 Q89,19 89,28 Q89,37 82,37 L82,19 Z"/>
+  <!-- Pokal-Körper -->
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M18,8 L82,8 L82,44 Q82,68 50,72 Q18,68 18,44 Z"/>
+  <!-- Hals -->
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M42,72 L42,82 L58,82 L58,72 Z"/>
+  <!-- Sockel -->
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M32,82 L68,82 L68,88 L32,88 Z"/>
+  <!-- Basis -->
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M24,88 L76,88 L76,94 L24,94 Z"/>
+</vector>
