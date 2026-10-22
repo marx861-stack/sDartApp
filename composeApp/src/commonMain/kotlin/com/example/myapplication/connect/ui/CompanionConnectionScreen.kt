@@ -107,11 +107,9 @@ fun CompanionConnectionScreen(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth()
-                    .widthIn(max = 640.dp)
+                    .fillMaxSize()
                     .safeDrawingPadding()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Einheitlicher Screen-Header
@@ -123,6 +121,7 @@ fun CompanionConnectionScreen(
                 // Hauptinhalt je nach Teilnehmer-Zustand
                 Box(
                     modifier = Modifier
+                        .widthIn(max = 640.dp)
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
@@ -816,6 +815,7 @@ private fun CompanionCameraStreamingView(
                                 val newScale = (currentScale * zoom).coerceIn(1f, 4f)
                                 val newZoom = (newScale - 1f) / 3f
                                 vm.cameraZoomLevel = newZoom
+                                vm.cameraZoomRatio = newScale
                             }
                         }
                     }
@@ -879,14 +879,13 @@ private fun CompanionCameraStreamingView(
                         .align(Alignment.BottomCenter)
                         .safeDrawingPadding()
                         .padding(bottom = 40.dp)
-                        .background(Color.Black.copy(alpha = 0.6f), CircleShape)
-                        .border(1.5.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.75f), CircleShape)
+                        .border(1.5.dp, PrimaryOrange.copy(alpha = 0.85f), CircleShape)
                         .clickable {
-                            vm.cameraZoomLevel = 0f
-                            vm.cameraZoomRatio = 1.0f
-                            vm.onResetZoom?.invoke()
+                            vm.resetZoom()
                         }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(horizontal = 14.dp, vertical = 7.dp)
                 ) {
                     val zoomText = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) {
                         "${vm.cameraZoomRatio.format(1)}x"

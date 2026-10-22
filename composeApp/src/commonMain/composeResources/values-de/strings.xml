@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Dart Game Pro</string>
+    <string name="settings">Einstellungen</string>
+
+    <!-- Main Dashboard Tiles -->
+    <string name="main_title_games">Games</string>
+    <string name="main_desc_games">501, Cricket, Durch 5, Around the Clock</string>
+    <string name="main_title_tournament">Turnier</string>
+    <string name="main_title_tournament_resume">Turnier fortsetzen</string>
+    <string name="main_desc_tournament">K.O.-System &amp; Liga für Gruppen</string>
+    <string name="main_desc_tournament_running">%1$s läuft</string>
+    <string name="main_title_players">Spieler</string>
+    <string name="main_desc_players">Profile &amp; Statistiken</string>
+    <string name="main_title_connect">Geräte verbinden</string>
+    <string name="main_desc_connect">Kamera, Anzeige &amp; Host</string>
+
+    <!-- Game Modes Selection -->
+    <string name="game_mode_standard">Standard</string>
+    <string name="game_mode_standard_desc">Klassisches Dart-Spiel. Starten Sie mit 501 Punkten und versuchen Sie, mit einem Double-Out zu gewinnen.</string>
+    <string name="game_mode_cricket">Cricket</string>
+    <string name="game_mode_cricket_desc">Spielen Sie Cricket mit den Zahlen 15-20 und Bull. Schließen Sie alle Segmente vor Ihrem Gegner.</string>
+    <string name="game_mode_all_fives">Durch 5 teilbar</string>
+    <string name="game_mode_all_fives_desc">Nur Runden mit durch 5 teilbaren Totals zählen. Alle 3 Pfeile müssen getroffen werden.</string>
+    <string name="game_mode_atc">Around the Clock</string>
+    <string name="game_mode_atc_desc">Treffen Sie der Reihe nach die Segmente von 1 bis 20 und optional das Bullseye.</string>
+</resources>

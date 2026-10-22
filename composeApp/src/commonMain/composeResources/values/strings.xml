@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Dart Game Pro</string>
+    <string name="settings">Settings</string>
+
+    <!-- Main Dashboard Tiles -->
+    <string name="main_title_games">Games</string>
+    <string name="main_desc_games">501, Cricket, All Fives, Around the Clock</string>
+    <string name="main_title_tournament">Tournament</string>
+    <string name="main_title_tournament_resume">Resume Tournament</string>
+    <string name="main_desc_tournament">Knockout system &amp; league for groups</string>
+    <string name="main_desc_tournament_running">%1$s in progress</string>
+    <string name="main_title_players">Players</string>
+    <string name="main_desc_players">Profiles &amp; statistics</string>
+    <string name="main_title_connect">Connect Devices</string>
+    <string name="main_desc_connect">Camera, display &amp; host</string>
+
+    <!-- Game Modes Selection -->
+    <string name="game_mode_standard">Standard</string>
+    <string name="game_mode_standard_desc">Classic dart game. Start with 501 points and try to win with a double-out.</string>
+    <string name="game_mode_cricket">Cricket</string>
+    <string name="game_mode_cricket_desc">Play Cricket with numbers 15-20 and Bull. Close all segments before your opponent.</string>
+    <string name="game_mode_all_fives">All Fives</string>
+    <string name="game_mode_all_fives_desc">Only rounds with totals divisible by 5 count. All 3 darts must hit the board.</string>
+    <string name="game_mode_atc">Around the Clock</string>
+    <string name="game_mode_atc_desc">Hit segments in ascending order from 1 to 20 and optionally the bullseye.</string>
+</resources>

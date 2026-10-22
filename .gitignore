@@ -7,6 +7,8 @@
 .kotlin/
 build/
 **/build/
+.cxx/
+**/.cxx/
 bin/
 out/
 dist/
@@ -47,6 +49,7 @@ DerivedData/
 # Project-specific Temporary Files & Local Tools
 temp/
 tools/upload_to_drive.*
+tools/generate_app_icons.py
 tournament_preview.png
 *.log
 

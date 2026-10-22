@@ -1,5 +1,13 @@
 package com.example.myapplication
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +37,7 @@ fun App() {
     val sessionManager = remember { SessionManager() }
     val participantManager = remember { ParticipantSessionManager() }
     var showHostOverviewFromStart by remember { mutableStateOf(false) }
+    var showSplashScreen by remember { mutableStateOf(true) }
 
     DisposableEffect(audioPlayer, vm) {
         vm.onPlaySound = { text, excitement ->
@@ -101,12 +110,38 @@ fun App() {
                     onBack = handleBack
                 )
         ) {
-            when (val screen = navManager.currentScreen) {
+            AnimatedContent(
+                targetState = navManager.currentScreen,
+                transitionSpec = {
+                    val isBackward = navManager.navigationDirection == NavigationDirection.Backward ||
+                            targetState == Screen.Start
+                    val slideOffset: (Int) -> Int = { fullWidth -> (fullWidth * 0.15f).toInt() }
+                    if (isBackward) {
+                        (slideInHorizontally(
+                            animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            initialOffsetX = { -slideOffset(it) }
+                        ) + fadeIn(tween(220))) togetherWith
+                                (slideOutHorizontally(
+                                    animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                    targetOffsetX = { slideOffset(it) }
+                                ) + fadeOut(tween(180)))
+                    } else {
+                        (slideInHorizontally(
+                            animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            initialOffsetX = { slideOffset(it) }
+                        ) + fadeIn(tween(220))) togetherWith
+                                (slideOutHorizontally(
+                                    animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                    targetOffsetX = { -slideOffset(it) }
+                                ) + fadeOut(tween(180)))
+                    }
+                }
+            ) { screen ->
+                when (screen) {
                 Screen.Start -> StartScreen(
                     vm = vm,
-                    onContinue = { mode ->
-                        navManager.setGameMode(mode)
-                        navManager.navigateTo(Screen.PlayerSetup)
+                    onGamesClick = {
+                        navManager.navigateTo(Screen.GameModes)
                     },
                     onTournamentClick = {
                         navManager.navigateTo(Screen.TournamentSetup)
@@ -123,6 +158,13 @@ fun App() {
                     onManagePlayersClick = {
                         navManager.navigateTo(Screen.PlayerManagement)
                     }
+                )
+                Screen.GameModes -> GameModesScreen(
+                    onGameModeSelected = { mode ->
+                        navManager.setGameMode(mode)
+                        navManager.navigateTo(Screen.PlayerSetup)
+                    },
+                    onBack = { navManager.goBack() }
                 )
                 Screen.PlayerSetup -> PlayerSetupScreen(
                     selectedGameMode = navManager.selectedGameMode ?: GameMode.X501,
@@ -204,9 +246,8 @@ fun App() {
                 else -> {
                     StartScreen(
                         vm = vm,
-                        onContinue = { mode ->
-                            navManager.setGameMode(mode)
-                            navManager.navigateTo(Screen.PlayerSetup)
+                        onGamesClick = {
+                            navManager.navigateTo(Screen.GameModes)
                         },
                         onTournamentClick = {
                             navManager.navigateTo(Screen.TournamentSetup)
@@ -221,6 +262,7 @@ fun App() {
                         onManagePlayersClick = { navManager.navigateTo(Screen.PlayerManagement) }
                     )
                 }
+            }
             }
 
 
@@ -260,6 +302,12 @@ fun App() {
                         }
                     },
                     containerColor = androidx.compose.ui.graphics.Color(0xFF262626)
+                )
+            }
+
+            if (showSplashScreen) {
+                SplashScreen(
+                    onTimeout = { showSplashScreen = false }
                 )
             }
         }

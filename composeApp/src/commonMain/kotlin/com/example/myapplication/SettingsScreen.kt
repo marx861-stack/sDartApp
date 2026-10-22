@@ -36,7 +36,7 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
 
     var versionClickCount by remember { mutableStateOf(0) }
-    var showModelDialog by remember { mutableStateOf(false) }
+    var showLicensesDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -44,10 +44,10 @@ fun SettingsScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth()
-                .widthIn(max = 640.dp)
-                .padding(16.dp)
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Einheitlicher Screen-Header
             ScreenHeader(
@@ -57,6 +57,7 @@ fun SettingsScreen(
 
             Column(
                 modifier = Modifier
+                    .widthIn(max = 640.dp)
                     .fillMaxSize()
                     .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -109,6 +110,13 @@ fun SettingsScreen(
                         },
                         isDark = isDark
                     )
+                    SettingsActionItem(
+                        iconRes = Res.drawable.ic_standard,
+                        title = "Open-Source-Lizenzen",
+                        value = "Anzeigen",
+                        onClick = { showLicensesDialog = true },
+                        isDark = isDark
+                    )
                 }
 
                 // Entwickler-Einstellungen
@@ -118,13 +126,6 @@ fun SettingsScreen(
                     exit = fadeOut() + shrinkVertically()
                 ) {
                     SettingsCard(title = "Entwickler-Optionen", isDark = isDark) {
-                        SettingsActionItem(
-                            iconRes = Res.drawable.ic_developer,
-                            title = "Modell",
-                            value = vm.selectedModelType.name,
-                            onClick = { showModelDialog = true },
-                            isDark = isDark
-                        )
                         SettingsSwitchItem(
                             iconRes = Res.drawable.ic_developer,
                             title = "Detection Overlay",
@@ -141,22 +142,22 @@ fun SettingsScreen(
                             onValueChanged = { vm.showDartboardOverlay = it },
                             isDark = isDark
                         )
+                        SettingsSwitchItem(
+                            iconRes = Res.drawable.ic_developer,
+                            title = "Debug HUD",
+                            description = "Inferenzzeit, FPS und Hardware-Status anzeigen",
+                            currentValue = vm.showCameraDebugHud,
+                            onValueChanged = { vm.showCameraDebugHud = it },
+                            isDark = isDark
+                        )
                     }
                 }
             }
         }
-    }
 
-    if (showModelDialog) {
-        ModelSelectionDialog(
-            currentMode = vm.selectedModelType,
-            onModeSelected = {
-                vm.selectedModelType = it
-                showModelDialog = false
-            },
-            onDismiss = { showModelDialog = false },
-            isDark = isDark
-        )
+        if (showLicensesDialog) {
+            LicensesDialog(onDismiss = { showLicensesDialog = false })
+        }
     }
 }
 
@@ -341,63 +342,106 @@ fun VersionInfoItem(
 }
 
 @Composable
-fun ModelSelectionDialog(
-    currentMode: ModelType,
-    onModeSelected: (ModelType) -> Unit,
-    onDismiss: () -> Unit,
-    isDark: Boolean
+fun LicensesDialog(
+    onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("ML Modell wählen") },
+        title = {
+            Text(
+                text = "Open-Source-Lizenzen",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        },
         text = {
-            Column {
-                ModelOption(
-                    title = "RTMDet Tiny",
-                    selected = currentMode == ModelType.RTMDET_TINY,
-                    onClick = { onModeSelected(ModelType.RTMDET_TINY) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                LicenseEntry(
+                    name = "RTMDet (OpenMMLab)",
+                    license = "Apache License 2.0",
+                    copyright = "Copyright (c) OpenMMLab. All rights reserved.",
+                    description = "Echtzeit-Objekterkennung für Darts und Dartboard (Modellarchitektur & Training)."
                 )
-                ModelOption(
-                    title = "YOLOX Tiny",
-                    selected = currentMode == ModelType.YOLOX_TINY,
-                    onClick = { onModeSelected(ModelType.YOLOX_TINY) }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                LicenseEntry(
+                    name = "Tencent ncnn",
+                    license = "BSD 3-Clause License",
+                    copyright = "Copyright (c) 2017, Tencent Inc. All rights reserved.",
+                    description = "High-Performance Neural Network Inference Framework mit Vulkan-GPU-Beschleunigung (Android)."
                 )
-                ModelOption(
-                    title = "YOLOX Nano",
-                    selected = currentMode == ModelType.YOLOX_NANO,
-                    onClick = { onModeSelected(ModelType.YOLOX_NANO) }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                LicenseEntry(
+                    name = "Microsoft ONNX Runtime",
+                    license = "MIT License",
+                    copyright = "Copyright (c) Microsoft Corporation. All rights reserved.",
+                    description = "Cross-Platform Machine Learning Inference Engine (Desktop / Windows)."
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                LicenseEntry(
+                    name = "Kotlin Multiplatform & Compose Multiplatform",
+                    license = "Apache License 2.0",
+                    copyright = "Copyright (c) JetBrains s.r.o. and Google LLC.",
+                    description = "Multiplattform-Architektur und deklaratives UI-Framework."
                 )
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Abbrechen")
+                Text(
+                    text = "Schließen",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                )
             }
-        }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }
 
 @Composable
-fun ModelOption(
-    title: String,
-    selected: Boolean,
-    onClick: () -> Unit
+private fun LicenseEntry(
+    name: String,
+    license: String,
+    copyright: String,
+    description: String
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = onClick
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         )
         Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(start = 8.dp)
+            text = license,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = copyright,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
     }
 }

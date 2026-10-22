@@ -153,6 +153,14 @@ compose.desktop {
             packageName = "sDartApp"
             packageVersion = appVersion
 
+            windows {
+                iconFile.set(project.file("src/desktopMain/resources/icon.ico"))
+                menuGroup = "Game"
+            }
+            macOS {
+                iconFile.set(project.file("src/desktopMain/resources/icon.icns"))
+                bundleID = "com.example.myapplication"
+            }
             linux {
                 iconFile.set(project.file("src/desktopMain/resources/icon.png"))
                 debPackageVersion = appVersion

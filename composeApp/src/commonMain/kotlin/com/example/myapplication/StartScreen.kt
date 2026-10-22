@@ -26,21 +26,19 @@ import com.example.myapplication.ui.AdaptiveContainer
 import com.example.myapplication.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 @Composable
 fun StartScreen(
     vm: DartViewModel,
-    onContinue: (GameMode) -> Unit = {},
+    onGamesClick: () -> Unit = {},
     onTournamentClick: () -> Unit = {},
     onResumeTournamentClick: () -> Unit = {},
     onPcConnect: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onManagePlayersClick: () -> Unit = {}
 ) {
-    var selectedMode by remember { mutableStateOf<GameMode?>(null) }
-    val isDark = true
-
     val backgroundModifier = Modifier.fillMaxSize().background(
         Brush.linearGradient(
             colors = listOf(
@@ -60,6 +58,7 @@ fun StartScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .safeDrawingPadding()
                     .padding(horizontal = 20.dp, vertical = 20.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -143,79 +142,34 @@ fun StartScreen(
                 }
                 // --- HEADER END ---
 
-                // Game Mode Cards Container (mit zentrierter Maximalbreite für Widescreen)
+                // Main Cards Container (skaliert zentriert und harmonisch bis 4K)
                 Column(
                     modifier = Modifier
-                        .widthIn(max = if (isWidescreen) 1000.dp else Dp.Unspecified)
+                        .widthIn(max = windowInfo.maxContentWidth)
                         .fillMaxWidth()
                         .padding(bottom = 40.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    val activeTourn = vm.tournamentManager.currentTournament
+                    val isTournRunning = activeTourn != null && !activeTourn.isFinished
+
                     if (isWidescreen) {
                         // 2-SPALTEN GRID (WIDESCREEN / DESKTOP)
                         Row(
                             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            GameModeCard(
-                                iconRes = Res.drawable.ic_standard,
-                                title = "Standard (501)",
-                                description = "Klassisches Dart-Spiel. Starten Sie mit 501 Punkten und versuchen Sie, mit einem Double-Out zu gewinnen.",
-                                isSelected = selectedMode == GameMode.X501,
-                                onClick = { onContinue(GameMode.X501) },
+                            GamesCard(
+                                onClick = { onGamesClick() },
                                 modifier = Modifier.weight(1f).fillMaxHeight()
                             )
-                            GameModeCard(
-                                iconRes = Res.drawable.ic_cricket,
-                                title = "Cricket",
-                                description = "Spielen Sie Cricket mit den Zahlen 15-20 und Bull. Schließen Sie alle Segmente vor Ihrem Gegner.",
-                                isSelected = selectedMode == GameMode.CRICKET,
-                                onClick = { onContinue(GameMode.CRICKET) },
-                                modifier = Modifier.weight(1f).fillMaxHeight()
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            GameModeCard(
-                                iconRes = Res.drawable.ic_all_fives,
-                                title = "Durch 5 teilbar (All Fives)",
-                                description = "Nur Runden mit durch 5 teilbaren Totals zählen. Alle 3 Pfeile müssen getroffen werden.",
-                                isSelected = selectedMode == GameMode.ALL_FIVES,
-                                onClick = { onContinue(GameMode.ALL_FIVES) },
-                                modifier = Modifier.weight(1f).fillMaxHeight()
-                            )
-                            GameModeCard(
-                                iconRes = Res.drawable.ic_atc,
-                                title = "Around the Clock",
-                                description = "Treffen Sie der Reihe nach die Segmente von 1 bis 20 und optional das Bullseye.",
-                                isSelected = selectedMode == GameMode.AROUND_THE_CLOCK,
-                                onClick = { onContinue(GameMode.AROUND_THE_CLOCK) },
-                                modifier = Modifier.weight(1f).fillMaxHeight()
-                            )
-                        }
-
-                        val activeTourn = vm.tournamentManager.currentTournament
-                        val isTournRunning = activeTourn != null && !activeTourn.isFinished
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
                             TournamentCard(
                                 activeTournamentName = if (isTournRunning) activeTourn?.name else null,
                                 isFinished = activeTourn?.isFinished ?: true,
                                 onClick = {
                                     if (isTournRunning) onResumeTournamentClick() else onTournamentClick()
                                 },
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
-                                isGrid = true
-                            )
-                            PlayerManagementCard(
-                                onClick = { onManagePlayersClick() },
                                 modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                         }
@@ -224,44 +178,19 @@ fun StartScreen(
                             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            PlayerManagementCard(
+                                onClick = { onManagePlayersClick() },
+                                modifier = Modifier.weight(1f).fillMaxHeight()
+                            )
                             PcIntegrationCard(
                                 onClick = { onPcConnect() },
-                                modifier = Modifier.fillMaxWidth(),
-                                isGrid = true
+                                modifier = Modifier.weight(1f).fillMaxHeight()
                             )
                         }
                     } else {
-                        // 1-SPALTEN LISTE (MOBILE PORTRAIT)
-                        val activeTourn = vm.tournamentManager.currentTournament
-                        val isTournRunning = activeTourn != null && !activeTourn.isFinished
-
-                        GameModeCard(
-                            iconRes = Res.drawable.ic_standard,
-                            title = "Standard (501)",
-                            description = "Klassisches Dart-Spiel. Starten Sie mit 501 Punkten und versuchen Sie, mit einem Double-Out zu gewinnen.",
-                            isSelected = selectedMode == GameMode.X501,
-                            onClick = { onContinue(GameMode.X501) }
-                        )
-                        GameModeCard(
-                            iconRes = Res.drawable.ic_cricket,
-                            title = "Cricket",
-                            description = "Spielen Sie Cricket mit den Zahlen 15-20 und Bull. Schließen Sie alle Segmente vor Ihrem Gegner.",
-                            isSelected = selectedMode == GameMode.CRICKET,
-                            onClick = { onContinue(GameMode.CRICKET) }
-                        )
-                        GameModeCard(
-                            iconRes = Res.drawable.ic_all_fives,
-                            title = "Durch 5 teilbar (All Fives)",
-                            description = "Nur Runden mit durch 5 teilbaren Totals zählen. Alle 3 Pfeile müssen getroffen werden.",
-                            isSelected = selectedMode == GameMode.ALL_FIVES,
-                            onClick = { onContinue(GameMode.ALL_FIVES) }
-                        )
-                        GameModeCard(
-                            iconRes = Res.drawable.ic_atc,
-                            title = "Around the Clock",
-                            description = "Treffen Sie der Reihe nach die Segmente von 1 bis 20 und optional das Bullseye.",
-                            isSelected = selectedMode == GameMode.AROUND_THE_CLOCK,
-                            onClick = { onContinue(GameMode.AROUND_THE_CLOCK) }
+                        // MOBILE PORTRAIT: Games & Turnier volle Breite, Spieler & Geräte verbinden nebeneinander
+                        GamesCard(
+                            onClick = { onGamesClick() }
                         )
                         TournamentCard(
                             activeTournamentName = if (isTournRunning) activeTourn?.name else null,
@@ -270,12 +199,19 @@ fun StartScreen(
                                 if (isTournRunning) onResumeTournamentClick() else onTournamentClick()
                             }
                         )
-                        PlayerManagementCard(
-                            onClick = { onManagePlayersClick() }
-                        )
-                        PcIntegrationCard(
-                            onClick = { onPcConnect() }
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            PlayerManagementCard(
+                                onClick = { onManagePlayersClick() },
+                                modifier = Modifier.weight(1f).fillMaxHeight()
+                            )
+                            PcIntegrationCard(
+                                onClick = { onPcConnect() },
+                                modifier = Modifier.weight(1f).fillMaxHeight()
+                            )
+                        }
                     }
                 }
             }
@@ -284,6 +220,7 @@ fun StartScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .safeDrawingPadding()
                     .padding(16.dp),
                 contentAlignment = Alignment.TopEnd
             ) {
@@ -295,7 +232,7 @@ fun StartScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = "Einstellungen",
+                        contentDescription = stringResource(Res.string.settings),
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -305,11 +242,7 @@ fun StartScreen(
 }
 
 @Composable
-fun GameModeCard(
-    iconRes: DrawableResource,
-    title: String,
-    description: String,
-    isSelected: Boolean,
+fun GamesCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -318,39 +251,36 @@ fun GameModeCard(
             .fillMaxWidth()
             .clickable { onClick() }
             .border(
-                width = if (isSelected) 3.dp else 2.dp,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                width = 2.dp,
+                color = MaterialTheme.colorScheme.outline,
                 shape = RoundedCornerShape(15.dp)
             ),
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 8.dp else 0.dp
+            defaultElevation = 0.dp
         )
     ) {
         Column(
             modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                painter = painterResource(iconRes),
+                painter = painterResource(Res.drawable.ic_target),
                 contentDescription = null,
                 modifier = Modifier
                     .size(56.dp)
                     .padding(bottom = 12.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            
+
             Text(
-                text = title,
+                text = stringResource(Res.string.main_title_games),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -359,9 +289,9 @@ fun GameModeCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            
+
             Text(
-                text = description,
+                text = stringResource(Res.string.main_desc_games),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -376,8 +306,7 @@ fun GameModeCard(
 @Composable
 fun PcIntegrationCard(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    isGrid: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
@@ -385,90 +314,51 @@ fun PcIntegrationCard(
             .clickable { onClick() }
             .border(
                 width = 2.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.outline,
                 shape = RoundedCornerShape(15.dp)
             ),
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        if (isGrid) {
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_mobile_connect),
+                contentDescription = null,
                 modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_mobile_connect),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .padding(bottom = 12.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                
-                Text(
-                    text = "Geräte verbinden",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                
-                Text(
-                    text = "Kamera, Anzeige oder Host im Netzwerk",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
-                    ),
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_mobile_connect),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .padding(end = 20.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Geräte verbinden",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-                    Text(
-                        text = "Kamera, Anzeige oder Host im Netzwerk",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-                }
-                
-                Text(
-                    text = "→",
-                    fontSize = 24.sp,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+                    .size(56.dp)
+                    .padding(bottom = 12.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            
+            Text(
+                text = stringResource(Res.string.main_title_connect),
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            Text(
+                text = stringResource(Res.string.main_desc_connect),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 18.sp
+                ),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -497,9 +387,10 @@ fun PlayerManagementCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 painter = painterResource(Res.drawable.ic_player_management),
@@ -509,9 +400,9 @@ fun PlayerManagementCard(
                     .padding(bottom = 12.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            
+
             Text(
-                text = "Spieler",
+                text = stringResource(Res.string.main_title_players),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -520,9 +411,9 @@ fun PlayerManagementCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            
+
             Text(
-                text = "Spieler verwalten & Statistiken ansehen",
+                text = stringResource(Res.string.main_desc_players),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -539,8 +430,7 @@ fun TournamentCard(
     activeTournamentName: String?,
     isFinished: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    isGrid: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     val isRunning = activeTournamentName != null && !isFinished
     Card(
@@ -548,92 +438,52 @@ fun TournamentCard(
             .fillMaxWidth()
             .clickable { onClick() }
             .border(
-                width = if (isRunning) 2.dp else 1.dp,
+                width = 2.dp,
                 color = if (isRunning) PrimaryOrange else MaterialTheme.colorScheme.outline,
                 shape = RoundedCornerShape(15.dp)
             ),
         shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isRunning) Color(0xFF2E2218) else MaterialTheme.colorScheme.surface
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        if (isGrid) {
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_trophy),
+                contentDescription = null,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_trophy),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(56.dp)
-                        .padding(bottom = 12.dp),
-                    tint = if (isRunning) PrimaryOrange else MaterialTheme.colorScheme.primary
-                )
+                    .size(56.dp)
+                    .padding(bottom = 12.dp),
+                tint = if (isRunning) PrimaryOrange else MaterialTheme.colorScheme.primary
+            )
 
-                Text(
-                    text = if (isRunning) "Turnier fortsetzen" else "Turnier",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isRunning) PrimaryOrange else MaterialTheme.colorScheme.onSurface
-                    ),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+            Text(
+                text = if (isRunning) stringResource(Res.string.main_title_tournament_resume) else stringResource(Res.string.main_title_tournament),
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isRunning) PrimaryOrange else MaterialTheme.colorScheme.onSurface
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
-                Text(
-                    text = if (isRunning) "$activeTournamentName läuft" else "K.O.-System & Liga für Gruppen",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
-                    ),
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_trophy),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .padding(end = 20.dp),
-                    tint = if (isRunning) PrimaryOrange else MaterialTheme.colorScheme.primary
-                )
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (isRunning) "Turnier fortsetzen" else "Turnier",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = if (isRunning) PrimaryOrange else MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-                    Text(
-                        text = if (isRunning) "$activeTournamentName läuft" else "K.O.-System & Liga für Gruppen",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-                }
-
-                Text(
-                    text = "→",
-                    fontSize = 24.sp,
-                    color = if (isRunning) PrimaryOrange else MaterialTheme.colorScheme.primary
-                )
-            }
+            Text(
+                text = if (isRunning) stringResource(Res.string.main_desc_tournament_running, activeTournamentName ?: "") else stringResource(Res.string.main_desc_tournament),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 18.sp
+                ),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
-

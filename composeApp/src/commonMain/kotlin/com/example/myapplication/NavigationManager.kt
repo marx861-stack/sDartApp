@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
  */
 sealed class Screen {
     object Start : Screen()
+    object GameModes : Screen()
     object PlayerSetup : Screen()
     object Game : Screen()
     object Camera : Screen()

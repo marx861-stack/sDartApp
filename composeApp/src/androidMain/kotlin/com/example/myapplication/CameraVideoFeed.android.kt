@@ -43,6 +43,7 @@ actual fun CameraVideoFeed(
     showCamera: Boolean,
     onDetectionsUpdated: (List<ObjectDetection>) -> Unit,
     onFrameSizeChanged: (Int, Int) -> Unit,
+    onTelemetryUpdated: (CameraTelemetry) -> Unit,
     sessionManager: SessionManager?,
     participantManager: ParticipantSessionManager?
 ) {
@@ -138,9 +139,34 @@ actual fun CameraVideoFeed(
     }
 
     val currentDetections by mlDetector.detections.collectAsState()
+    val detectorFrameSize by mlDetector.frameSize.collectAsState()
+    val dynamicRoi by mlDetector.dynamicRoiState.collectAsState()
+    val inferenceTimeMs by mlDetector.inferenceTimeMs.collectAsState()
+    val fps by mlDetector.framesPerSecond.collectAsState()
+    val gpuActive by mlDetector.gpuActive.collectAsState()
+    val gpuInitFailed by mlDetector.gpuInitFailed.collectAsState()
 
     LaunchedEffect(currentDetections) {
         onDetectionsUpdated(currentDetections)
+    }
+
+    LaunchedEffect(detectorFrameSize, isHostWithCompanionStream) {
+        if (!isHostWithCompanionStream && detectorFrameSize.first > 0 && detectorFrameSize.second > 0) {
+            onFrameSizeChanged(detectorFrameSize.first, detectorFrameSize.second)
+        }
+    }
+
+    LaunchedEffect(dynamicRoi, inferenceTimeMs, fps, gpuActive, gpuInitFailed) {
+        onTelemetryUpdated(
+            CameraTelemetry(
+                dynamicRoi = dynamicRoi,
+                inferenceTimeMs = inferenceTimeMs,
+                fps = fps,
+                acceleratorLabel = if (gpuActive) "GPU (Vulkan)" else "CPU",
+                gpuActive = gpuActive,
+                gpuInitFailed = gpuInitFailed
+            )
+        )
     }
 
     val zoomState by mlDetector.zoomState.collectAsState()
@@ -160,21 +186,21 @@ actual fun CameraVideoFeed(
                 val minRatio = state.minZoomRatio
                 val newRatio = (currentRatio * zoomMultiplier).coerceIn(minRatio, maxRatio)
                 mlDetector.setZoomRatio(newRatio)
+                vm.cameraZoomRatio = newRatio
             } else {
                 val currentZoom = vm.cameraZoomLevel
                 val currentScale = 1f + currentZoom * 3f
                 val newScale = (currentScale * zoomMultiplier).coerceIn(1f, 4f)
                 val newZoom = (newScale - 1f) / 3f
                 mlDetector.setZoom(newZoom)
+                vm.cameraZoomLevel = newZoom
+                vm.cameraZoomRatio = newScale
             }
         }
         vm.onResetZoom = {
-            val state = mlDetector.zoomState.value
-            if (state != null) {
-                mlDetector.setZoomRatio(1.0f.coerceIn(state.minZoomRatio, state.maxZoomRatio))
-            } else {
-                mlDetector.setZoom(0f)
-            }
+            mlDetector.resetZoom()
+            vm.cameraZoomLevel = 0f
+            vm.cameraZoomRatio = 1.0f
         }
         onDispose {
             vm.onPinchZoom = null
@@ -184,7 +210,11 @@ actual fun CameraVideoFeed(
 
     DisposableEffect(lifecycleOwner, hasCameraPermission, isHostWithCompanionStream, shouldCapture) {
         if (hasCameraPermission && shouldCapture && !isHostWithCompanionStream) {
-            mlDetector.setZoom(vm.cameraZoomLevel)
+            // Wiederherstellung immer über den linearen Zoom: cameraZoomLevel ist in allen Pfaden
+            // hardware-konsistent, cameraZoomRatio dagegen teils nur eine Anzeige-Skala (1 + 3 * Level).
+            if (vm.cameraZoomLevel > 0.001f) {
+                mlDetector.setZoom(vm.cameraZoomLevel)
+            }
             mlDetector.startCamera(lifecycleOwner)
         }
         onDispose {
@@ -196,7 +226,7 @@ actual fun CameraVideoFeed(
         modifier = modifier
             .fillMaxSize()
             .onGloballyPositioned { layoutCoordinates ->
-                if (!isHostWithCompanionStream) {
+                if (!isHostWithCompanionStream && (detectorFrameSize.first <= 0 || detectorFrameSize.second <= 0)) {
                     val w = layoutCoordinates.size.width
                     val h = layoutCoordinates.size.height
                     val frameW = if (w < h) 720 else 1280

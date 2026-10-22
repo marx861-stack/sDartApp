@@ -8,7 +8,11 @@ import com.example.myapplication.tournament.TournamentManager
 import com.example.myapplication.tournament.TournamentMatch
 import com.example.myapplication.tournament.web.TournamentWebServer
 import com.example.myapplication.tournament.web.createTournamentWebServer
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private const val ZOOM_PERSIST_DELAY_MS = 400L
 
 class DartViewModel : ViewModel() {
     // Decoupled callback for haptic feedback, initialized by the UI layer to avoid memory leaks
@@ -53,34 +57,141 @@ class DartViewModel : ViewModel() {
     // Flag um mehrfaches Speichern von Statistiken fÃ¼r das gleiche Spiel zu verhindern
     var statisticsSavedForCurrentGame = false
     
-    // Globale Einstellungen
-    var isSoundEnabled by mutableStateOf(true)
-    var isVibrationEnabled by mutableStateOf(true)
-    var isVoiceCallerEnabled by mutableStateOf(true)
-    var audioAnnounceEachDart by mutableStateOf(true)
-    var audioAnnounceTurnTotal by mutableStateOf(true)
+    // Globale Einstellungen (persistent via AppPreferences)
+    private var _isSoundEnabled by mutableStateOf(AppPreferences.isSoundEnabled)
+    var isSoundEnabled: Boolean
+        get() = _isSoundEnabled
+        set(value) {
+            _isSoundEnabled = value
+            AppPreferences.isSoundEnabled = value
+        }
 
+    private var _isVibrationEnabled by mutableStateOf(AppPreferences.isVibrationEnabled)
+    var isVibrationEnabled: Boolean
+        get() = _isVibrationEnabled
+        set(value) {
+            _isVibrationEnabled = value
+            AppPreferences.isVibrationEnabled = value
+        }
+
+    private var _isVoiceCallerEnabled by mutableStateOf(AppPreferences.isVoiceCallerEnabled)
+    var isVoiceCallerEnabled: Boolean
+        get() = _isVoiceCallerEnabled
+        set(value) {
+            _isVoiceCallerEnabled = value
+            AppPreferences.isVoiceCallerEnabled = value
+        }
+
+    private var _audioAnnounceEachDart by mutableStateOf(AppPreferences.audioAnnounceEachDart)
+    var audioAnnounceEachDart: Boolean
+        get() = _audioAnnounceEachDart
+        set(value) {
+            _audioAnnounceEachDart = value
+            AppPreferences.audioAnnounceEachDart = value
+        }
+
+    private var _audioAnnounceTurnTotal by mutableStateOf(AppPreferences.audioAnnounceTurnTotal)
+    var audioAnnounceTurnTotal: Boolean
+        get() = _audioAnnounceTurnTotal
+        set(value) {
+            _audioAnnounceTurnTotal = value
+            AppPreferences.audioAnnounceTurnTotal = value
+        }
 
     // --- Entwickler-Einstellungen (versteckt, Standard: deaktiviert) ---
     // Wird durch 10x Tippen auf die Versionsnummer in den Einstellungen freigeschaltet.
-    var isDevModeUnlocked by mutableStateOf(false)
+    private var _isDevModeUnlocked by mutableStateOf(AppPreferences.isDevModeUnlocked)
+    var isDevModeUnlocked: Boolean
+        get() = _isDevModeUnlocked
+        set(value) {
+            _isDevModeUnlocked = value
+            AppPreferences.isDevModeUnlocked = value
+        }
+
     // Zeigt YOLO-Bounding-Boxes und Klassen-Labels im Kamerabild an
-    var showCameraDetectionOverlay by mutableStateOf(false)
+    private var _showCameraDetectionOverlay by mutableStateOf(AppPreferences.showCameraDetectionOverlay)
+    var showCameraDetectionOverlay: Boolean
+        get() = _showCameraDetectionOverlay
+        set(value) {
+            _showCameraDetectionOverlay = value
+            AppPreferences.showCameraDetectionOverlay = value
+        }
+
     // Zeigt Inferenzzeit, FPS und GPU/CPU-Status im Kamerabild an
-    var showCameraDebugHud by mutableStateOf(false)
-    // Zeigt das kalibrierte Dartboard-Overlay (GrÃ¼ne Klammern, Ringe, Heatmap) im Kamerabild an
-    var showDartboardOverlay by mutableStateOf(false)
+    private var _showCameraDebugHud by mutableStateOf(AppPreferences.showCameraDebugHud)
+    var showCameraDebugHud: Boolean
+        get() = _showCameraDebugHud
+        set(value) {
+            _showCameraDebugHud = value
+            AppPreferences.showCameraDebugHud = value
+        }
+
+    // Zeigt das kalibrierte Dartboard-Overlay (Grüne Klammern, Ringe, Heatmap) im Kamerabild an
+    private var _showDartboardOverlay by mutableStateOf(AppPreferences.showDartboardOverlay)
+    var showDartboardOverlay: Boolean
+        get() = _showDartboardOverlay
+        set(value) {
+            _showDartboardOverlay = value
+            AppPreferences.showDartboardOverlay = value
+        }
     
     // Zoom-Level der Kamera (wird über alle Spiele hinweg gemerkt, bis die App geschlossen wird)
-    var cameraZoomLevel by mutableFloatStateOf(0f)
-    var cameraZoomRatio by mutableFloatStateOf(1f)
+    // Zoom ändert sich während einer Pinch-Geste viele Male pro Sekunde; gespeichert wird daher
+    // erst, wenn sich der Wert ZOOM_PERSIST_DELAY_MS lang nicht mehr geändert hat.
+    private var _cameraZoomLevel by mutableFloatStateOf(AppPreferences.cameraZoomLevel)
+    var cameraZoomLevel: Float
+        get() = _cameraZoomLevel
+        set(value) {
+            _cameraZoomLevel = value
+            scheduleZoomPersist()
+        }
+
+    private var _cameraZoomRatio by mutableFloatStateOf(AppPreferences.cameraZoomRatio)
+    var cameraZoomRatio: Float
+        get() = _cameraZoomRatio
+        set(value) {
+            _cameraZoomRatio = value
+            scheduleZoomPersist()
+        }
+
+    private var zoomPersistJob: Job? = null
+
+    private fun scheduleZoomPersist() {
+        zoomPersistJob?.cancel()
+        zoomPersistJob = viewModelScope.launch {
+            delay(ZOOM_PERSIST_DELAY_MS)
+            persistZoom()
+        }
+    }
+
+    private fun persistZoom() {
+        AppPreferences.cameraZoomLevel = _cameraZoomLevel
+        AppPreferences.cameraZoomRatio = _cameraZoomRatio
+    }
 
     // Direkte Zoom-Steuerung durch die Plattform (verhindert Ruckeln & Feedback-Loops)
     var onPinchZoom: ((Float) -> Unit)? = null
     var onResetZoom: (() -> Unit)? = null
+
+    fun resetZoom() {
+        cameraZoomLevel = 0f
+        cameraZoomRatio = 1.0f
+        onResetZoom?.invoke()
+    }
     
-    // Ausgewähltes YOLOX-Modell
-    var selectedModelType by mutableStateOf(ModelType.RTMDET_TINY)
+    fun resetSettingsToDefaults() {
+        isSoundEnabled = true
+        isVibrationEnabled = true
+        isVoiceCallerEnabled = true
+        audioAnnounceEachDart = true
+        audioAnnounceTurnTotal = true
+        showCameraDetectionOverlay = false
+        showCameraDebugHud = false
+        showDartboardOverlay = false
+        cameraZoomLevel = 0f
+        cameraZoomRatio = 1f
+    }
+
     
     // --- Turnier-Integration ---
     val tournamentManager = TournamentManager()
@@ -1956,6 +2067,10 @@ class DartViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
+        if (zoomPersistJob?.isActive == true) {
+            zoomPersistJob?.cancel()
+            persistZoom()
+        }
         tournamentWebServer.stop()
     }
 } 

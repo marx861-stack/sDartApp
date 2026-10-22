@@ -11,7 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +52,7 @@ actual fun CameraVideoFeed(
     showCamera: Boolean,
     onDetectionsUpdated: (List<ObjectDetection>) -> Unit,
     onFrameSizeChanged: (Int, Int) -> Unit,
+    onTelemetryUpdated: (CameraTelemetry) -> Unit,
     sessionManager: SessionManager?,
     participantManager: ParticipantSessionManager?
 ) {
@@ -85,9 +88,14 @@ actual fun CameraVideoFeed(
     // Eingehende JPEG-Frames von einem verbundenen Companion-Handy
     val companionRawBytes by (sessionManager?.latestPreviewFrame?.collectAsState() ?: remember { mutableStateOf(null) })
     var companionFrame by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    var companionFps by remember { mutableIntStateOf(0) }
+    var companionFramesThisSec by remember { mutableIntStateOf(0) }
+    var lastCompanionFpsTime by remember { mutableLongStateOf(0L) }
 
     val onnxDetector = remember { OnnxDartDetector() }
     val isInferencing = remember { AtomicBoolean(false) }
+    var dynamicRoi by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+    var inferenceTimeMs by remember { mutableLongStateOf(0L) }
 
     var streamUrlInput by remember { mutableStateOf("http://192.168.178.50:8080") }
     var showSourceDialog by remember { mutableStateOf(false) }
@@ -106,6 +114,15 @@ actual fun CameraVideoFeed(
                 if (selectedSourceType != CameraSourceType.COMPANION_STREAM) {
                     webcamManager.stopWebcam()
                     selectedSourceType = CameraSourceType.COMPANION_STREAM
+                }
+                val now = System.currentTimeMillis()
+                companionFramesThisSec++
+                if (lastCompanionFpsTime == 0L) {
+                    lastCompanionFpsTime = now
+                } else if (now - lastCompanionFpsTime >= 1000L) {
+                    companionFps = companionFramesThisSec
+                    companionFramesThisSec = 0
+                    lastCompanionFpsTime = now
                 }
                 try {
                     val skiaImg = Image.makeFromEncoded(bytes)
@@ -183,10 +200,31 @@ actual fun CameraVideoFeed(
                     System.err.println("[CameraVideoFeed] Inferenz-Fehler abgefangen: ${t.message}")
                     emptyList()
                 }
+                dynamicRoi = onnxDetector.dynamicRoi
+                inferenceTimeMs = onnxDetector.lastInferenceTimeMs
                 onDetectionsUpdated(dets)
             }
         } finally {
             isInferencing.set(false)
+        }
+    }
+
+    DisposableEffect(vm) {
+        vm.onPinchZoom = { zoomMultiplier ->
+            val currentZoom = vm.cameraZoomLevel
+            val currentScale = 1f + currentZoom * 3f
+            val newScale = (currentScale * zoomMultiplier).coerceIn(1f, 4f)
+            val newZoom = (newScale - 1f) / 3f
+            vm.cameraZoomLevel = newZoom
+            vm.cameraZoomRatio = newScale
+        }
+        vm.onResetZoom = {
+            vm.cameraZoomLevel = 0f
+            vm.cameraZoomRatio = 1.0f
+        }
+        onDispose {
+            vm.onPinchZoom = null
+            vm.onResetZoom = null
         }
     }
 
@@ -203,7 +241,11 @@ actual fun CameraVideoFeed(
         CameraSourceType.STREAM_URL -> streamFrame
         CameraSourceType.COMPANION_STREAM -> companionFrame
     }
-    val activeFps = if (selectedSourceType == CameraSourceType.USB_WEBCAM) webcamFps else streamFps
+    val activeFps = when (selectedSourceType) {
+        CameraSourceType.USB_WEBCAM -> webcamFps
+        CameraSourceType.STREAM_URL -> streamFps
+        CameraSourceType.COMPANION_STREAM -> companionFps
+    }
 
     LaunchedEffect(activeFrame) {
         activeFrame?.let {
@@ -211,148 +253,76 @@ actual fun CameraVideoFeed(
         }
     }
 
+    // Digitaler Zoom: skaliert nur die Anzeige, die Overlays in CameraBackground skalieren über displayZoom mit
+    val zoomFactor = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) {
+        vm.cameraZoomRatio
+    } else {
+        1.0f + vm.cameraZoomLevel * 3.0f
+    }
+
+    LaunchedEffect(dynamicRoi, inferenceTimeMs, activeFps, selectedSourceType, zoomFactor) {
+        val label = when (selectedSourceType) {
+            CameraSourceType.USB_WEBCAM -> "CPU (ONNX USB)"
+            CameraSourceType.STREAM_URL -> "CPU (ONNX STREAM)"
+            CameraSourceType.COMPANION_STREAM -> "CPU (ONNX HOST)"
+        }
+        onTelemetryUpdated(
+            CameraTelemetry(
+                dynamicRoi = dynamicRoi,
+                inferenceTimeMs = inferenceTimeMs,
+                fps = activeFps,
+                acceleratorLabel = label,
+                gpuActive = false,
+                gpuInitFailed = false,
+                displayZoom = zoomFactor
+            )
+        )
+    }
+
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize().clipToBounds()
     ) {
         // Video Rendering (USB Webcam oder MJPEG Stream)
         if (showCamera && activeFrame != null) {
             Image(
                 bitmap = activeFrame,
                 contentDescription = "Live Video Feed",
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = zoomFactor
+                        scaleY = zoomFactor
+                    },
                 contentScale = ContentScale.Crop
             )
         }
 
-        // Desktop Status-Banner unten (über der Aktionsleiste) - nur wenn Kameraansicht aktiv ist
+        // Quellen-Button oben rechts (dezent, ohne Text-Statusleiste) - nur wenn Kameraansicht aktiv ist
         if (showCamera) {
-            Box(
+            Button(
+                onClick = {
+                    webcamManager.refreshWebcams()
+                    showSourceDialog = true
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black.copy(alpha = 0.65f),
+                    contentColor = Color.White
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 90.dp)
-                    .background(Color.Black.copy(alpha = 0.75f), shape = RoundedCornerShape(20.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.25f), shape = RoundedCornerShape(20.dp))
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(top = 16.dp, end = 68.dp)
+                    .height(34.dp)
                     .zIndex(20f)
             ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                val isActive = if (selectedSourceType == CameraSourceType.USB_WEBCAM) isWebcamRunning else (streamState is StreamState.Connected)
-                val statusDotColor = if (isActive) Color(0xFF28a745) else Color(0xFFffc107)
-
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(statusDotColor, CircleShape)
-                )
-
-                val statusText = if (isStreamingToHost) {
-                    "Stream an Host aktiv ($activeFps FPS)"
-                } else when (selectedSourceType) {
-                    CameraSourceType.USB_WEBCAM -> {
-                        if (isWebcamRunning && availableWebcams.isNotEmpty()) {
-                            "USB: ${availableWebcams.getOrNull(selectedWebcamIndex) ?: "Kamera"} ($activeFps FPS)"
-                        } else if (availableWebcams.isEmpty()) {
-                            "Keine USB-Webcam gefunden"
-                        } else {
-                            "Webcam angehalten"
-                        }
-                    }
-                    CameraSourceType.STREAM_URL -> {
-                        when (streamState) {
-                            is StreamState.Connected -> "Stream Verbunden ($activeFps FPS)"
-                            is StreamState.Connecting -> "Verbinde mit Stream..."
-                            is StreamState.Error -> "Stream-Verbindungsfehler"
-                            else -> "Companion / IP-Stream bereit"
-                        }
-                    }
-                    CameraSourceType.COMPANION_STREAM -> {
-                        if (companionRawBytes != null) {
-                            "Handy-Kamera live verbunden (Host-Inferenz aktiv)"
-                        } else {
-                            "Warte auf Handy-Kamera-Stream..."
-                        }
-                    }
-                }
-
                 Text(
-                    text = statusText,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
+                    text = "Quelle wählen",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
-
-                Button(
-                    onClick = {
-                        webcamManager.refreshWebcams()
-                        showSourceDialog = true
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.height(28.dp)
-                ) {
-                    Text(
-                        text = "Quelle wählen",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-            }
-        }
-    }
-
-        // Real-time Debug HUD für Inferenzzeit und FPS
-        if (showCamera && vm.showCameraDebugHud) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 12.dp)
-                    .background(Color.Black.copy(alpha = 0.75f), shape = RoundedCornerShape(12.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.15f), shape = RoundedCornerShape(12.dp))
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
-                    .zIndex(10f)
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Video-Feed",
-                        color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    Text(
-                        text = "$activeFps FPS",
-                        color = if (activeFps > 15) Color.Green else if (activeFps > 0) Color.Yellow else Color.Gray,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Box(
-                        modifier = Modifier
-                            .padding(vertical = 6.dp)
-                            .width(40.dp)
-                            .height(1.dp)
-                            .background(Color.White.copy(alpha = 0.2f))
-                    )
-                    Text(
-                        text = "Quelle",
-                        color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                    Text(
-                        text = when (selectedSourceType) {
-                            CameraSourceType.USB_WEBCAM -> "USB WEBCAM"
-                            CameraSourceType.STREAM_URL -> "MJPEG STREAM"
-                            CameraSourceType.COMPANION_STREAM -> "COMPANION PHONE (HOST ML)"
-                        },
-                        color = Color.Cyan,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
         }
 

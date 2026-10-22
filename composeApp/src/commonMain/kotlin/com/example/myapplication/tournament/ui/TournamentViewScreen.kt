@@ -82,8 +82,8 @@ fun TournamentViewScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .safeDrawingPadding()
+                        .padding(start = 20.dp, end = 20.dp, top = 20.dp)
                 ) {
                     ScreenHeader(
                         title = state.name,
@@ -93,7 +93,9 @@ fun TournamentViewScreen(
 
                     // Apple-style Actions: Live-Ticker / QR-Code & Beenden
                     Row(
-                        modifier = Modifier.align(Alignment.CenterEnd),
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(bottom = 20.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {

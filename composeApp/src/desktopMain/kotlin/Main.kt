@@ -5,6 +5,9 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.example.myapplication.App
+import org.jetbrains.compose.resources.painterResource
+import sdartapp.composeapp.generated.resources.Res
+import sdartapp.composeapp.generated.resources.dart_app_logo
 
 fun main(args: Array<String>) {
     val screenshotType = System.getProperty("screenshot.type") ?: args.firstOrNull { it.startsWith("--screenshot=") }?.substringAfter("--screenshot=")
@@ -46,7 +49,8 @@ fun main(args: Array<String>) {
     Window(
         onCloseRequest = ::exitApplication,
         title = "s'Dart App",
-        state = windowState
+        state = windowState,
+        icon = painterResource(Res.drawable.dart_app_logo)
     ) {
         window.minimumSize = java.awt.Dimension(800, 600)
         App()

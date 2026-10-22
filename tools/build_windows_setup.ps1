@@ -33,16 +33,10 @@ if (-not (Test-Path $CscExe)) {
     exit 1
 }
 
-$IconIco = Join-Path $RootDir "composeApp\build\compose\default-resources\1.7.0\default-icon-windows.ico"
+$IconIco = Join-Path $RootDir "composeApp\src\desktopMain\resources\icon.ico"
 if (-not (Test-Path $IconIco)) {
-    # Fallback to general compose default icon search
-    $foundIcon = Get-ChildItem -Path (Join-Path $RootDir "composeApp\build") -Filter "default-icon-windows.ico" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($foundIcon) {
-        $IconIco = $foundIcon.FullName
-    } else {
-        Write-Error "Windows-Icon (default-icon-windows.ico) nicht gefunden!"
-        exit 1
-    }
+    Write-Error "Windows-Icon nicht gefunden: $IconIco"
+    exit 1
 }
 
 $JarFile = Join-Path $DistDir "sDartApp-windows-x64-$AppVersion.jar"
@@ -143,6 +137,8 @@ SolidCompression=yes
 WizardStyle=modern
 SetupIconFile=$IconIco
 UninstallDisplayIcon={app}\{#MyAppExeName}
+ChangesAssociations=yes
+ChangesEnvironment=yes
 
 [Languages]
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
@@ -158,9 +154,9 @@ Source: "$JbrDir\*"; DestDir: "{app}\runtime"; Flags: ignoreversion recursesubdi
 Source: "$IconIco"; DestDir: "{app}"; DestName: "icon.ico"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\icon.ico"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\icon.ico"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
@@ -179,6 +175,21 @@ if (-not (Test-Path $SetupExe)) {
 
 # Aufräumen von temp
 Remove-Item -Force -ErrorAction SilentlyContinue $LauncherCs, $LauncherExe, $IssFile
+
+# Windows Shell Icon-Cache sofort aktualisieren (kein Neustart erforderlich)
+Write-Host "Aktualisiere Windows Shell Icon-Cache..."
+try {
+    $notifyCode = @"
+    using System;
+    using System.Runtime.InteropServices;
+    public class ShellIconNotify {
+        [DllImport("shell32.dll")]
+        public static extern void SHChangeNotify(int wEventId, int uFlags, IntPtr dwItem1, IntPtr dwItem2);
+    }
+"@
+    Add-Type -TypeDefinition $notifyCode -ErrorAction SilentlyContinue
+    [ShellIconNotify]::SHChangeNotify(0x08000000, 0, [IntPtr]::Zero, [IntPtr]::Zero)
+} catch {}
 
 Write-Host "`n========================================================" -ForegroundColor Green
 Write-Host "ERFOLG: Windows Setup Installer (.exe) wurde erstellt:" -ForegroundColor Green

@@ -750,20 +750,25 @@ fun GameScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(bottom = 96.dp)
+                    .then(
+                        if (isWidescreen) {
+                            Modifier.fillMaxWidth(0.5f).padding(bottom = 24.dp)
+                        } else {
+                            Modifier.padding(bottom = 96.dp)
+                        }
+                    )
                     .zIndex(20000f),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
                     modifier = Modifier
-                        .background(Color.Black.copy(alpha = 0.6f), CircleShape)
-                        .border(1.5.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.75f), CircleShape)
+                        .border(1.5.dp, PrimaryOrange.copy(alpha = 0.85f), CircleShape)
                         .clickable {
-                            vm.cameraZoomLevel = 0f
-                            vm.cameraZoomRatio = 1.0f
-                            vm.onResetZoom?.invoke()
+                            vm.resetZoom()
                         }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(horizontal = 14.dp, vertical = 7.dp)
                 ) {
                     val zoomText = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) {
                         "${vm.cameraZoomRatio.format(1)}x"
@@ -776,7 +781,7 @@ fun GameScreen(
                         color = PrimaryOrange,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                     )
                 }

@@ -61,6 +61,11 @@ Alle fertigen Installations- und Release-Dateien werden zentral im gemeinsamen S
 * **iOS:** Zielort für das App-Paket ist `dist/ios/sDartApp.ipa` bzw. `dist/ios/sDartApp.framework`. Die SwiftUI-App (`iosApp/iosApp/iOSApp.swift`), der Compose-Einstiegspunkt (`MainViewController.kt`) sowie Berechtigungen für Kamera & Bonjour (`Info.plist`) sind vollständig vorbereitet. Eine detaillierte Anleitung für Sideloading (Sideloadly / AltStore / TrollStore) und macOS-Builds liegt unter `dist/ios/README.md`.
 * **Manueller Export:** `./gradlew :composeApp:copyDistributables` kopiert alle aktuellen Installationsdateien gebündelt nach `dist/`.
 * **Google Drive Upload:** `./gradlew :composeApp:uploadToGoogleDrive` oder `tools/upload_to_drive.bat` synchronisiert alle Binaries (.apk, .jar, .exe) direkt in den Google Drive Ordner `Projekte/ Dart app` und aktualisiert vorhandene Dateien in-place.
+* **App-Icons:** Das offizielle Logo (`dart_app_logo.png` / `icon.png`) wird für alle Plattformen einheitlich verwendet:
+  - **Android:** Adaptive Icons (`ic_launcher.xml` mit Safe-Zone Inset & dunklem Hintergrund `#2B2B2A`) sowie automatisch gerenderte Mipmaps (`mdpi` bis `xxxhdpi`, eckig und rund).
+  - **Desktop (Windows/Linux):** Multi-Resolution ICO (`icon.ico`), PNG für Linux und Compose-Fenster-Icon (`Window(icon = ...)`). Der Inno Setup Installer (`sDartApp-windows-x64-Setup.exe`) und die Starter-EXE nutzen das Icon nativ.
+  - **iOS:** `Assets.xcassets/AppIcon.appiconset` mit 1024x1024 Universal-Asset.
+  - **Generator-Skript:** `tools/generate_app_icons.py` aktualisiert bei Bedarf alle Plattform-Icons aus dem Master-PNG.
 
 ---
 
@@ -120,10 +125,14 @@ Alle fertigen Installations- und Release-Dateien werden zentral im gemeinsamen S
      - **Desktop (JVM):** `DesktopJsonPlayerRepository` (`PlayerRepository.desktop.kt`) speichert in `%APPDATA%\sDartApp\saved_players_v2.json` (bzw. `~/.sDartApp`).
      - **Android:** `AndroidJsonPlayerRepository` (`PlayerRepository.android.kt`) speichert in `context.filesDir/saved_players_v2.json`.
      - **iOS:** Fallback-Implementierung (`PlayerRepository.ios.kt`) via `InMemoryPlayerRepository`.
-   * **App-Einstellungen:** `AppPreferences.kt` persistiert zuletzt genutzte Spielernamen über `expect/actual fun saveAppPreference` / `loadAppPreference`:
+   * **App-Einstellungen:** `AppPreferences.kt` persistiert Einstellungen, UI-Zustände sowie Kamerazoom (`cameraZoomLevel`, `cameraZoomRatio`) spiel- und sitzungsübergreifend über `expect/actual fun saveAppPreference` / `loadAppPreference`:
      - Desktop: Java Properties (`preferences.properties` im AppData-Verzeichnis).
      - Android: `SharedPreferences` (`sdart_app_prefs`).
      - iOS: `NSUserDefaults`.
+   * **Kamera-Zoom Parität & Persistenz:**
+     - Beim Umschalten zwischen Kamera und Board im `GameScreen` und spielübergreifend bleibt der Zoom erhalten.
+     - In `MLDartDetector.kt` wird der gespeicherte Zoom-Faktor (`currentZoomRatio` / `currentZoom`) beim Reconnect direkt wiederhergestellt und initiale Standard-Meldungen (1.0x / 0.0) von CameraX gefiltert, sodass der gespeicherte Zustand nicht überschrieben wird.
+     - Auf Desktop (`CameraVideoFeed.desktop.kt`) skaliert der Video-Feed via `graphicsLayer` digital synchron mit dem gespeicherten Zoom-Level.
    * **Verdrahtung:** Vollständig integriert in `App.kt`, `PlayerSetupScreen.kt`, `PlayerLoadDialog.kt` und `PlayerManagementScreen.kt`.
    * **Build-Status:** Verifiziert für Desktop (`desktopJar` BUILD SUCCESSFUL) und Android (`compileDebugKotlinAndroid` BUILD SUCCESSFUL).
 
@@ -261,3 +270,29 @@ Alle fertigen Installations- und Release-Dateien werden zentral im gemeinsamen S
       - Global geöffnete Dialoge wie die Host-Übersicht (`showHostOverviewFromStart`) werden vorrangig geschlossen.
     * **Build- & Test-Status:** `allTests`, `compileDebugKotlinAndroid` und `compileKotlinDesktop` erfolgreich verifiziert.
 
+
+16. [X] **Phase 15: Kachel-Restrukturierung (Games, Turnier, Spieler, Geräte verbinden):**
+    * **Hauptmenü (`StartScreen.kt`):**
+      - Gliederung des Startbildschirms in vier zentrale Hauptkacheln:
+        1. **Games:** Verzweigt zur neuen Spielmodus-Auswahl (`GameModesScreen`).
+        2. **Turnier:** K.O.-System & Liga bzw. laufendes Turnier fortsetzen.
+        3. **Spieler:** Spieler-Verwaltung & Statistiken.
+        4. **Geräte verbinden:** Companion-Verbindungen & Netzwerk-Rollen.
+      - Perfekte 2x2-Grid-Symmetrie auf Widescreen/Desktop und übersichtliche 4-Kachel-Liste auf mobilen Endgeräten.
+    * **Spielmodus-Auswahl (`GameModesScreen.kt` & `Screen.GameModes`):**
+      - Eigener Bildschirm mit einheitlichem `ScreenHeader(title = "Games", onBack = ...)` und den 4 Spielmodi:
+        * **Standard (501)**
+        * **Cricket**
+        * **Durch 5 teilbar (All Fives)**
+        * **Around the Clock**
+      - Nahtlose Rückkehr zum Hauptmenü via Back-Button / System-Gesten und Weiterleitung zu `PlayerSetup` bei Auswahl.
+    * **Build- & Test-Status:** `compileKotlinDesktop` und `compileDebugKotlinAndroid` erfolgreich verifiziert.
+
+17. [X] **Phase 16: Internationalisierung & Compose Multiplatform String-Ressourcen (i18n):**
+    * **Ressourcenstruktur:**
+      - `composeResources/values/strings.xml` als Standard-Sprache (Englisch).
+      - `composeResources/values-de/strings.xml` als lokalisierte deutsche Fassung.
+    * **Integration in Menüs:**
+      - Vollständige Umstellung von `StartScreen.kt` und `GameModesScreen.kt` auf `stringResource(Res.string.<id>)`.
+      - Automatische Sprachanpassung basierend auf der Betriebssystem-Sprache (Android, Windows Desktop, iOS).
+    * **Build-Status:** `compileKotlinDesktop` und `compileDebugKotlinAndroid` erfolgreich verifiziert.

@@ -27,38 +27,11 @@ actual fun CameraVideoFeed(
     showCamera: Boolean,
     onDetectionsUpdated: (List<ObjectDetection>) -> Unit,
     onFrameSizeChanged: (Int, Int) -> Unit,
+    onTelemetryUpdated: (CameraTelemetry) -> Unit,
     sessionManager: SessionManager?,
     participantManager: ParticipantSessionManager?
 ) {
     Box(
         modifier = modifier.fillMaxSize()
-    ) {
-        // iOS Status-Banner
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 16.dp)
-                .background(Color.Black.copy(alpha = 0.65f), shape = RoundedCornerShape(20.dp))
-                .border(1.dp, Color.White.copy(alpha = 0.2f), shape = RoundedCornerShape(20.dp))
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .zIndex(5f)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(Color(0xFF28a745), CircleShape)
-                )
-                Text(
-                    text = "iOS Kamera-Modus (AVFoundation Vorbereitung)",
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-    }
+    )
 }

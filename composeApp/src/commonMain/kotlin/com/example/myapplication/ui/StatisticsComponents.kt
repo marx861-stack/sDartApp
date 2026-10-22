@@ -30,18 +30,19 @@ private val dbGreen = Color(0xFF388E3C)
 @Composable
 fun HeatmapDartboard(
     hits: List<Offset>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showNumbers: Boolean = true
 ) {
     val textMeasurer = rememberTextMeasurer()
     val scores = listOf(20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5)
 
     Canvas(modifier = modifier) {
         val center = Offset(size.width / 2f, size.height / 2f)
-        // Platz für Zahlen am Rand lassen
+        // Platz für Zahlen am Rand lassen (1.25f entspricht dem vollen Außenradius inkl. Zahlenring)
         val radius = (min(size.width, size.height) / 2f) / 1.25f
         
         // 1. Statisches Dartboard zeichnen
-        drawStaticBoard(center, radius, scores, textMeasurer)
+        drawStaticBoard(center, radius, scores, textMeasurer, showNumbers)
         
         // 2. Hits als Heatmap-Punkte zeichnen
         hits.forEach { normalizedHit ->
@@ -55,9 +56,9 @@ fun HeatmapDartboard(
             val gradientRadius = radius * 0.15f
             val heatmapBrush = Brush.radialGradient(
                 colors = listOf(
-                    Color.Red.copy(alpha = 0.6f),
-                    Color(0xFFFF9800).copy(alpha = 0.3f), // Orange
-                    Color.Yellow.copy(alpha = 0.1f),
+                    Color.Red.copy(alpha = 0.65f),
+                    Color(0xFFFF9800).copy(alpha = 0.4f), // Orange
+                    Color.Yellow.copy(alpha = 0.15f),
                     Color.Transparent
                 ),
                 center = hitPos,
@@ -68,6 +69,12 @@ fun HeatmapDartboard(
                 radius = gradientRadius,
                 center = hitPos
             )
+            // Kleiner sichtbarer Punkt für exakten Trefferort
+            drawCircle(
+                color = Color.Yellow,
+                radius = 2.5f,
+                center = hitPos
+            )
         }
     }
 }
@@ -76,7 +83,8 @@ private fun DrawScope.drawStaticBoard(
     center: Offset,
     radius: Float,
     scores: List<Int>,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    showNumbers: Boolean = true
 ) {
     val bullseyeRadius = radius * 0.037f
     val outerBullRadius = radius * 0.093f
@@ -129,17 +137,19 @@ private fun DrawScope.drawStaticBoard(
     drawCircle(color = dbRed, radius = bullseyeRadius, center = center)
 
     // Zahlen am Rand zeichnen
-    val numberRadius = radius * 1.125f // Exakte Mitte zwischen Dartboard (1.0) und Außenrand (1.25)
-    scores.forEachIndexed { index, score ->
-        val angle = (segmentAngle * index) - 90f
-        val angleRad = Math.toRadians(angle.toDouble())
-        val textLayoutResult = textMeasurer.measure(
-            text = score.toString(),
-            style = TextStyle(color = Color.White, fontSize = (radius * 0.18f).toSp())
-        )
-        
-        val x = (center.x + numberRadius * cos(angleRad)).toFloat() - textLayoutResult.size.width / 2
-        val y = (center.y + numberRadius * sin(angleRad)).toFloat() - textLayoutResult.size.height / 2
-        drawText(textLayoutResult, topLeft = Offset(x, y))
+    if (showNumbers && radius > 35f) {
+        val numberRadius = radius * 1.125f // Exakte Mitte zwischen Dartboard (1.0) und Außenrand (1.25)
+        scores.forEachIndexed { index, score ->
+            val angle = (segmentAngle * index) - 90f
+            val angleRad = Math.toRadians(angle.toDouble())
+            val textLayoutResult = textMeasurer.measure(
+                text = score.toString(),
+                style = TextStyle(color = Color.White, fontSize = (radius * 0.18f).toSp())
+            )
+            
+            val x = (center.x + numberRadius * cos(angleRad)).toFloat() - textLayoutResult.size.width / 2
+            val y = (center.y + numberRadius * sin(angleRad)).toFloat() - textLayoutResult.size.height / 2
+            drawText(textLayoutResult, topLeft = Offset(x, y))
+        }
     }
 }

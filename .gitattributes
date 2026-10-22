@@ -1,0 +1,2 @@
+# Mark third-party libraries as vendored so GitHub Linguist excludes them from language stats
+composeApp/src/androidMain/cpp/ncnn-android-vulkan/** linguist-vendored

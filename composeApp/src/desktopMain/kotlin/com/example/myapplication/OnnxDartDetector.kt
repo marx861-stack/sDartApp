@@ -3,19 +3,19 @@ package com.example.myapplication
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
-import org.jetbrains.skia.Bitmap
-import org.jetbrains.skia.ColorAlphaType
-import org.jetbrains.skia.ColorType
-import org.jetbrains.skia.ImageInfo
+import androidx.compose.ui.geometry.Rect
+import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.RenderingHints
+import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.io.InputStream
 import java.nio.FloatBuffer
 
 /**
  * Native Desktop ONNX-Inferenz für Dart-Erkennung (RTMDet / YOLOX).
- * Verwendet standardisiertes BGR-Preprocessing mit Mittelwert/Std-Normalisierung identisch zur Python/Android-Pipeline.
+ * Verwendet standardisiertes Top-Left Letterbox (Grau 114,114,114), Dynamic Auto-Tracking ROI (30% Padding)
+ * und BGR-Preprocessing mit Mittelwert/Std-Normalisierung 1:1 identisch zur Android/Original-Pipeline.
  */
 class OnnxDartDetector(
     private val modelResourceName: String = "rtmdet_tiny.onnx",
@@ -39,6 +39,18 @@ class OnnxDartDetector(
     private val sessionLock = Any()
     @Volatile
     private var isClosed = false
+
+    @Volatile
+    var lastInferenceTimeMs: Long = 0L
+        private set
+
+    val dynamicRoi: Rect?
+        get() = pipeline.normalizedDynamicRoi
+
+    // Wiederverwendbarer 640x640 Puffer zur Vermeidung von Allokationen pro Frame
+    private val scaledImage = BufferedImage(inputSize, inputSize, BufferedImage.TYPE_INT_RGB)
+    private val rgbPixels = IntArray(inputSize * inputSize)
+    private val floatBuffer = FloatBuffer.allocate(1 * 3 * inputSize * inputSize)
 
     @Synchronized
     fun initialize(): Boolean {
@@ -75,7 +87,8 @@ class OnnxDartDetector(
     }
 
     /**
-     * Führt die Erkennung auf einem AWT BufferedImage aus (aus SARXOS Webcam).
+     * Führt die Erkennung auf einem AWT BufferedImage aus (aus SARXOS Webcam oder MJPEG-Stream).
+     * Verwendet Top-Left Letterbox (114, 114, 114) + Dynamic ROI Zoom identisch zur Android-App.
      */
     fun detect(bufferedImage: BufferedImage): List<ObjectDetection> {
         if (isClosed) return emptyList()
@@ -84,13 +97,34 @@ class OnnxDartDetector(
             if (!isInitialized && !initialize()) return emptyList()
 
             return try {
-                val resized = BufferedImage(inputSize, inputSize, BufferedImage.TYPE_INT_RGB)
-                val g: Graphics2D = resized.createGraphics()
+                val startTime = System.currentTimeMillis()
+                val imgW = bufferedImage.width
+                val imgH = bufferedImage.height
+                if (imgW <= 0 || imgH <= 0) return emptyList()
+
+                val cropParams = pipeline.computeCropParams(imgW, imgH, inputSize)
+
+                val g: Graphics2D = scaledImage.createGraphics()
+                g.color = Color(114, 114, 114)
+                g.fillRect(0, 0, inputSize, inputSize)
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-                g.drawImage(bufferedImage, 0, 0, inputSize, inputSize, null)
+
+                val scaleTotal = (cropParams.baseRatio * cropParams.roiScale).toDouble()
+                val tx = (-cropParams.frameSafeRoi.left * cropParams.roiScale + cropParams.roiOffsetX).toDouble()
+                val ty = (-cropParams.frameSafeRoi.top * cropParams.roiScale + cropParams.roiOffsetY).toDouble()
+                val transform = AffineTransform(scaleTotal, 0.0, 0.0, scaleTotal, tx, ty)
+
+                g.drawImage(bufferedImage, transform, null)
                 g.dispose()
 
-                runInference(resized)
+                val rawDetections = runInference(scaledImage)
+                val afterNms = pipeline.applyNMS(rawDetections)
+                // Erst in den Vollbild-Raum zurückrechnen, dann zeitlich filtern (ROI wandert zwischen Frames)
+                val mapped = pipeline.mapDetectionsAndUpdateDynamicRoi(afterNms, cropParams, inputSize)
+                val stableDetections = pipeline.filterStableDetections(mapped)
+
+                lastInferenceTimeMs = System.currentTimeMillis() - startTime
+                stableDetections
             } catch (e: Exception) {
                 System.err.println("[OnnxDartDetector] Fehler bei der Inferenz: ${e.message}")
                 emptyList()
@@ -99,7 +133,7 @@ class OnnxDartDetector(
     }
 
     /**
-     * Führt die Erkennung auf rohen JPEG-Bytes aus (z.B. aus MJPEG Stream).
+     * Führt die Erkennung auf rohen JPEG-Bytes aus (z.B. aus MJPEG Stream oder Companion-Stream).
      */
     fun detect(jpegBytes: ByteArray): List<ObjectDetection> {
         if (jpegBytes.isEmpty() || isClosed) return emptyList()
@@ -121,11 +155,7 @@ class OnnxDartDetector(
         val session = this.session ?: return emptyList()
         val env = this.env ?: return emptyList()
 
-        val floatBuffer = FloatBuffer.allocate(1 * 3 * inputSize * inputSize)
         val channelSize = inputSize * inputSize
-
-        // BGR Planar Layout mit Normalisierung
-        val rgbPixels = IntArray(inputSize * inputSize)
         inputImage.getRGB(0, 0, inputSize, inputSize, rgbPixels, 0, inputSize)
 
         val bOffset = 0
@@ -156,9 +186,7 @@ class OnnxDartDetector(
             results = session.run(inputs)
             val rawOutput = extractRawOutput(results)
 
-            val parsed = pipeline.parseRawOutput(rawOutput, inputSize)
-            val nms = pipeline.applyNMS(parsed)
-            pipeline.filterStableDetections(nms)
+            pipeline.parseRawOutput(rawOutput, inputSize)
         } catch (e: Exception) {
             System.err.println("[OnnxDartDetector] Fehler im Inferenz-Ablauf: ${e.message}")
             emptyList()
@@ -168,11 +196,6 @@ class OnnxDartDetector(
         }
     }
 
-    /**
-     * Extrahiert die Inferenz-Ergebnisse und bringt sie in das Format:
-     * [x1, y1, x2, y2, score, classId, ...]
-     * Unterstützt MMDeploy RTMDet Format mit ('boxes', 'scores')
-     */
     private fun extractRawOutput(results: OrtSession.Result): FloatArray {
         val outputList = mutableListOf<Float>()
 
@@ -223,11 +246,6 @@ class OnnxDartDetector(
         return resultArr
     }
 
-    /**
-     * Schließt die ONNX-Session threadsicher und asynchron.
-     * Blockiert nicht den UI-Thread und wartet sauber, bis laufende Inferenz-Calls abgeschlossen sind.
-     * Schließt OrtEnvironment NICHT, da dies ein prozessweites Singleton ist.
-     */
     fun close() {
         isClosed = true
         Thread {
