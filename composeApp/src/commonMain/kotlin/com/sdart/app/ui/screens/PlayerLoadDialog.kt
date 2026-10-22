@@ -1,4 +1,6 @@
-package com.sdart.app
+package com.sdart.app.ui.screens
+
+import com.sdart.app.*
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
