@@ -31,6 +31,8 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
+actual suspend fun queryAvailableLocalCameras(): List<String> = listOf("Lokale Gerätekamera")
+
 /**
  * Android-spezifische Implementierung von CameraVideoFeed.
  * Konzentriert sich ausschließlich auf die Video-Bereitstellung (CameraX / Companion Stream)
@@ -50,6 +52,9 @@ actual fun CameraVideoFeed(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    val hostState by (sessionManager?.hostState?.collectAsState() ?: remember { mutableStateOf(null) })
+    val isHostActive = hostState is HostState.Active
+
     val participantState by (participantManager?.state?.collectAsState() ?: remember { mutableStateOf(null) })
     val isStreamingToHost = participantState is ParticipantState.Connected &&
             (participantState as ParticipantState.Connected).role == DeviceRole.CAMERA
@@ -58,8 +63,24 @@ actual fun CameraVideoFeed(
 
     val companionRawBytes by (sessionManager?.latestPreviewFrame?.collectAsState() ?: remember { mutableStateOf(null) })
     var companionFrame by remember { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
-    val isHostWithCompanionStream = companionRawBytes != null
+    val isHostWithCompanionStream = (vm.cameraSourceType == CameraSourceType.COMPANION_STREAM) && (companionRawBytes != null)
     val isCompanionInferencing = remember { AtomicBoolean(false) }
+
+    // Automatischer Wechsel bei neu verbundener oder getrennter Host-Kamera
+    val cameraParticipants = (hostState as? HostState.Active)?.participants?.filter { it.role == DeviceRole.CAMERA } ?: emptyList()
+    var lastCameraParticipantIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    LaunchedEffect(cameraParticipants) {
+        val currentIds = cameraParticipants.map { it.connectionId }.toSet()
+        val newlyJoined = currentIds - lastCameraParticipantIds
+        if (newlyJoined.isNotEmpty()) {
+            val newId = newlyJoined.last()
+            sessionManager?.activeCameraConnectionId = newId
+            vm.selectCompanionCamera(newId)
+        } else if (currentIds.isEmpty() && vm.cameraSourceType == CameraSourceType.COMPANION_STREAM) {
+            vm.setCameraSource(CameraSourceType.LOCAL)
+        }
+        lastCameraParticipantIds = currentIds
+    }
 
     LaunchedEffect(companionRawBytes, isHostWithCompanionStream) {
         if (!isHostWithCompanionStream) {
@@ -102,8 +123,6 @@ actual fun CameraVideoFeed(
         hasCameraPermission = isGranted
     }
 
-    val hostState by (sessionManager?.hostState?.collectAsState() ?: remember { mutableStateOf(null) })
-    val isHostActive = hostState is HostState.Active
     val shouldCapture = showCamera || isHostActive || isStreamingToHost
 
     LaunchedEffect(isHostWithCompanionStream, shouldCapture) {

@@ -173,6 +173,62 @@ class DartViewModel : ViewModel() {
     var onPinchZoom: ((Float) -> Unit)? = null
     var onResetZoom: (() -> Unit)? = null
 
+    // Plattformübergreifende Kamera-Quellenauswahl
+    var cameraSourceType by mutableStateOf(AppPreferences.cameraSourceType)
+        private set
+
+    var cameraStreamUrl by mutableStateOf(AppPreferences.cameraStreamUrl)
+        private set
+
+    var selectedWebcamIndex by mutableIntStateOf(AppPreferences.selectedWebcamIndex)
+        private set
+
+    var selectedCompanionConnectionId by mutableStateOf<String?>(null)
+        private set
+
+    var availableWebcams by mutableStateOf<List<String>>(emptyList())
+
+    // Plattform-Callbacks für Kamera-Hardware-Steuerung
+    var onRefreshWebcams: (() -> Unit)? = null
+    var onCameraSourceChanged: ((CameraSourceType) -> Unit)? = null
+
+    init {
+        refreshWebcams()
+    }
+
+    fun setCameraSource(type: CameraSourceType) {
+        cameraSourceType = type
+        AppPreferences.cameraSourceType = type
+        onCameraSourceChanged?.invoke(type)
+    }
+
+    fun selectCompanionCamera(connectionId: String?) {
+        selectedCompanionConnectionId = connectionId
+        setCameraSource(CameraSourceType.COMPANION_STREAM)
+    }
+
+    fun setStreamUrl(url: String) {
+        cameraStreamUrl = url
+        AppPreferences.cameraStreamUrl = url
+    }
+
+    fun setWebcamIndex(index: Int) {
+        selectedWebcamIndex = index
+        AppPreferences.selectedWebcamIndex = index
+        onCameraSourceChanged?.invoke(cameraSourceType)
+    }
+
+    fun refreshWebcams() {
+        onRefreshWebcams?.invoke()
+        viewModelScope.launch {
+            val cams = queryAvailableLocalCameras()
+            availableWebcams = cams
+            if (selectedWebcamIndex !in cams.indices && cams.isNotEmpty()) {
+                selectedWebcamIndex = 0
+            }
+        }
+    }
+
     // Status ob der Kamera-Quellen-Auswahldialog geöffnet ist (für Hintergrund-Blur im GameScreen)
     var isCameraSourceDialogOpen by mutableStateOf(false)
 

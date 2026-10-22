@@ -21,6 +21,19 @@ data class CameraTelemetry(
 )
 
 /**
+ * Art der ausgewählten Kamera-Quelle (plattformübergreifend).
+ */
+enum class CameraSourceType {
+    LOCAL,             // Lokale USB-Webcam (Desktop) / Gerätekamera (Android/iOS)
+    COMPANION_STREAM   // Live-Video vom über Host verbundenen Smartphone (Companion)
+}
+
+/**
+ * Fragt die verfügbaren lokalen Kameras der Plattform ab (auch wenn der Kamera-Feed noch nicht läuft).
+ */
+expect suspend fun queryAvailableLocalCameras(): List<String>
+
+/**
  * Minimale Plattform-Abstraktion für den rohen Kamera-Video-Feed (Android: CameraX, Desktop: Webcam/Stream, iOS: AVFoundation).
  * Überträgt ausschließlich das Video-Rendering und meldet die erkannten Objekte, Frame-Größe sowie Telemetrie.
  * Sämtliche Overlays, Visier-Brackets und Scoring-Logik liegen zu 100% geteilt in commonMain.

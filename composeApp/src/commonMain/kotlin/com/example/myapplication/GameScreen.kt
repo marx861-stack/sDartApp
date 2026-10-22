@@ -542,30 +542,6 @@ fun GameScreen(
                                         }
                                     }
                                 }
-
-                                // Kamera-Quelle Button (z.B. Desktop USB / Stream Umschaltung)
-                                if (showCamera && vm.onRequestOpenSourceDialog != null) {
-                                    IconButton(
-                                        onClick = { vm.onRequestOpenSourceDialog?.invoke() },
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(
-                                                top = 10.dp,
-                                                end = if (sessionManager != null) 64.dp else 10.dp
-                                            )
-                                            .size(46.dp)
-                                            .background(Color.Black.copy(alpha = 0.65f), CircleShape)
-                                            .border(1.dp, GlassBorder, CircleShape)
-                                            .zIndex(100f)
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(Res.drawable.ic_camera_streaming),
-                                            contentDescription = "Kamera-Quelle wählen",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                }
                             }
 
                             // Rechter Bereich: Sidebar mit Scores, Stats & Aktionen (50/50 Aufteilung)
@@ -797,30 +773,6 @@ fun GameScreen(
                                             modifier = Modifier.size(22.dp)
                                         )
                                     }
-                                }
-                            }
-
-                            // Kamera-Quelle Button (z.B. Desktop USB / Stream Umschaltung)
-                            if (showCamera && vm.onRequestOpenSourceDialog != null) {
-                                IconButton(
-                                    onClick = { vm.onRequestOpenSourceDialog?.invoke() },
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(
-                                            top = 12.dp,
-                                            end = if (sessionManager != null) 66.dp else 12.dp
-                                        )
-                                        .size(46.dp)
-                                        .background(Color.Black.copy(alpha = 0.65f), CircleShape)
-                                        .border(1.dp, GlassBorder, CircleShape)
-                                        .zIndex(100f)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(Res.drawable.ic_camera_streaming),
-                                        contentDescription = "Kamera-Quelle wählen",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(24.dp)
-                                    )
                                 }
                             }
                         }
@@ -1065,7 +1017,8 @@ fun GameScreen(
         if (showHostOverviewDialog && sessionManager != null) {
             HostOverviewDialog(
                 sessionManager = sessionManager,
-                onDismissRequest = { showHostOverviewDialog = false }
+                onDismissRequest = { showHostOverviewDialog = false },
+                vm = vm
             )
         }
     }

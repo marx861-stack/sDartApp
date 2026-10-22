@@ -20,6 +20,8 @@ import com.example.myapplication.connect.SessionManager
 /**
  * iOS-spezifischer Stub für CameraVideoFeed (AVFoundation).
  */
+actual suspend fun queryAvailableLocalCameras(): List<String> = listOf("Lokale Gerätekamera")
+
 @Composable
 actual fun CameraVideoFeed(
     modifier: Modifier,

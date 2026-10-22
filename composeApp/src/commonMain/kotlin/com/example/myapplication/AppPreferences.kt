@@ -16,6 +16,9 @@ object AppPreferences {
     private const val KEY_SHOW_DARTBOARD_OVERLAY = "pref_show_dartboard_overlay"
     private const val KEY_CAMERA_ZOOM_LEVEL = "pref_camera_zoom_level"
     private const val KEY_CAMERA_ZOOM_RATIO = "pref_camera_zoom_ratio"
+    private const val KEY_CAMERA_SOURCE_TYPE = "pref_camera_source_type"
+    private const val KEY_CAMERA_STREAM_URL = "pref_camera_stream_url"
+    private const val KEY_SELECTED_WEBCAM_INDEX = "pref_selected_webcam_index"
 
     fun getLastPlayerNames(): String? = loadAppPreference(KEY_LAST_PLAYERS)
 
@@ -84,5 +87,24 @@ object AppPreferences {
     var showDartboardOverlay: Boolean
         get() = getBoolean(KEY_SHOW_DARTBOARD_OVERLAY, false)
         set(value) = saveBoolean(KEY_SHOW_DARTBOARD_OVERLAY, value)
+
+    var cameraSourceType: CameraSourceType
+        get() {
+            val name = loadAppPreference(KEY_CAMERA_SOURCE_TYPE) ?: return CameraSourceType.LOCAL
+            return try {
+                CameraSourceType.valueOf(name)
+            } catch (_: Exception) {
+                CameraSourceType.LOCAL
+            }
+        }
+        set(value) = saveAppPreference(KEY_CAMERA_SOURCE_TYPE, value.name)
+
+    var cameraStreamUrl: String
+        get() = loadAppPreference(KEY_CAMERA_STREAM_URL) ?: "http://192.168.178.50:8080"
+        set(value) = saveAppPreference(KEY_CAMERA_STREAM_URL, value)
+
+    var selectedWebcamIndex: Int
+        get() = loadAppPreference(KEY_SELECTED_WEBCAM_INDEX)?.toIntOrNull() ?: 0
+        set(value) = saveAppPreference(KEY_SELECTED_WEBCAM_INDEX, value.toString())
 }
 

@@ -78,7 +78,9 @@ sequenceDiagram
 
 - **Mehrere Hosts gefunden:** kurze Auswahlliste („Desktop Marc“, „Laptop Verein“).
 - **Host-Übersicht:** Liste aller verbundenen Geräte mit Rolle, Verbindungsqualität, „Trennen“.
-- **Freigabe aus = Netzwerk aus:** Beenden der Freigabe oder der App stoppt Server und Ankündigung vollständig.
+- **Zentrale Kamera-Quellenauswahl (Dropdown):** Direkt im Host-Fenster (`HostOverviewDialog`) als einheitliches Dropdown-Menü integriert. Enthält alle verfügbaren lokalen USB-Webcams/Gerätekameras sowie alle über den Host per WLAN verbundenen Begleit-Kameras (Live-Status und automatische Host-Aktivierung).
+- **Gemerkte Geräte:** Werden nicht mehr als Inline-Dropdown, sondern auf einer eigenen Unterseite innerhalb des Popups verwaltet (inklusive Einzelaustragung und „Alle entfernen“).
+- **Freigabe aus = Netzwerk aus:** Beenden der Freigabe oder der App stoppt Server und Ankündigung vollständig. Im inaktiven Zustand zeigt das Hostfenster ein aufgeräumtes Design ohne Hilfstexte.
 
 ## 5. Technische Bausteine
 

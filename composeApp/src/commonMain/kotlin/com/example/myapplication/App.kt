@@ -271,7 +271,8 @@ fun App() {
             if (showHostOverviewFromStart) {
                 HostOverviewDialog(
                     sessionManager = sessionManager,
-                    onDismissRequest = { showHostOverviewFromStart = false }
+                    onDismissRequest = { showHostOverviewFromStart = false },
+                    vm = vm
                 )
             }
 

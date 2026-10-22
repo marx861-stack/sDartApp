@@ -33,11 +33,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
+import com.github.sarxos.webcam.Webcam
 
-enum class CameraSourceType {
-    USB_WEBCAM,
-    STREAM_URL,
-    COMPANION_STREAM
+actual suspend fun queryAvailableLocalCameras(): List<String> = withContext(Dispatchers.IO) {
+    try {
+        Webcam.getWebcams().map { it.name }
+    } catch (_: Exception) {
+        emptyList()
+    }
 }
 
 /**
@@ -65,25 +68,13 @@ actual fun CameraVideoFeed(
     val shouldCapture = showCamera || isHostActive || isStreamingToHost
 
     val webcamManager = remember { DesktopWebcamManager() }
-    val mjpegClient = remember { DesktopMjpegClient() }
-
-    val initialCompanionBytes = sessionManager?.latestPreviewFrame?.value
-    var selectedSourceType by remember {
-        mutableStateOf(if (initialCompanionBytes != null) CameraSourceType.COMPANION_STREAM else CameraSourceType.USB_WEBCAM)
-    }
-    var selectedWebcamIndex by remember { mutableStateOf(0) }
 
     val availableWebcams by webcamManager.availableWebcams.collectAsState()
     val isWebcamRunning by webcamManager.isRunning.collectAsState()
     val webcamFrame by webcamManager.currentFrame.collectAsState()
     val webcamFps by webcamManager.fps.collectAsState()
 
-    val streamState by mjpegClient.streamState.collectAsState()
-    val streamFrame by mjpegClient.currentFrame.collectAsState()
-    val streamFps by mjpegClient.fps.collectAsState()
-
     val webcamRawImage by webcamManager.currentBufferedImage.collectAsState()
-    val streamRawJpegBytes by mjpegClient.currentRawJpegBytes.collectAsState()
 
     // Eingehende JPEG-Frames von einem verbundenen Companion-Handy
     val companionRawBytes by (sessionManager?.latestPreviewFrame?.collectAsState() ?: remember { mutableStateOf(null) })
@@ -97,34 +88,38 @@ actual fun CameraVideoFeed(
     var dynamicRoi by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var inferenceTimeMs by remember { mutableLongStateOf(0L) }
 
-    var streamUrlInput by remember { mutableStateOf("http://192.168.178.50:8080") }
-    var showSourceDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(showSourceDialog) {
-        vm.isCameraSourceDialogOpen = showSourceDialog
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            vm.isCameraSourceDialogOpen = false
+    // Sync available webcams mit ViewModel (nicht mit leerer Initial-Liste überschreiben)
+    LaunchedEffect(availableWebcams) {
+        if (availableWebcams.isNotEmpty()) {
+            vm.availableWebcams = availableWebcams
         }
     }
 
-    // USB-Webcam nur suchen, wenn wir tatsächlich USB_WEBCAM als Quelle gewählt haben
+    // Webcams beim ersten Start suchen
     LaunchedEffect(Unit) {
-        if (selectedSourceType == CameraSourceType.USB_WEBCAM) {
-            webcamManager.refreshWebcams()
-        }
+        webcamManager.refreshWebcams()
     }
 
-    // Wenn ein Companion-Handy Frames sendet, schalten wir sofort auf den Handy-Feed um und stoppen die lokale Webcam!
+    // Automatischer Wechsel bei neu verbundener oder getrennter Host-Kamera
+    val cameraParticipants = (hostState as? HostState.Active)?.participants?.filter { it.role == DeviceRole.CAMERA } ?: emptyList()
+    var lastCameraParticipantIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    LaunchedEffect(cameraParticipants) {
+        val currentIds = cameraParticipants.map { it.connectionId }.toSet()
+        val newlyJoined = currentIds - lastCameraParticipantIds
+        if (newlyJoined.isNotEmpty()) {
+            val newId = newlyJoined.last()
+            sessionManager?.activeCameraConnectionId = newId
+            vm.selectCompanionCamera(newId)
+        } else if (currentIds.isEmpty() && vm.cameraSourceType == CameraSourceType.COMPANION_STREAM) {
+            vm.setCameraSource(CameraSourceType.LOCAL)
+        }
+        lastCameraParticipantIds = currentIds
+    }
+
+    // Wenn ein Companion-Handy Frames sendet
     LaunchedEffect(companionRawBytes) {
         companionRawBytes?.let { bytes ->
             if (bytes.isNotEmpty()) {
-                if (selectedSourceType != CameraSourceType.COMPANION_STREAM) {
-                    webcamManager.stopWebcam()
-                    selectedSourceType = CameraSourceType.COMPANION_STREAM
-                }
                 val now = System.currentTimeMillis()
                 companionFramesThisSec++
                 if (lastCompanionFpsTime == 0L) {
@@ -144,19 +139,29 @@ actual fun CameraVideoFeed(
         }
     }
 
-    LaunchedEffect(availableWebcams, shouldCapture, selectedSourceType) {
-        if (shouldCapture && selectedSourceType == CameraSourceType.USB_WEBCAM) {
-            if (availableWebcams.isNotEmpty() && !isWebcamRunning) {
-                webcamManager.startWebcam(selectedWebcamIndex)
+    // Starten & Stoppen der Quellen je nach ausgewählter Quelle im ViewModel
+    val knownWebcams = if (availableWebcams.isNotEmpty()) availableWebcams else vm.availableWebcams
+    LaunchedEffect(knownWebcams, shouldCapture, vm.cameraSourceType, vm.selectedWebcamIndex) {
+        if (!shouldCapture) {
+            if (isWebcamRunning) webcamManager.stopWebcam()
+            return@LaunchedEffect
+        }
+
+        when (vm.cameraSourceType) {
+            CameraSourceType.LOCAL -> {
+                if (knownWebcams.isNotEmpty()) {
+                    webcamManager.startWebcam(vm.selectedWebcamIndex)
+                }
             }
-        } else if ((!shouldCapture || selectedSourceType != CameraSourceType.USB_WEBCAM) && isWebcamRunning) {
-            webcamManager.stopWebcam()
+            CameraSourceType.COMPANION_STREAM -> {
+                if (isWebcamRunning) webcamManager.stopWebcam()
+            }
         }
     }
 
     // Streaming an Host: Wenn PC die Rolle CAMERA hat, Frames zum Host schicken
     var lastFrameSendTime by remember { mutableLongStateOf(0L) }
-    LaunchedEffect(webcamRawImage, streamRawJpegBytes, isStreamingToHost, selectedSourceType) {
+    LaunchedEffect(webcamRawImage, isStreamingToHost, vm.cameraSourceType) {
         if (!isStreamingToHost) return@LaunchedEffect
 
         val now = System.currentTimeMillis()
@@ -164,12 +169,9 @@ actual fun CameraVideoFeed(
         if (now - lastFrameSendTime < minIntervalMs) return@LaunchedEffect
 
         withContext(Dispatchers.IO) {
-            val bytes = when (selectedSourceType) {
-                CameraSourceType.USB_WEBCAM -> {
+            val bytes = when (vm.cameraSourceType) {
+                CameraSourceType.LOCAL -> {
                     webcamRawImage?.let { bufferedImageToJpeg(it, 0.6f) }
-                }
-                CameraSourceType.STREAM_URL -> {
-                    streamRawJpegBytes
                 }
                 CameraSourceType.COMPANION_STREAM -> null
             }
@@ -181,7 +183,7 @@ actual fun CameraVideoFeed(
     }
 
     // Frame-Inferenz Loop für Desktop: Führt Inferenz nur im Standalone- oder Host-Betrieb aus
-    LaunchedEffect(webcamRawImage, streamRawJpegBytes, companionRawBytes, selectedSourceType, shouldCapture, isStreamingToHost) {
+    LaunchedEffect(webcamRawImage, companionRawBytes, vm.cameraSourceType, shouldCapture, isStreamingToHost) {
         if (!shouldCapture || isStreamingToHost) {
             onDetectionsUpdated(emptyList())
             return@LaunchedEffect
@@ -195,12 +197,9 @@ actual fun CameraVideoFeed(
         try {
             withContext(Dispatchers.Default) {
                 val dets = try {
-                    when (selectedSourceType) {
-                        CameraSourceType.USB_WEBCAM -> {
+                    when (vm.cameraSourceType) {
+                        CameraSourceType.LOCAL -> {
                             webcamRawImage?.let { onnxDetector.detect(it) } ?: emptyList()
-                        }
-                        CameraSourceType.STREAM_URL -> {
-                            streamRawJpegBytes?.let { onnxDetector.detect(it) } ?: emptyList()
                         }
                         CameraSourceType.COMPANION_STREAM -> {
                             companionRawBytes?.let { onnxDetector.detect(it) } ?: emptyList()
@@ -235,33 +234,29 @@ actual fun CameraVideoFeed(
             vm.cameraZoomLevel = 0f
             vm.cameraZoomRatio = 1.0f
         }
-        vm.onRequestOpenSourceDialog = {
+        vm.onRefreshWebcams = {
             webcamManager.refreshWebcams()
-            showSourceDialog = true
         }
         onDispose {
             vm.onPinchZoom = null
             vm.onResetZoom = null
-            vm.onRequestOpenSourceDialog = null
+            vm.onRefreshWebcams = null
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
             webcamManager.stopWebcam()
-            mjpegClient.disconnect()
             onnxDetector.close()
         }
     }
 
-    val activeFrame = when (selectedSourceType) {
-        CameraSourceType.USB_WEBCAM -> webcamFrame
-        CameraSourceType.STREAM_URL -> streamFrame
+    val activeFrame = when (vm.cameraSourceType) {
+        CameraSourceType.LOCAL -> webcamFrame
         CameraSourceType.COMPANION_STREAM -> companionFrame
     }
-    val activeFps = when (selectedSourceType) {
-        CameraSourceType.USB_WEBCAM -> webcamFps
-        CameraSourceType.STREAM_URL -> streamFps
+    val activeFps = when (vm.cameraSourceType) {
+        CameraSourceType.LOCAL -> webcamFps
         CameraSourceType.COMPANION_STREAM -> companionFps
     }
 
@@ -278,10 +273,9 @@ actual fun CameraVideoFeed(
         1.0f + vm.cameraZoomLevel * 3.0f
     }
 
-    LaunchedEffect(dynamicRoi, inferenceTimeMs, activeFps, selectedSourceType, zoomFactor) {
-        val label = when (selectedSourceType) {
-            CameraSourceType.USB_WEBCAM -> "CPU (ONNX USB)"
-            CameraSourceType.STREAM_URL -> "CPU (ONNX STREAM)"
+    LaunchedEffect(dynamicRoi, inferenceTimeMs, activeFps, vm.cameraSourceType, zoomFactor) {
+        val label = when (vm.cameraSourceType) {
+            CameraSourceType.LOCAL -> "CPU (ONNX USB)"
             CameraSourceType.COMPANION_STREAM -> "CPU (ONNX HOST)"
         }
         onTelemetryUpdated(
@@ -300,7 +294,7 @@ actual fun CameraVideoFeed(
     Box(
         modifier = modifier.fillMaxSize().clipToBounds()
     ) {
-        // Video Rendering (USB Webcam oder MJPEG Stream)
+        // Video Rendering (USB Webcam oder Companion)
         if (showCamera && activeFrame != null) {
             Image(
                 bitmap = activeFrame,
@@ -312,83 +306,6 @@ actual fun CameraVideoFeed(
                         scaleY = zoomFactor
                     },
                 contentScale = ContentScale.Crop
-            )
-        }
-
-        // Dialog zur Kameraquellen-Auswahl (USB vs. Stream)
-        if (showSourceDialog) {
-            AlertDialog(
-                onDismissRequest = { showSourceDialog = false },
-                title = { Text("Kamera-Quelle auswählen", color = Color.White) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Text("Verfügbare USB-Webcams:", color = PrimaryOrange, fontWeight = FontWeight.Bold)
-
-                        if (availableWebcams.isEmpty()) {
-                            Text("Keine USB-Kameras gefunden (bitte USB-Verbindung prüfen).", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
-                        } else {
-                            availableWebcams.forEachIndexed { idx, name ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(if (selectedSourceType == CameraSourceType.USB_WEBCAM && selectedWebcamIndex == idx) Color.White.copy(alpha = 0.15f) else Color.Transparent, RoundedCornerShape(8.dp))
-                                        .clickable {
-                                            selectedSourceType = CameraSourceType.USB_WEBCAM
-                                            selectedWebcamIndex = idx
-                                            mjpegClient.disconnect()
-                                            webcamManager.startWebcam(idx)
-                                            showSourceDialog = false
-                                        }
-                                        .padding(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    RadioButton(
-                                        selected = (selectedSourceType == CameraSourceType.USB_WEBCAM && selectedWebcamIndex == idx),
-                                        onClick = {
-                                            selectedSourceType = CameraSourceType.USB_WEBCAM
-                                            selectedWebcamIndex = idx
-                                            mjpegClient.disconnect()
-                                            webcamManager.startWebcam(idx)
-                                            showSourceDialog = false
-                                        }
-                                    )
-                                    Text(name, color = Color.White, modifier = Modifier.padding(start = 8.dp))
-                                }
-                            }
-                        }
-
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
-
-                        Text("Oder Netzwerk-Stream (Smartphone/IP-Cam):", color = PrimaryOrange, fontWeight = FontWeight.Bold)
-                        OutlinedTextField(
-                            value = streamUrlInput,
-                            onValueChange = { streamUrlInput = it },
-                            label = { Text("MJPEG URL (z.B. http://192.168.x.x:8080)") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Button(
-                            onClick = {
-                                selectedSourceType = CameraSourceType.STREAM_URL
-                                webcamManager.stopWebcam()
-                                mjpegClient.connect(streamUrlInput.trim())
-                                showSourceDialog = false
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Netzwerk-Stream starten", color = Color.White)
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showSourceDialog = false }) {
-                        Text("Schließen", color = Color.White)
-                    }
-                },
-                containerColor = Color(0xFF262626),
-                shape = RoundedCornerShape(16.dp)
             )
         }
     }

@@ -86,6 +86,8 @@ class SessionManager(
     private val _latestPreviewFrame = MutableStateFlow<ByteArray?>(null)
     val latestPreviewFrame: StateFlow<ByteArray?> = _latestPreviewFrame.asStateFlow()
 
+    var activeCameraConnectionId: String? = null
+
     // Temporäre Speicherung von Verbindungsadressen vor dem Hello
     private val connectionAddresses = mutableMapOf<String, String>()
 
@@ -246,7 +248,9 @@ class SessionManager(
 
     override fun onBinaryReceived(connectionId: String, bytes: ByteArray) {
         // Empfangene Vorschau-Frames (JPEG) vom Kamera-Teilnehmer
-        _latestPreviewFrame.value = bytes
+        if (activeCameraConnectionId == null || activeCameraConnectionId == connectionId) {
+            _latestPreviewFrame.value = bytes
+        }
     }
 
     override fun onError(connectionId: String?, error: Throwable) {
@@ -288,6 +292,10 @@ class SessionManager(
             remoteAddress = remoteAddr
         )
 
+        if (hello.role == DeviceRole.CAMERA && activeCameraConnectionId == null) {
+            activeCameraConnectionId = connectionId
+        }
+
         val welcomeMsg = ConnectProtocol.encode(
             ConnectMessage.Welcome(
                 sessionId = current.hostId,
@@ -306,7 +314,16 @@ class SessionManager(
     private fun removeParticipant(connectionId: String) {
         _hostState.update { state ->
             if (state is HostState.Active) {
-                state.copy(participants = state.participants.filterNot { it.connectionId == connectionId })
+                val updated = state.copy(participants = state.participants.filterNot { it.connectionId == connectionId })
+                val cameraParticipants = updated.participants.filter { it.role == DeviceRole.CAMERA }
+                if (activeCameraConnectionId == connectionId) {
+                    activeCameraConnectionId = cameraParticipants.firstOrNull()?.connectionId
+                }
+                if (cameraParticipants.isEmpty()) {
+                    _latestPreviewFrame.value = null
+                    activeCameraConnectionId = null
+                }
+                updated
             } else state
         }
     }
