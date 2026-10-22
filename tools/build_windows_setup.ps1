@@ -40,15 +40,13 @@ if (-not (Test-Path $IconIco)) {
 }
 
 $JarFile = Join-Path $DistDir "sDartApp-windows-x64-$AppVersion.jar"
+Write-Host "Baue aktuelle Desktop Standalone JAR via Gradle..."
+$env:JAVA_HOME = $JbrDir
+$gradlew = Join-Path $RootDir "gradlew.bat"
+& $gradlew :composeApp:packageUberJarForCurrentOS
 if (-not (Test-Path $JarFile)) {
-    Write-Host "Desktop Standalone JAR fehlt. Baue JAR via Gradle..."
-    $env:JAVA_HOME = $JbrDir
-    $gradlew = Join-Path $RootDir "gradlew.bat"
-    & $gradlew :composeApp:packageUberJarForCurrentOS
-    if (-not (Test-Path $JarFile)) {
-        Write-Error "Erstellung von '$JarFile' fehlgeschlagen!"
-        exit 1
-    }
+    Write-Error "Erstellung von '$JarFile' fehlgeschlagen!"
+    exit 1
 }
 
 if (-not (Test-Path $TempDir)) {
