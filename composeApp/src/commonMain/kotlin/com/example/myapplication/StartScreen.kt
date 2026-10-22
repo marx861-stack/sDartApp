@@ -23,7 +23,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.ui.AdaptiveContainer
+import com.example.myapplication.ui.WindowHeightSizeClass
+import com.example.myapplication.ui.theme.DarkBgGradient
 import com.example.myapplication.ui.theme.PrimaryOrange
+import com.example.myapplication.ui.theme.ditheredBackground
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -39,36 +42,41 @@ fun StartScreen(
     onSettingsClick: () -> Unit = {},
     onManagePlayersClick: () -> Unit = {}
 ) {
-    val backgroundModifier = Modifier.fillMaxSize().background(
-        Brush.linearGradient(
-            colors = listOf(
-                Color(0xFF1A1A1A),
-                Color(0xFF2A2A2A),
-                Color(0xFF1F1F1F)
-            )
-        )
-    )
+    val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
 
     AdaptiveContainer(modifier = backgroundModifier) { windowInfo ->
         val isWidescreen = windowInfo.isWidescreen
+        val shouldCenterVertically = isWidescreen && windowInfo.heightClass != WindowHeightSizeClass.COMPACT
 
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .safeDrawingPadding()
-                    .padding(horizontal = 20.dp, vertical = 20.dp)
                     .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
+                contentAlignment = Alignment.TopCenter
             ) {
-                // --- HEADER START ---
                 Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 24.dp)
+                        .then(
+                            if (shouldCenterVertically) {
+                                Modifier.defaultMinSize(minHeight = windowInfo.maxHeight - 48.dp)
+                            } else {
+                                Modifier
+                            }
+                        ),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(bottom = 30.dp)
+                    verticalArrangement = if (shouldCenterVertically) Arrangement.Center else Arrangement.Top
                 ) {
+                    // --- HEADER START ---
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(bottom = 30.dp)
+                    ) {
                     // Debossed Logo
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -147,7 +155,7 @@ fun StartScreen(
                     modifier = Modifier
                         .widthIn(max = windowInfo.maxContentWidth)
                         .fillMaxWidth()
-                        .padding(bottom = 40.dp),
+                        .padding(bottom = if (shouldCenterVertically) 0.dp else 40.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -215,7 +223,8 @@ fun StartScreen(
                     }
                 }
             }
-            
+        }
+
             // Settings Button (Floating Top Right)
             Box(
                 modifier = Modifier

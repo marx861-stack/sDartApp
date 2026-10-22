@@ -27,6 +27,7 @@ import com.example.myapplication.tournament.ui.TournamentSetupScreen
 import com.example.myapplication.tournament.ui.TournamentViewScreen
 import com.example.myapplication.ui.theme.DarkBgGradient
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.example.myapplication.ui.theme.ditheredBackground
 
 @Composable
 fun App() {
@@ -104,7 +105,7 @@ fun App() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBgGradient)
+                .ditheredBackground()
                 .edgeSwipeBack(
                     enabled = canGoBack,
                     onBack = handleBack

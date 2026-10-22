@@ -7,7 +7,7 @@ Ziel ist es, die Spiellogik, Punktezählung, UI und Computer-Vision-Algorithmen 
 * **Desktop** (Windows Standalone via DirectX / Skia)
 * **iOS** (iPhone / iPad via Metal / Skia)
 
-Das Ursprungsprojekt verbleibt unverändert als Referenz unter `Original Android-App`.
+Das Ursprungsprojekt verbleibt unverändert als Referenz (Original Android-App).
 
 ---
 
@@ -141,7 +141,8 @@ Alle fertigen Installations- und Release-Dateien werden zentral im gemeinsamen S
 
 9. [X] **Phase 8: Audio & Voice Caller Engine (Multiplattform):**
    * `AudioPlayer.kt` (`commonMain`): `interface AudioPlayer` mit `playSound(text, excitement)`, `vibrate()`, `release()` und `@Composable expect fun rememberAudioPlayer(): AudioPlayer`.
-   * **Asset-Management:** Die 376 MP3-Audiodateien (~8,2 MB) und `manifest.json` werden ohne Daten-Duplikation geteilt:
+   * **TTS-Generierung & Lizenz (`tools/generate_kokoro_audio.py`):** Sämtliche 241 Caller-Sprachdateien (plus 2 Soundeffekte `bing.mp3` & `buzzer.mp3` = 243 Einträge in `manifest.json`) werden offline mit **Kokoro-82M (`bm_lewis`, britisches Englisch, Apache-2.0-Lizenz)** in 24 kHz / 320 kbps MP3 generiert.
+   * **Asset-Management:** Die 243 MP3-Audiodateien und `manifest.json` werden ohne Daten-Duplikation geteilt:
      - Quelle verbleibt in `composeApp/src/androidMain/assets/audio/`.
      - Desktop bindet die Assets direkt über `desktopMain.resources.srcDirs("src/androidMain/assets")` in das JAR ein.
    * **Implementierungen:**
@@ -192,13 +193,13 @@ Alle fertigen Installations- und Release-Dateien werden zentral im gemeinsamen S
     * Im Kamera-Modus wird der Live-Feed in `CompanionConnectionScreen.kt` gerendert.
 
 12. [X] **Phase 11: Multiplatform Dart-Erkennung (Desktop ONNX Runtime, Companion Stream & Common Pipeline):**
-    * **Gemeinsame Pipeline:** [DartDetectionPipeline.kt](../composeApp/src/commonMain/kotlin/com/example/myapplication/DartDetectionPipeline.kt) in `commonMain` für Bounding-Box-Dekodierung, Schwellenwerte, NMS und zeitliche Mehr-Frame-Stabilität.
-    * **Desktop-Inferenz:** [OnnxDartDetector.kt](../composeApp/src/desktopMain/kotlin/com/example/myapplication/OnnxDartDetector.kt) nutzt Microsoft ONNX Runtime mit dem praxiserprobten Modell `rtmdet_tiny.onnx` aus `Dart Game Pro`.
+    * **Gemeinsame Pipeline:** [`DartDetectionPipeline.kt`](../composeApp/src/commonMain/kotlin/com/example/myapplication/DartDetectionPipeline.kt) in `commonMain` für Bounding-Box-Dekodierung, Schwellenwerte, NMS und zeitliche Mehr-Frame-Stabilität.
+    * **Desktop-Inferenz:** [`OnnxDartDetector.kt`](../composeApp/src/desktopMain/kotlin/com/example/myapplication/OnnxDartDetector.kt) nutzt Microsoft ONNX Runtime mit dem praxiserprobten Modell `rtmdet_tiny.onnx` aus `Dart Game Pro`.
     * **Hybrid-Architektur (Standalone vs. Companion-Stream):**
       - **Standalone-Betrieb (Handy oder PC alleine):** Lokale Inferenz (Android: NCNN Vulkan, Desktop: ONNX Runtime).
       - **Companion-Stream-Betrieb:** Wenn das Smartphone als Kamera mit dem Host gekoppelt ist, schaltet Android die lokale Inferenz ab (`inferenceEnabled = false`), komprimiert Frames als JPEG (~24 FPS) und sendet sie über WebSocket-Binärframes an den Host.
-      - **Host-seitige Verarbeitung:** [CameraBackground.desktop.kt](../composeApp/src/desktopMain/kotlin/com/example/myapplication/CameraBackground.desktop.kt) empfängt die Preview-Frames (`CameraSourceType.COMPANION_STREAM`), decodiert sie via Skia und führt die ONNX-Erkennung sowie das Auto-Scoring zentral auf dem Host aus.
-    * **Desktop-Kamerafeed:** Unterstützt USB-Webcam (`BufferedImage`), HTTP-MJPEG-Stream und Companion-WebSocket-Stream (`COMPANION PHONE (HOST ML)`), inklusive Bounding-Box-Overlay und Auto-Scoring via [DartboardCalibrationSystem.kt](../composeApp/src/commonMain/kotlin/com/example/myapplication/DartboardCalibrationSystem.kt) und [AutoDetectionSystem.kt](../composeApp/src/commonMain/kotlin/com/example/myapplication/AutoDetectionSystem.kt).
+      - **Host-seitige Verarbeitung:** [`CameraBackground.desktop.kt`](../composeApp/src/desktopMain/kotlin/com/example/myapplication/CameraBackground.desktop.kt) empfängt die Preview-Frames (`CameraSourceType.COMPANION_STREAM`), decodiert sie via Skia und führt die ONNX-Erkennung sowie das Auto-Scoring zentral auf dem Host aus.
+    * **Desktop-Kamerafeed:** Unterstützt USB-Webcam (`BufferedImage`), HTTP-MJPEG-Stream und Companion-WebSocket-Stream (`COMPANION PHONE (HOST ML)`), inklusive Bounding-Box-Overlay und Auto-Scoring via [`DartboardCalibrationSystem.kt`](../composeApp/src/commonMain/kotlin/com/example/myapplication/DartboardCalibrationSystem.kt) und [`AutoDetectionSystem.kt`](../composeApp/src/commonMain/kotlin/com/example/myapplication/AutoDetectionSystem.kt).
     * **Linux-Unterstützung (.deb & Standalone-JAR):**
       - `nativeDistributions.linux` mit App-Icon (`icon.png`), Menü-Kategorie `Game` und `debPackageVersion = "1.0.0"` konfiguriert; natives `.deb`-Packaging via `./gradlew packageDeb` auf Linux/Ubuntu.
       - **Nativer C++-Symbolkonflikt (Skiko vs. ONNX Runtime & LD_PRELOAD-Lösung):**

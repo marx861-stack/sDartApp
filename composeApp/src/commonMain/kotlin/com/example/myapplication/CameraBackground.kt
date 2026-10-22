@@ -32,6 +32,7 @@ import androidx.compose.ui.zIndex
 import com.example.myapplication.connect.ParticipantSessionManager
 import com.example.myapplication.connect.SessionManager
 import com.example.myapplication.ui.theme.DarkBgGradient
+import com.example.myapplication.ui.theme.ditheredBackground
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.math.max
@@ -241,7 +242,7 @@ fun CameraBackground(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBgGradient)
+            .ditheredBackground()
     ) {
         // 1. Nativer Video-Feed (Kamera / Stream)
         CameraVideoFeed(

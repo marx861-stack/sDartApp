@@ -33,6 +33,10 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
   - Smartphone camera wirelessly streamed as an external video feed to the Desktop via WebSocket (primary workflow)
   - Automatic mDNS/UDP service discovery on the local Wi-Fi network
 
+- **🔊 British Mastercaller Voice & Audio Engine:**
+  - Pre-generated 24 kHz / 320 kbps voice caller announcements powered by **[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)** (`bm_lewis` British male voice, **Apache 2.0** licensed)
+  - Supports individual dart calls, turn totals, Cricket status announcements, and dramatic `180` calls (`tools/generate_kokoro_audio.py`)
+
 - **🎨 100% Compose Multiplatform:**
   - Shared UI, canvas rendering, scoring, and data models in `commonMain`
   - Consistent user experience across Desktop, Android, and iOS
@@ -134,3 +138,5 @@ Contributions to s'Dart App are always welcome! Please check out our [Contributi
 ## 📄 License
 
 This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)** – see the [LICENSE](LICENSE) file for details.
+
+- **Voice Caller Audio Assets:** Generated offline using [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (`bm_lewis`), licensed under the **Apache License 2.0**.

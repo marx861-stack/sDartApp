@@ -405,7 +405,6 @@ fun GameScreen(
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(Color.Black.copy(alpha = 0.35f))
                                     .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
-                                    .padding(8.dp)
                                     .then(
                                         if (showCamera && !showRoundAnimation) {
                                             Modifier
@@ -818,7 +817,7 @@ fun GameScreen(
                     .fillMaxHeight()
                     .fillMaxWidth(if (isWidescreen) 0.5f else 1.0f)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(bottom = if (isWidescreen) 24.dp else 96.dp)
+                    .padding(bottom = if (isWidescreen) 48.dp else 96.dp)
                     .zIndex(20000f),
                 contentAlignment = Alignment.BottomCenter
             ) {

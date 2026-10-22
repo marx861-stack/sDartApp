@@ -21,6 +21,25 @@ fun main(args: Array<String>) {
         return
     }
 
+    // Native Hardware-Beschleunigung & Skiko Rendering je nach Betriebssystem optimieren
+    try {
+        val os = System.getProperty("os.name")?.lowercase() ?: ""
+        when {
+            os.contains("win") -> {
+                System.setProperty("skiko.renderApi", "DIRECT3D")
+                System.setProperty("sun.java2d.d3d", "true")
+                System.setProperty("sun.java2d.noddraw", "true")
+            }
+            os.contains("mac") -> {
+                System.setProperty("skiko.renderApi", "METAL")
+            }
+            os.contains("linux") -> {
+                System.setProperty("skiko.renderApi", "OPENGL")
+                System.setProperty("sun.java2d.opengl", "true")
+            }
+        }
+    } catch (_: Throwable) {}
+
     // WICHTIG FÜR LINUX: ONNX Runtime VOR Compose/Skiko initialisieren
     try {
         ai.onnxruntime.OrtEnvironment.getEnvironment()
