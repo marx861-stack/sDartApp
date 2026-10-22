@@ -1,5 +1,7 @@
 package com.sdart.app
 
+import com.sdart.app.domain.player.PlayerStats
+
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 

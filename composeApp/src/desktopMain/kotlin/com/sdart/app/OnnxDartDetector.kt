@@ -1,5 +1,7 @@
 package com.sdart.app
 
+import com.sdart.app.core.detection.*
+
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession

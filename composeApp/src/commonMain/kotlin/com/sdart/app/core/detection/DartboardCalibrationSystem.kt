@@ -1,4 +1,6 @@
-package com.sdart.app
+package com.sdart.app.core.detection
+
+import com.sdart.app.*
 
 import androidx.compose.ui.geometry.Offset
 import kotlin.math.*

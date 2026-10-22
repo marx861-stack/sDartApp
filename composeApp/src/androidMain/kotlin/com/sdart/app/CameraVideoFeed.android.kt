@@ -1,5 +1,7 @@
 package com.sdart.app
 
+import com.sdart.app.core.detection.ObjectDetection
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap

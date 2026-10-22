@@ -1,4 +1,6 @@
-package com.sdart.app
+package com.sdart.app.domain.player
+
+import com.sdart.app.*
 
 /**
  * Zentrale Datei für alle Spieler-Statistik-Berechnungen

@@ -1,5 +1,7 @@
 package com.sdart.app
 
+import com.sdart.app.core.detection.ObjectDetection
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect

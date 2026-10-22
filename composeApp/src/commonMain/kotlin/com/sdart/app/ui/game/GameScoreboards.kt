@@ -26,7 +26,7 @@ import com.sdart.app.DartViewModel
 import com.sdart.app.Game
 import com.sdart.app.GameMode
 import com.sdart.app.Player
-import com.sdart.app.PlayerStatistics
+import com.sdart.app.domain.player.PlayerStatistics
 import com.sdart.app.DartThrow
 import com.sdart.app.format
 import com.sdart.app.domain.CHECKOUT_PATHS

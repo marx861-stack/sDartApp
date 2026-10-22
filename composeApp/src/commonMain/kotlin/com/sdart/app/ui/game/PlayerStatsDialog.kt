@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.GameMode
 import com.sdart.app.Player
-import com.sdart.app.PlayerStatistics
+import com.sdart.app.domain.player.PlayerStatistics
 import com.sdart.app.ui.HeatmapDartboard
 import com.sdart.app.ui.theme.PrimaryOrange
 

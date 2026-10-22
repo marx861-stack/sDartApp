@@ -1,5 +1,7 @@
 package com.sdart.app
 
+import com.sdart.app.core.detection.*
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.BatteryManager

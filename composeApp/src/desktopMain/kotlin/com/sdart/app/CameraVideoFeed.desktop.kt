@@ -1,5 +1,7 @@
 package com.sdart.app
 
+import com.sdart.app.core.detection.ObjectDetection
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
