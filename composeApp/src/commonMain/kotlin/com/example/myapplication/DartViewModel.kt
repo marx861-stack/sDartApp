@@ -173,6 +173,9 @@ class DartViewModel : ViewModel() {
     var onPinchZoom: ((Float) -> Unit)? = null
     var onResetZoom: (() -> Unit)? = null
 
+    // Status ob der Kamera-Quellen-Auswahldialog geöffnet ist (für Hintergrund-Blur im GameScreen)
+    var isCameraSourceDialogOpen by mutableStateOf(false)
+
     fun resetZoom() {
         cameraZoomLevel = 0f
         cameraZoomRatio = 1.0f

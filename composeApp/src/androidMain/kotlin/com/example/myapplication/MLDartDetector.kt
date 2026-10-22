@@ -191,12 +191,13 @@ class MLDartDetector(
         isRestoringZoom = false
         if (!isCameraActive || camera == null) return
         try {
-            camera?.cameraControl?.setLinearZoom(0f)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to reset linear zoom", e)
-        }
-        try {
-            camera?.cameraControl?.setZoomRatio(1.0f)
+            val state = camera?.cameraInfo?.zoomState?.value
+            val targetRatio = if (state != null) {
+                1.0f.coerceIn(state.minZoomRatio, state.maxZoomRatio)
+            } else {
+                1.0f
+            }
+            camera?.cameraControl?.setZoomRatio(targetRatio)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to reset zoom ratio", e)
         }

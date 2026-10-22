@@ -172,8 +172,8 @@ actual fun CameraVideoFeed(
     val zoomState by mlDetector.zoomState.collectAsState()
     LaunchedEffect(zoomState) {
         zoomState?.let { state ->
-            vm.cameraZoomLevel = state.linearZoom
             vm.cameraZoomRatio = state.zoomRatio
+            vm.cameraZoomLevel = ((state.zoomRatio - 1.0f) / 3.0f).coerceIn(0f, 1f)
         }
     }
 
@@ -210,10 +210,10 @@ actual fun CameraVideoFeed(
 
     DisposableEffect(lifecycleOwner, hasCameraPermission, isHostWithCompanionStream, shouldCapture) {
         if (hasCameraPermission && shouldCapture && !isHostWithCompanionStream) {
-            // Wiederherstellung immer über den linearen Zoom: cameraZoomLevel ist in allen Pfaden
-            // hardware-konsistent, cameraZoomRatio dagegen teils nur eine Anzeige-Skala (1 + 3 * Level).
-            if (vm.cameraZoomLevel > 0.001f) {
-                mlDetector.setZoom(vm.cameraZoomLevel)
+            if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.01f) {
+                mlDetector.setZoomRatio(vm.cameraZoomRatio)
+            } else if (vm.cameraZoomLevel > 0.001f) {
+                mlDetector.setZoomRatio(1.0f + vm.cameraZoomLevel * 3.0f)
             }
             mlDetector.startCamera(lifecycleOwner)
         }

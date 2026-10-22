@@ -173,12 +173,13 @@ class DartboardCalibrationSystem {
 
     /**
      * Bewertet die Entfernung des Dartboards basierend auf der detektierten Ellipsengröße
-     * (1:1 identisch zur Original-App inkl. R_BOARD_OUTER / R_DOUBLE_OUTER Skalierung).
+     * (1:1 identisch zur Original-App inkl. R_BOARD_OUTER / R_DOUBLE_OUTER Skalierung
+     * sowie optionalem digitalem Anzeige-Zoom).
      */
-    fun getBoardDistanceStatus(canvasWidth: Int, canvasHeight: Int): BoardDistanceStatus {
+    fun getBoardDistanceStatus(canvasWidth: Int, canvasHeight: Int, displayZoom: Float = 1f): BoardDistanceStatus {
         if (!isCalibratedState) return BoardDistanceStatus.UNKNOWN
         val size = detectedEllipseSize ?: return BoardDistanceStatus.UNKNOWN
-        val boardOuterSize = size * (R_BOARD_OUTER / R_DOUBLE_OUTER)
+        val boardOuterSize = size * (R_BOARD_OUTER / R_DOUBLE_OUTER) * displayZoom.coerceAtLeast(1f)
         val minDimension = min(canvasWidth, canvasHeight)
         if (minDimension <= 0) return BoardDistanceStatus.UNKNOWN
         val ratio = boardOuterSize / minDimension.toFloat()

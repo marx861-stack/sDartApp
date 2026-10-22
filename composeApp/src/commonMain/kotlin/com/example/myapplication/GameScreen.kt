@@ -185,6 +185,8 @@ fun GameScreen(
     var showHostOverviewDialog by remember { mutableStateOf(false) }
     var dartboardBounds by remember { mutableStateOf<Rect?>(null) }
     var dartboardBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
+    val autoDetectionSystem = remember { AutoDetectionSystem() }
+    val calibrationSystem = remember { DartboardCalibrationSystem() }
     
     val currentRepo = repository ?: remember { InMemoryPlayerRepository() }
     var statisticsUpdated by remember { mutableStateOf(false) }
@@ -361,6 +363,12 @@ fun GameScreen(
 
     AdaptiveContainer(modifier = Modifier.fillMaxSize()) { windowInfo ->
         val isWidescreen = windowInfo.isWidescreen
+        val isAnyDialogOpen = (showCompletionDialog && winnerText.isNotEmpty()) ||
+                activeStatsPlayer != null ||
+                showExitDialog ||
+                (navigationManager?.showGameExitDialog == true) ||
+                (showHostOverviewDialog && sessionManager != null) ||
+                vm.isCameraSourceDialogOpen
 
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -369,13 +377,21 @@ fun GameScreen(
                     .graphicsLayer {
                         val isCompleted = showCompletionDialog && winnerText.isNotEmpty()
                         val isStatsOpen = activeStatsPlayer != null
-                        if (roundAnimationProgress > 0f || isCompleted || isStatsOpen) {
-                            val blurPx = if (isCompleted || isStatsOpen) 30f else (30f * roundAnimationProgress)
+                        val isLocalExitOpen = showExitDialog
+                        val isNavExitOpen = navigationManager?.showGameExitDialog == true
+                        val isHostOverviewOpen = showHostOverviewDialog && sessionManager != null
+                        val isSourceDialogOpen = vm.isCameraSourceDialogOpen
+                        val animProgress = roundAnimationProgress
+                        val dialogOpen = isCompleted || isStatsOpen || isLocalExitOpen || isNavExitOpen || isHostOverviewOpen || isSourceDialogOpen
+                        if (animProgress > 0f || dialogOpen) {
+                            val blurPx = if (dialogOpen) 30f else (30f * animProgress)
                             renderEffect = BlurEffect(
                                 radiusX = blurPx,
                                 radiusY = blurPx,
                                 edgeTreatment = TileMode.Clamp
                             )
+                        } else {
+                            renderEffect = null
                         }
                     }
             ) {
@@ -402,21 +418,46 @@ fun GameScreen(
                                     .padding(8.dp)
                                     .then(
                                         if (showCamera && !showRoundAnimation) {
-                                            Modifier.pointerInput(Unit) {
-                                                detectTransformGestures { _, _, zoom, _ ->
-                                                    if (zoom != 1f) {
-                                                        if (vm.onPinchZoom != null) {
-                                                            vm.onPinchZoom?.invoke(zoom)
-                                                        } else {
-                                                            val currentZoom = vm.cameraZoomLevel
-                                                            val currentScale = 1f + currentZoom * 3f
-                                                            val newScale = (currentScale * zoom).coerceIn(1f, 4f)
-                                                            val newZoom = (newScale - 1f) / 3f
-                                                            vm.cameraZoomLevel = newZoom
+                                            Modifier
+                                                .pointerInput(Unit) {
+                                                    detectTransformGestures { _, _, zoom, _ ->
+                                                        if (zoom != 1f) {
+                                                            if (vm.onPinchZoom != null) {
+                                                                vm.onPinchZoom?.invoke(zoom)
+                                                            } else {
+                                                                val currentZoom = vm.cameraZoomLevel
+                                                                val currentScale = 1f + currentZoom * 3f
+                                                                val newScale = (currentScale * zoom).coerceIn(1f, 4f)
+                                                                val newZoom = (newScale - 1f) / 3f
+                                                                vm.cameraZoomLevel = newZoom
+                                                                vm.cameraZoomRatio = newScale
+                                                            }
                                                         }
                                                     }
                                                 }
-                                            }
+                                                .pointerInput(Unit) {
+                                                    awaitPointerEventScope {
+                                                        while (true) {
+                                                            val event = awaitPointerEvent()
+                                                            if (event.type == androidx.compose.ui.input.pointer.PointerEventType.Scroll) {
+                                                                val scrollY = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
+                                                                if (scrollY != 0f) {
+                                                                    val zoomMultiplier = if (scrollY < 0f) 1.1f else 0.9f
+                                                                    if (vm.onPinchZoom != null) {
+                                                                        vm.onPinchZoom?.invoke(zoomMultiplier)
+                                                                    } else {
+                                                                        val currentZoom = vm.cameraZoomLevel
+                                                                        val currentScale = 1f + currentZoom * 3f
+                                                                        val newScale = (currentScale * zoomMultiplier).coerceIn(1f, 4f)
+                                                                        val newZoom = (newScale - 1f) / 3f
+                                                                        vm.cameraZoomLevel = newZoom
+                                                                        vm.cameraZoomRatio = newScale
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                         } else {
                                             Modifier
                                         }
@@ -430,7 +471,9 @@ fun GameScreen(
                                         showCamera = showCamera,
                                         showOverlay = showCamera,
                                         dartboardBounds = dartboardBounds,
-                                        sessionManager = sessionManager
+                                        sessionManager = sessionManager,
+                                        autoDetectionSystem = autoDetectionSystem,
+                                        calibrationSystem = calibrationSystem
                                     )
                                 }
 
@@ -594,7 +637,9 @@ fun GameScreen(
                             showCamera = showCamera,
                             showOverlay = showCamera,
                             dartboardBounds = dartboardBoundsInRoot,
-                            sessionManager = sessionManager
+                            sessionManager = sessionManager,
+                            autoDetectionSystem = autoDetectionSystem,
+                            calibrationSystem = calibrationSystem
                         )
                     } else {
                         Box(modifier = Modifier.fillMaxSize().background(DarkBgGradient))
@@ -620,21 +665,46 @@ fun GameScreen(
                                 .fillMaxWidth()
                                 .then(
                                     if (showCamera && !showRoundAnimation) {
-                                        Modifier.pointerInput(Unit) {
-                                            detectTransformGestures { _, _, zoom, _ ->
-                                                if (zoom != 1f) {
-                                                    if (vm.onPinchZoom != null) {
-                                                        vm.onPinchZoom?.invoke(zoom)
-                                                    } else {
-                                                        val currentZoom = vm.cameraZoomLevel
-                                                        val currentScale = 1f + currentZoom * 3f
-                                                        val newScale = (currentScale * zoom).coerceIn(1f, 4f)
-                                                        val newZoom = (newScale - 1f) / 3f
-                                                        vm.cameraZoomLevel = newZoom
+                                        Modifier
+                                            .pointerInput(Unit) {
+                                                detectTransformGestures { _, _, zoom, _ ->
+                                                    if (zoom != 1f) {
+                                                        if (vm.onPinchZoom != null) {
+                                                            vm.onPinchZoom?.invoke(zoom)
+                                                        } else {
+                                                            val currentZoom = vm.cameraZoomLevel
+                                                            val currentScale = 1f + currentZoom * 3f
+                                                            val newScale = (currentScale * zoom).coerceIn(1f, 4f)
+                                                            val newZoom = (newScale - 1f) / 3f
+                                                            vm.cameraZoomLevel = newZoom
+                                                            vm.cameraZoomRatio = newScale
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
+                                            .pointerInput(Unit) {
+                                                awaitPointerEventScope {
+                                                    while (true) {
+                                                        val event = awaitPointerEvent()
+                                                        if (event.type == androidx.compose.ui.input.pointer.PointerEventType.Scroll) {
+                                                            val scrollY = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
+                                                            if (scrollY != 0f) {
+                                                                val zoomMultiplier = if (scrollY < 0f) 1.1f else 0.9f
+                                                                if (vm.onPinchZoom != null) {
+                                                                    vm.onPinchZoom?.invoke(zoomMultiplier)
+                                                                } else {
+                                                                    val currentZoom = vm.cameraZoomLevel
+                                                                    val currentScale = 1f + currentZoom * 3f
+                                                                    val newScale = (currentScale * zoomMultiplier).coerceIn(1f, 4f)
+                                                                    val newZoom = (newScale - 1f) / 3f
+                                                                    vm.cameraZoomLevel = newZoom
+                                                                    vm.cameraZoomRatio = newScale
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                     } else {
                                         Modifier
                                     }
@@ -743,42 +813,42 @@ fun GameScreen(
                 }
             }
 
-        // Zoom-Indikator
+        // Zoom-Indikator (zeigt aktuellen Zoom z.B. 1.0x; Klick setzt auf 1.0x zurück)
         val isZoomActive = kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f || vm.cameraZoomLevel > 0.01f
-        if (showCamera && isZoomActive) {
+        if (showCamera && !isAnyDialogOpen) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxHeight()
+                    .fillMaxWidth(if (isWidescreen) 0.5f else 1.0f)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .then(
-                        if (isWidescreen) {
-                            Modifier.fillMaxWidth(0.5f).padding(bottom = 24.dp)
-                        } else {
-                            Modifier.padding(bottom = 96.dp)
-                        }
-                    )
+                    .padding(bottom = if (isWidescreen) 24.dp else 96.dp)
                     .zIndex(20000f),
                 contentAlignment = Alignment.BottomCenter
             ) {
+                val currentDisplayZoom = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) {
+                    vm.cameraZoomRatio
+                } else if (vm.cameraZoomLevel > 0.01f) {
+                    1.0f + vm.cameraZoomLevel * 3.0f
+                } else {
+                    1.0f
+                }
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(Color.Black.copy(alpha = 0.75f), CircleShape)
-                        .border(1.5.dp, PrimaryOrange.copy(alpha = 0.85f), CircleShape)
+                        .border(
+                            1.5.dp,
+                            if (isZoomActive) PrimaryOrange.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.25f),
+                            CircleShape
+                        )
                         .clickable {
                             vm.resetZoom()
                         }
                         .padding(horizontal = 14.dp, vertical = 7.dp)
                 ) {
-                    val zoomText = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) {
-                        "${vm.cameraZoomRatio.format(1)}x"
-                    } else {
-                        val zoomFactor = 1.0f + vm.cameraZoomLevel * 3.0f
-                        "${zoomFactor.format(1)}x"
-                    }
                     Text(
-                        text = zoomText,
-                        color = PrimaryOrange,
+                        text = "${currentDisplayZoom.format(1)}x",
+                        color = if (isZoomActive) PrimaryOrange else Color.White.copy(alpha = 0.85f),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
@@ -2019,7 +2089,10 @@ fun PlayerStatsDialog(
     isDarkTheme: Boolean,
     onDismiss: () -> Unit
 ) {
-    var showFullscreenHeatmap by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableStateOf(0) } // 0 = Statistiken, 1 = Heatmap
+    val hitPositions = remember(player.dartThrows) {
+        player.dartThrows.map { it.position }.filter { it != Offset.Unspecified }
+    }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -2048,90 +2121,187 @@ fun PlayerStatsDialog(
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                MainStatCard(
-                    title = "Aktueller Score",
-                    value = if (isWinner) "0" else player.currentScore.toString(),
-                    subtitle = if (isWinner) "Gewonnen!" else "Punkte übrig",
-                    color = if (isWinner) Color(0xFF28a745) else PrimaryOrange,
-                    icon = if (isWinner) Res.drawable.ic_trophy else Res.drawable.ic_target,
-                    isDarkTheme = isDarkTheme,
-                    hits = player.dartThrows.map { it.position }.filter { it != Offset.Unspecified },
-                    onHeatmapClick = { showFullscreenHeatmap = true }
-                )
-                
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val avgScore = PlayerStatistics.getAverageScorePerRound(player)
-                    CompactStatCard(
-                        title = "Ø Punkte/Runde",
-                        value = "$avgScore",
-                        color = if (isDarkTheme) Color.White else Color(0xFF495057),
-                        icon = Res.drawable.ic_chart_bar,
-                        isDarkTheme = isDarkTheme,
-                        modifier = Modifier.weight(1f)
-                    )
-                    val wonLegs = PlayerStatistics.getWonLegs(player, gameMode)
-                    CompactStatCard(
-                        title = "Gewonnene Legs",
-                        value = "$wonLegs",
-                        color = Color(0xFFffc107),
-                        icon = Res.drawable.ic_trophy,
-                        isDarkTheme = isDarkTheme,
-                        modifier = Modifier.weight(1f)
-                    )
+                // Tab-Auswahl (Statistiken / Heatmap) direkt im gleichen Fenster
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (selectedTab == 0) PrimaryOrange else Color.Transparent)
+                            .clickable { selectedTab = 0 }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Statistiken",
+                            fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Medium,
+                            color = if (selectedTab == 0) Color.White else (if (isDarkTheme) Color.LightGray else Color.DarkGray),
+                            fontSize = 13.sp
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (selectedTab == 1) PrimaryOrange else Color.Transparent)
+                            .clickable { selectedTab = 1 }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Heatmap",
+                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Medium,
+                            color = if (selectedTab == 1) Color.White else (if (isDarkTheme) Color.LightGray else Color.DarkGray),
+                            fontSize = 13.sp
+                        )
+                    }
                 }
-                
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val highestRoundScore = PlayerStatistics.getHighestRoundScore(player)
-                    CompactStatCard(
-                        title = "Höchste Runde",
-                        value = "$highestRoundScore",
-                        color = Color(0xFF17a2b8),
-                        icon = Res.drawable.ic_target,
+
+                if (selectedTab == 0) {
+                    MainStatCard(
+                        title = "Aktueller Score",
+                        value = if (isWinner) "0" else player.currentScore.toString(),
+                        subtitle = if (isWinner) "Gewonnen!" else "Punkte übrig",
+                        color = if (isWinner) Color(0xFF28a745) else PrimaryOrange,
+                        icon = if (isWinner) Res.drawable.ic_trophy else Res.drawable.ic_target,
                         isDarkTheme = isDarkTheme,
-                        modifier = Modifier.weight(1f)
+                        hits = hitPositions,
+                        onHeatmapClick = { selectedTab = 1 }
                     )
-                    val highestSingleThrow = if (player.scores.isNotEmpty()) {
-                        when {
-                            highestRoundScore >= 180 -> 60
-                            highestRoundScore >= 140 -> 50
-                            highestRoundScore >= 100 -> 40
-                            highestRoundScore >= 60 -> 20
-                            else -> highestRoundScore / 3
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val avgScore = PlayerStatistics.getAverageScorePerRound(player)
+                        CompactStatCard(
+                            title = "Ø Punkte/Runde",
+                            value = "$avgScore",
+                            color = if (isDarkTheme) Color.White else Color(0xFF495057),
+                            icon = Res.drawable.ic_chart_bar,
+                            isDarkTheme = isDarkTheme,
+                            modifier = Modifier.weight(1f)
+                        )
+                        val wonLegs = PlayerStatistics.getWonLegs(player, gameMode)
+                        CompactStatCard(
+                            title = "Gewonnene Legs",
+                            value = "$wonLegs",
+                            color = Color(0xFFffc107),
+                            icon = Res.drawable.ic_trophy,
+                            isDarkTheme = isDarkTheme,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val highestRoundScore = PlayerStatistics.getHighestRoundScore(player)
+                        CompactStatCard(
+                            title = "Höchste Runde",
+                            value = "$highestRoundScore",
+                            color = Color(0xFF17a2b8),
+                            icon = Res.drawable.ic_target,
+                            isDarkTheme = isDarkTheme,
+                            modifier = Modifier.weight(1f)
+                        )
+                        val highestSingleThrow = if (player.scores.isNotEmpty()) {
+                            when {
+                                highestRoundScore >= 180 -> 60
+                                highestRoundScore >= 140 -> 50
+                                highestRoundScore >= 100 -> 40
+                                highestRoundScore >= 60 -> 20
+                                else -> highestRoundScore / 3
+                            }
+                        } else 0
+                        CompactStatCard(
+                            title = "Höchster Wurf",
+                            value = "$highestSingleThrow",
+                            color = Color(0xFF6f42c1),
+                            icon = Res.drawable.ic_lightning,
+                            isDarkTheme = isDarkTheme,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    
+                    val totalRounds = PlayerStatistics.getTotalRounds(player)
+                    val totalThrows = player.dartThrows.size
+                    
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CompactStatCard(
+                            title = "Anzahl Runden",
+                            value = "$totalRounds",
+                            color = Color(0xFFfd7e14),
+                            icon = Res.drawable.ic_refresh,
+                            isDarkTheme = isDarkTheme,
+                            modifier = Modifier.weight(1f)
+                        )
+                        CompactStatCard(
+                            title = "Anzahl Würfe",
+                            value = "$totalThrows",
+                            color = Color(0xFF20c997),
+                            icon = Res.drawable.ic_target,
+                            isDarkTheme = isDarkTheme,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    // Große Heatmap-Anzeige direkt im gleichen Fenster
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        if (hitPositions.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .widthIn(max = 300.dp)
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .background(
+                                        if (isDarkTheme) Color.Black.copy(alpha = 0.3f) else Color(0xFFF0F0F0),
+                                        RoundedCornerShape(16.dp)
+                                    )
+                                    .padding(12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                HeatmapDartboard(
+                                    hits = hitPositions,
+                                    modifier = Modifier.fillMaxSize(),
+                                    showNumbers = true
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "${hitPositions.size} Treffer (${player.dartThrows.size} Darts geworfen)",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = if (isDarkTheme) Color.LightGray else Color(0xFF6c757d)
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Noch keine Würfe für ${player.name} vorhanden",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isDarkTheme) Color.LightGray else Color(0xFF6c757d),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
-                    } else 0
-                    CompactStatCard(
-                        title = "Höchster Wurf",
-                        value = "$highestSingleThrow",
-                        color = Color(0xFF6f42c1),
-                        icon = Res.drawable.ic_lightning,
-                        isDarkTheme = isDarkTheme,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                
-                val totalRounds = PlayerStatistics.getTotalRounds(player)
-                val totalThrows = player.dartThrows.size
-                
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CompactStatCard(
-                        title = "Anzahl Runden",
-                        value = "$totalRounds",
-                        color = Color(0xFFfd7e14),
-                        icon = Res.drawable.ic_refresh,
-                        isDarkTheme = isDarkTheme,
-                        modifier = Modifier.weight(1f)
-                    )
-                    CompactStatCard(
-                        title = "Anzahl Würfe",
-                        value = "$totalThrows",
-                        color = Color(0xFF20c997),
-                        icon = Res.drawable.ic_target,
-                        isDarkTheme = isDarkTheme,
-                        modifier = Modifier.weight(1f)
-                    )
+                    }
                 }
             }
         },
@@ -2147,60 +2317,8 @@ fun PlayerStatsDialog(
         },
         containerColor = if (isDarkTheme) Color(0xFF1E1E1E) else Color.White,
         shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(16.dp).widthIn(min = 280.dp, max = 460.dp)
     )
-    
-    if (showFullscreenHeatmap && player.dartThrows.isNotEmpty()) {
-        AlertDialog(
-            onDismissRequest = { showFullscreenHeatmap = false },
-            title = {
-                Text(
-                    text = "Heatmap: ${player.name}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (isDarkTheme) Color.White else Color(0xFF2D3748)
-                )
-            },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(280.dp)
-                            .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-                            .padding(12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        DartboardHeatmap(
-                            dartPositions = player.dartThrows.map { it.position }.filter { it != Offset.Unspecified },
-                            modifier = Modifier.fillMaxSize(),
-                            showNumbers = true
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "${player.dartThrows.size} Darts geworfen",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isDarkTheme) Color.LightGray else Color(0xFF6c757d)
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { showFullscreenHeatmap = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Schließen", fontWeight = FontWeight.Medium, modifier = Modifier.padding(vertical = 4.dp), color = Color.White)
-                }
-            },
-            containerColor = if (isDarkTheme) Color(0xFF1E1E1E) else Color.White,
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.padding(16.dp)
-        )
-    }
 }
 
 @Composable
@@ -2604,11 +2722,8 @@ fun ScoreInputSection(
     }
 
     Box(modifier = modifier.onGloballyPositioned { parentCoords = it }) {
-        Card(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        Box(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(top = 4.dp, start = 4.dp, end = 4.dp, bottom = 4.dp)) {
                 val hintText = when {
@@ -3072,155 +3187,3 @@ fun calculateDartScore(
     return Pair(baseScore, multiplier)
 }
 
-@Composable
-fun DartboardHeatmap(
-    dartPositions: List<Offset>,
-    modifier: Modifier = Modifier,
-    showNumbers: Boolean = true
-) {
-    val textMeasurer = rememberTextMeasurer()
-    val scores = listOf(20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5)
-    
-    Canvas(modifier = modifier) {
-        val center = this.center
-        val radius = min(size.width, size.height) / 2f
-        
-        drawBoardContentForHeatmap(scores, textMeasurer, showNumbers)
-        
-        if (dartPositions.isNotEmpty()) {
-            drawHeatmapOverlay(dartPositions, center, radius)
-        }
-    }
-}
-
-private fun DrawScope.drawBoardContentForHeatmap(
-    scores: List<Int>,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
-    showNumbers: Boolean
-) {
-    val center = this.center
-    val radius = min(size.width, size.height) / 2f
-
-    val bullseyeRadius = radius * 0.037f
-    val outerBullRadius = radius * 0.093f
-    val tripleRingInnerRadius = radius * 0.571f
-    val tripleRingOuterRadius = radius * 0.629f
-    val doubleRingInnerRadius = radius * 0.941f
-    val doubleRingOuterRadius = radius * 1.000f
-    val outerRingRadius = radius * 1.25f
-
-    drawCircle(color = dartboardBlack, radius = outerRingRadius)
-    drawCircle(color = dartboardBlack, radius = radius)
-    
-    val segmentAngle = 18f
-    for (i in scores.indices) {
-        val startAngle = (segmentAngle * (i - 0.5f)) - 90f
-        val segmentColor = if (i % 2 != 0) dartboardBeige else dartboardBlack
-        drawArc(color = segmentColor, startAngle = startAngle, sweepAngle = segmentAngle, useCenter = true)
-
-        val ringColor = if (i % 2 != 0) dartboardGreen else dartboardRed
-        
-        val triplePathRadius = (tripleRingInnerRadius + tripleRingOuterRadius) / 2f
-        drawArc(
-            color = ringColor, startAngle = startAngle, sweepAngle = segmentAngle, useCenter = false,
-            topLeft = Offset(center.x - triplePathRadius, center.y - triplePathRadius),
-            size = Size(triplePathRadius * 2, triplePathRadius * 2),
-            style = Stroke(width = tripleRingOuterRadius - tripleRingInnerRadius)
-        )
-        
-        val doublePathRadius = (doubleRingInnerRadius + doubleRingOuterRadius) / 2f
-        drawArc(
-            color = ringColor, startAngle = startAngle, sweepAngle = segmentAngle, useCenter = false,
-            topLeft = Offset(center.x - doublePathRadius, center.y - doublePathRadius),
-            size = Size(doublePathRadius * 2, doublePathRadius * 2),
-            style = Stroke(width = doubleRingOuterRadius - doubleRingInnerRadius)
-        )
-    }
-    drawCircle(color = dartboardGreen, radius = outerBullRadius, center = center)
-    drawCircle(color = dartboardRed, radius = bullseyeRadius, center = center)
-
-    if (showNumbers && radius > 50f) {
-        val numberRadius = radius * 1.125f
-        scores.forEachIndexed { index, score ->
-            val angle = (segmentAngle * index) - 90f
-            val angleRad = toRadians(angle.toDouble())
-            val text = score.toString()
-            val textLayoutResult = textMeasurer.measure(text, style = TextStyle(color = Color.White, fontSize = (radius * 0.06).sp))
-            val textWidth = textLayoutResult.size.width
-            val textHeight = textLayoutResult.size.height
-
-            val x = (center.x + numberRadius * cos(angleRad)).toFloat() - textWidth / 2
-            val y = (center.y + numberRadius * sin(angleRad)).toFloat() - textHeight / 2
-            drawText(textLayoutResult = textLayoutResult, topLeft = Offset(x, y))
-        }
-    }
-}
-
-private fun DrawScope.drawHeatmapOverlay(
-    dartPositions: List<Offset>,
-    center: Offset,
-    dartboardRadius: Float
-) {
-    if (dartPositions.isEmpty()) return
-    
-    val normalizedPositions = dartPositions.map { normalizedPos ->
-        Offset(center.x + normalizedPos.x * dartboardRadius, center.y + normalizedPos.y * dartboardRadius)
-    }
-    
-    val validPositions = normalizedPositions.filter { position ->
-        val distance = sqrt(
-            (position.x - center.x).pow(2) + (position.y - center.y).pow(2)
-        )
-        distance <= dartboardRadius * 1.1f
-    }
-    
-    if (validPositions.isEmpty()) return
-    
-    val scaledPositions = validPositions
-    val heatmapRadius = dartboardRadius * 0.15f
-    val maxIntensity = validPositions.size.toFloat()
-    
-    scaledPositions.forEach { position ->
-        val nearbyCount = scaledPositions.count { otherPos ->
-            val distance = sqrt(
-                (position.x - otherPos.x).pow(2) + (position.y - otherPos.y).pow(2)
-            )
-            distance <= heatmapRadius * 2f
-        }
-        
-        val intensity = (nearbyCount / maxIntensity).coerceIn(0f, 1f)
-        
-        val heatColor = when {
-            intensity < 0.2f -> Color.Yellow.copy(alpha = intensity * 0.3f)
-            intensity < 0.5f -> Color(0xFFFFA500).copy(alpha = intensity * 0.5f)
-            intensity < 0.8f -> Color(0xFFFF6600).copy(alpha = intensity * 0.7f)
-            else -> Color.Red.copy(alpha = intensity * 0.9f)
-        }
-        
-        val blurLayers = 5
-        for (i in blurLayers downTo 1) {
-            val layerRadius = heatmapRadius * (i.toFloat() / blurLayers)
-            val layerAlpha = (intensity * (1f - (i - 1) * 0.15f)).coerceIn(0f, 1f)
-            
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        heatColor.copy(alpha = layerAlpha),
-                        heatColor.copy(alpha = layerAlpha * 0.5f),
-                        Color.Transparent
-                    ),
-                    center = position,
-                    radius = layerRadius
-                ),
-                radius = layerRadius,
-                center = position
-            )
-        }
-        
-        drawCircle(
-            color = heatColor,
-            radius = 4f,
-            center = position
-        )
-    }
-}

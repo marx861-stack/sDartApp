@@ -100,6 +100,16 @@ actual fun CameraVideoFeed(
     var streamUrlInput by remember { mutableStateOf("http://192.168.178.50:8080") }
     var showSourceDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(showSourceDialog) {
+        vm.isCameraSourceDialogOpen = showSourceDialog
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            vm.isCameraSourceDialogOpen = false
+        }
+    }
+
     // USB-Webcam nur suchen, wenn wir tatsächlich USB_WEBCAM als Quelle gewählt haben
     LaunchedEffect(Unit) {
         if (selectedSourceType == CameraSourceType.USB_WEBCAM) {
@@ -397,7 +407,9 @@ actual fun CameraVideoFeed(
                     TextButton(onClick = { showSourceDialog = false }) {
                         Text("Schließen", color = Color.White)
                     }
-                }
+                },
+                containerColor = Color(0xFF262626),
+                shape = RoundedCornerShape(16.dp)
             )
         }
     }

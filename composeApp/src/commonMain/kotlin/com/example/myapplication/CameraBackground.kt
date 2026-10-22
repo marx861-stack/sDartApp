@@ -335,7 +335,11 @@ fun CameraBackground(
                     }
                 }
 
-                val distanceStatus = calibrationSystem.getBoardDistanceStatus(size.width.toInt(), size.height.toInt())
+                val distanceStatus = calibrationSystem.getBoardDistanceStatus(
+                    canvasWidth = size.width.toInt(),
+                    canvasHeight = size.height.toInt(),
+                    displayZoom = displayZoom
+                )
                 val isDistanceOk = distanceStatus == BoardDistanceStatus.OK
 
                 val bracketColor = when {
