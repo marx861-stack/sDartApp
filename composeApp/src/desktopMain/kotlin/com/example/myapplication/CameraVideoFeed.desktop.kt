@@ -221,9 +221,12 @@ actual fun CameraVideoFeed(
 
     DisposableEffect(vm) {
         vm.onPinchZoom = { zoomMultiplier ->
-            val currentZoom = vm.cameraZoomLevel
-            val currentScale = 1f + currentZoom * 3f
-            val newScale = (currentScale * zoomMultiplier).coerceIn(1f, 4f)
+            val currentRatio = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) {
+                vm.cameraZoomRatio
+            } else {
+                1f + vm.cameraZoomLevel * 3f
+            }
+            val newScale = (currentRatio * zoomMultiplier).coerceIn(1f, 4f)
             val newZoom = (newScale - 1f) / 3f
             vm.cameraZoomLevel = newZoom
             vm.cameraZoomRatio = newScale
@@ -232,9 +235,14 @@ actual fun CameraVideoFeed(
             vm.cameraZoomLevel = 0f
             vm.cameraZoomRatio = 1.0f
         }
+        vm.onRequestOpenSourceDialog = {
+            webcamManager.refreshWebcams()
+            showSourceDialog = true
+        }
         onDispose {
             vm.onPinchZoom = null
             vm.onResetZoom = null
+            vm.onRequestOpenSourceDialog = null
         }
     }
 
@@ -305,35 +313,6 @@ actual fun CameraVideoFeed(
                     },
                 contentScale = ContentScale.Crop
             )
-        }
-
-        // Quellen-Button oben rechts (dezent, ohne Text-Statusleiste) - nur wenn Kameraansicht aktiv ist
-        if (showCamera) {
-            Button(
-                onClick = {
-                    webcamManager.refreshWebcams()
-                    showSourceDialog = true
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black.copy(alpha = 0.65f),
-                    contentColor = Color.White
-                ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 16.dp, end = 68.dp)
-                    .height(34.dp)
-                    .zIndex(20f)
-            ) {
-                Text(
-                    text = "Quelle wählen",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
         }
 
         // Dialog zur Kameraquellen-Auswahl (USB vs. Stream)

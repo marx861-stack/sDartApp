@@ -3,134 +3,134 @@
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin_Multiplatform-v2.0+-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org/docs/multiplatform.html)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose_Multiplatform-v1.7+-4285F4.svg?logo=jetpackcompose&logoColor=white)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Desktop_%7C_Android_%7C_iOS-lightgrey.svg)](#unterst%C3%BCtzte-plattformen)
+[![Platform](https://img.shields.io/badge/Platform-Desktop_%7C_Android_%7C_iOS-lightgrey.svg)](#-supported-platforms)
 
-**s'Dart App** ist eine moderne, plattformübergreifende Dart-Scoring- und Tracking-Anwendung, entwickelt mit **Kotlin Multiplatform (KMP)** und **Compose Multiplatform**.
+**s'Dart App** is a modern, cross-platform dart scoring and tracking application built with **Kotlin Multiplatform (KMP)** and **Compose Multiplatform**.
 
-Die App kombiniert klassisches Punktezählen (X01, Cricket, Turniermodi) mit kamerabasierter Scheibenerkennung, automatischer Kalibrierung und Begleit-Kameraanbindung.
+The app combines classic scorekeeping (X01, Cricket, tournament modes) with camera-based dartboard detection, automatic calibration, and companion camera support.
 
 ---
 
 ## ✨ Features
 
-- **🎯 Vielfältige Dart-Spielmodi:**
-  - **X01:** 301, 501, 701, Custom – konfigurierbar mit Single/Double/Master Out, Sets & Legs
-  - **Cricket:** Standard & Cut-Throat Modus
-  - **Around the Clock:** 5 Varianten (Standard, Double, Triple, Quickly, Shanghai)
-  - **All Fives:** Runden- und Leg-basiertes Punktespiel
-  - **Turnier-Engine:** K.O.-Systeme & Gruppenphasen, interaktive Turnierbäume und integrierter lokaler Webserver mit QR-Code zum Live-Teilen des Turnierstands im lokalen Netzwerk
-  - **Statistiken & Historie:** 180er/140er/100er-Tracking, First 9 Average, Checkout-Quote und grafische Dart-Heatmaps
+- **🎯 Diverse Dart Game Modes:**
+  - **X01:** 301, 501, 701, Custom – configurable with Single/Double/Master Out, Sets & Legs
+  - **Cricket:** Standard & Cut-Throat modes
+  - **Around the Clock:** 5 variants (Standard, Double, Triple, Quickly, Shanghai)
+  - **All Fives:** Round- and leg-based point game
+  - **Tournament Engine:** Knockout systems & group stages, interactive tournament brackets, and integrated local web server with QR code for sharing live tournament standings across the local network
+  - **Statistics & History:** 180s/140s/100s tracking, First 9 Average, checkout percentage, and graphical dart heatmaps
 
-- **📷 Computer Vision & Kamera-Tracking:**
-  - **Hardwarebeschleunigte Erkennung:** ONNX Runtime mit RTMDet (`rtmdet_tiny.onnx`) auf dem Desktop sowie NCNN Vulkan auf Android
-  - **Automatische Scheiben-Kalibrierung:** Erkennt alle Schnittpunkte der Dartboard-Segmente am Spider-Gitter sowie die 20er-Markierung zur automatischen Homographie-Berechnung
-  - **Manuelle Justierung:** Optionale 4-Punkt-Kalibrierung (D20, D6, D3, D11) mit Visier-Brackets und Fadenkreuz
-  - **Plattformunabhängige Homographie:** Reine Kotlin-Projektionsmathematik zur Entzerrung ohne externe OpenCV-Abhängigkeiten
-  - **Abstands-Feedback:** Visuelle Rückmeldung bei ungünstigem Kameraabstand (*"ZU NAH"* / *"ZU WEIT WEG"*)
-  - **Kamera-Einblendung:** Live-Kamerabild und Visier-Overlay werden direkt auf der Dartboard-Fläche eingeblendet (Widescreen-Layout: Dartboard links, Scoreboard & Statistiken rechts)
+- **📷 Computer Vision & Camera Tracking:**
+  - **Hardware-Accelerated Detection:** ONNX Runtime with RTMDet (`rtmdet_tiny.onnx`) on Desktop and NCNN Vulkan on Android
+  - **Automatic Dartboard Calibration:** Detects all segment intersections on the spider wire grid as well as the 20-point marker for automatic homography calculation
+  - **Manual Adjustment:** Optional 4-point calibration (D20, D6, D3, D11) with sight brackets and crosshairs
+  - **Platform-Independent Homography:** Pure Kotlin projective math for perspective correction without external OpenCV dependencies
+  - **Distance Feedback:** Visual guidance for suboptimal camera distance (*"TOO CLOSE"* / *"TOO FAR"*)
+  - **Camera Integration:** Live camera feed and sight overlay are embedded directly onto the dartboard surface (widescreen layout: dartboard on the left, scoreboard & stats on the right)
 
-- **📱 Begleit-Modus (Companion Connection):**
-  - Smartphone-Kamera drahtlos als externer Video-Feed für den Desktop per WebSocket (Haupt-Workflow)
-  - Automatische mDNS/UDP Service-Erkennung im lokalen WLAN
+- **📱 Companion Mode (Companion Connection):**
+  - Smartphone camera wirelessly streamed as an external video feed to the Desktop via WebSocket (primary workflow)
+  - Automatic mDNS/UDP service discovery on the local Wi-Fi network
 
-- **🎨 100 % Compose Multiplatform:**
-  - Geteilter UI-, Canvas-, Scoring- und Modellcode in `commonMain`
-  - Konsistente Benutzererfahrung auf Desktop, Android und iOS
+- **🎨 100% Compose Multiplatform:**
+  - Shared UI, canvas rendering, scoring, and data models in `commonMain`
+  - Consistent user experience across Desktop, Android, and iOS
 
 ---
 
-## 🖥️ Unterstützte Plattformen
+## 🖥️ Supported Platforms
 
-| Plattform | Status | Besonderheiten |
+| Platform | Status | Highlights |
 |---|---|---|
-| **Desktop (Windows)** | ✅ Vollständig | Standalone `.exe` Installer, Begleit-Kamera per WLAN (Companion) & experimenteller Webcam-Support |
-| **Desktop (Linux / macOS)** | ✅ Vollständig | Native Desktop-Ausführung via JVM / Compose Multiplatform |
-| **Android** | ✅ Vollständig | CameraX Live-Stream mit Echtzeit-Canvas-Overlay |
-| **iOS** | 🔄 In Vorbereitung | Framework-Build via Kotlin Native / AVFoundation-Anbindung |
+| **Desktop (Windows)** | ✅ Full | Standalone `.exe` installer, companion camera via Wi-Fi & experimental webcam support |
+| **Desktop (Linux / macOS)** | ✅ Full | Native desktop execution via JVM / Compose Multiplatform |
+| **Android** | ✅ Full | CameraX live stream with real-time canvas overlay |
+| **iOS** | 🔄 In Progress | Framework build via Kotlin/Native / AVFoundation integration |
 
 ---
 
-## 🚀 Schnellstart & Lokale Entwicklung
+## 🚀 Quick Start & Local Development
 
-### Voraussetzungen
+### Prerequisites
 
-- **Java Development Kit (JDK):** Version 17 oder 21
-- **Android Studio** oder **IntelliJ IDEA** (mit installiertem *Kotlin Multiplatform*-Plugin)
-- Für Android-Entwicklung: Android SDK (API Level 24+)
+- **Java Development Kit (JDK):** Version 17 or 21
+- **Android Studio** or **IntelliJ IDEA** (with the *Kotlin Multiplatform* plugin installed)
+- For Android development: Android SDK (API Level 24+)
 
-### Repository klonen
+### Clone Repository
 
 ```bash
 git clone https://github.com/marx861-stack/sDartApp.git
 cd sDartApp
 ```
 
-### Desktop-App starten
+### Run Desktop App
 
-Unter Windows:
+On Windows:
 ```cmd
 gradlew.bat :composeApp:run
 ```
 
-Unter macOS / Linux:
+On macOS / Linux:
 ```bash
 ./gradlew :composeApp:run
 ```
 
-### Standalone Desktop Uber-JAR bauen
+### Build Standalone Desktop Uber-JAR
 
 ```bash
 ./gradlew :composeApp:packageUberJarForCurrentOS
 ```
-Die fertige JAR-Datei liegt anschließend in `dist/` bzw. `composeApp/build/compose/jars/`.
+The packaged JAR file will be located in `dist/` or `composeApp/build/compose/jars/`.
 
-### Android-App bauen
+### Build Android App
 
 ```bash
 ./gradlew :composeApp:assembleDebug
 ```
-Die generierte APK befindet sich unter `composeApp/build/outputs/apk/debug/`.
+The generated APK can be found under `composeApp/build/outputs/apk/debug/`.
 
 ---
 
-## 🏗️ Projekt- & Modulstruktur
+## 🏗️ Project & Module Structure
 
-Das Projekt folgt einer strikten Multiplatform-Architektur:
+The project follows a strict multiplatform architecture:
 
 ```text
 sDartApp_KMP/
 ├── composeApp/
 │   ├── src/
-│   │   ├── commonMain/        # 100 % geteilte UI (Compose), State, Modelle & Spiel-Logik
+│   │   ├── commonMain/        # 100% shared UI (Compose), state, models & game logic
 │   │   │   ├── kotlin/
 │   │   │   └── composeResources/
-│   │   ├── desktopMain/       # Desktop-spezifische Hardware/Kamera-Implementierung
-│   │   ├── androidMain/       # Android-spezifische CameraX-Implementierung & MainActivity
-│   │   └── iosMain/           # iOS Entry-Points & Framework-Brücke
-├── docs/                      # Architektur-, Netzwerk- & Schnittstellen-Konzepte
+│   │   ├── desktopMain/       # Desktop-specific hardware/camera implementation
+│   │   ├── androidMain/       # Android-specific CameraX implementation & MainActivity
+│   │   └── iosMain/           # iOS entry points & framework bridge
+├── docs/                      # Architecture, networking & interface concepts
 ├── gradle/
-└── tools/                     # Skripte für Release-Builds & Installer
+└── tools/                     # Scripts for release builds & installers
 ```
 
-Ausführliche Architektur- und Integrationskonzepte findest du im Verzeichnis [`docs/`](docs/):
-- [`docs/kmp_migration_architecture.md`](docs/kmp_migration_architecture.md) – Architekturübersicht und Multiplatform-Aufbau
-- [`docs/tournament_architecture.md`](docs/tournament_architecture.md) – Spezifikation der Turnier-Engine
-- [`docs/companion_connection_concept.md`](docs/companion_connection_concept.md) – Remote-Kamera-Kopplung
+Detailed architecture and integration concepts can be found in the [`docs/`](docs/) directory:
+- [`docs/kmp_migration_architecture.md`](docs/kmp_migration_architecture.md) – Architecture overview and multiplatform setup
+- [`docs/tournament_architecture.md`](docs/tournament_architecture.md) – Tournament engine specification
+- [`docs/companion_connection_concept.md`](docs/companion_connection_concept.md) – Remote camera pairing
 
 ---
 
-## 🤝 Mitwirken (Contributing)
+## 🤝 Contributing
 
-Beiträge zur App sind herzlich willkommen! Lies dir bitte unsere [Richtlinien für Mitwirkende](CONTRIBUTING.md) durch, bevor du einen Pull Request einreichst oder größere Änderungen planst.
+Contributions to s'Dart App are always welcome! Please check out our [Contributing Guidelines](CONTRIBUTING.md) before opening a pull request or proposing major changes.
 
-1. Forke das Projekt
-2. Erstelle einen Feature-Branch (`git checkout -b feature/mein-tolles-feature`)
-3. Committe deine Änderungen (`git commit -m 'feat: Neues Feature hinzugefügt'`)
-4. Pushe den Branch (`git push origin feature/mein-tolles-feature`)
-5. Eröffne einen Pull Request
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/my-amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: Add amazing feature'`)
+4. Push to the branch (`git push origin feature/my-amazing-feature`)
+5. Open a Pull Request
 
 ---
 
-## 📄 Lizenz
+## 📄 License
 
-Dieses Projekt ist unter der **GNU General Public License v3.0 (GPL-3.0)** lizenziert – siehe die Datei [LICENSE](LICENSE) für Details.
+This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)** – see the [LICENSE](LICENSE) file for details.

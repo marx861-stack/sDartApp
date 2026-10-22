@@ -176,6 +176,9 @@ class DartViewModel : ViewModel() {
     // Status ob der Kamera-Quellen-Auswahldialog geöffnet ist (für Hintergrund-Blur im GameScreen)
     var isCameraSourceDialogOpen by mutableStateOf(false)
 
+    // Callback zum Anfordern des plattformspezifischen Quellen-Dialogs (z.B. Desktop)
+    var onRequestOpenSourceDialog: (() -> Unit)? = null
+
     fun resetZoom() {
         cameraZoomLevel = 0f
         cameraZoomRatio = 1.0f

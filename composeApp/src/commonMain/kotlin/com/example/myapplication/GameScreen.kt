@@ -26,6 +26,7 @@ import com.example.myapplication.connect.HostState
 import com.example.myapplication.connect.ui.HostOverviewDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import com.example.myapplication.ui.AdaptiveContainer
 import androidx.compose.ui.geometry.Offset
@@ -370,30 +371,19 @@ fun GameScreen(
                 (showHostOverviewDialog && sessionManager != null) ||
                 vm.isCameraSourceDialogOpen
 
+        val blurRadius = if (isAnyDialogOpen) {
+            20.dp
+        } else if (roundAnimationProgress > 0f) {
+            (20.dp * roundAnimationProgress)
+        } else {
+            0.dp
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer {
-                        val isCompleted = showCompletionDialog && winnerText.isNotEmpty()
-                        val isStatsOpen = activeStatsPlayer != null
-                        val isLocalExitOpen = showExitDialog
-                        val isNavExitOpen = navigationManager?.showGameExitDialog == true
-                        val isHostOverviewOpen = showHostOverviewDialog && sessionManager != null
-                        val isSourceDialogOpen = vm.isCameraSourceDialogOpen
-                        val animProgress = roundAnimationProgress
-                        val dialogOpen = isCompleted || isStatsOpen || isLocalExitOpen || isNavExitOpen || isHostOverviewOpen || isSourceDialogOpen
-                        if (animProgress > 0f || dialogOpen) {
-                            val blurPx = if (dialogOpen) 30f else (30f * animProgress)
-                            renderEffect = BlurEffect(
-                                radiusX = blurPx,
-                                radiusY = blurPx,
-                                edgeTreatment = TileMode.Clamp
-                            )
-                        } else {
-                            renderEffect = null
-                        }
-                    }
+                    .then(if (blurRadius > 0.dp) Modifier.blur(blurRadius) else Modifier)
             ) {
                 if (isWidescreen) {
                     // ==========================================
@@ -425,9 +415,8 @@ fun GameScreen(
                                                             if (vm.onPinchZoom != null) {
                                                                 vm.onPinchZoom?.invoke(zoom)
                                                             } else {
-                                                                val currentZoom = vm.cameraZoomLevel
-                                                                val currentScale = 1f + currentZoom * 3f
-                                                                val newScale = (currentScale * zoom).coerceIn(1f, 4f)
+                                                                val currentRatio = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) vm.cameraZoomRatio else (1f + vm.cameraZoomLevel * 3f)
+                                                                val newScale = (currentRatio * zoom).coerceIn(1f, 4f)
                                                                 val newZoom = (newScale - 1f) / 3f
                                                                 vm.cameraZoomLevel = newZoom
                                                                 vm.cameraZoomRatio = newScale
@@ -442,13 +431,13 @@ fun GameScreen(
                                                             if (event.type == androidx.compose.ui.input.pointer.PointerEventType.Scroll) {
                                                                 val scrollY = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
                                                                 if (scrollY != 0f) {
-                                                                    val zoomMultiplier = if (scrollY < 0f) 1.1f else 0.9f
+                                                                    event.changes.forEach { it.consume() }
+                                                                    val zoomMultiplier = if (scrollY < 0f) 1.15f else 0.87f
                                                                     if (vm.onPinchZoom != null) {
                                                                         vm.onPinchZoom?.invoke(zoomMultiplier)
                                                                     } else {
-                                                                        val currentZoom = vm.cameraZoomLevel
-                                                                        val currentScale = 1f + currentZoom * 3f
-                                                                        val newScale = (currentScale * zoomMultiplier).coerceIn(1f, 4f)
+                                                                        val currentRatio = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) vm.cameraZoomRatio else (1f + vm.cameraZoomLevel * 3f)
+                                                                        val newScale = (currentRatio * zoomMultiplier).coerceIn(1f, 4f)
                                                                         val newZoom = (newScale - 1f) / 3f
                                                                         vm.cameraZoomLevel = newZoom
                                                                         vm.cameraZoomRatio = newScale
@@ -551,6 +540,30 @@ fun GameScreen(
                                                 modifier = Modifier.size(22.dp)
                                             )
                                         }
+                                    }
+                                }
+
+                                // Kamera-Quelle Button (z.B. Desktop USB / Stream Umschaltung)
+                                if (showCamera && vm.onRequestOpenSourceDialog != null) {
+                                    IconButton(
+                                        onClick = { vm.onRequestOpenSourceDialog?.invoke() },
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(
+                                                top = 10.dp,
+                                                end = if (sessionManager != null) 64.dp else 10.dp
+                                            )
+                                            .size(46.dp)
+                                            .background(Color.Black.copy(alpha = 0.65f), CircleShape)
+                                            .border(1.dp, GlassBorder, CircleShape)
+                                            .zIndex(100f)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_camera_streaming),
+                                            contentDescription = "Kamera-Quelle wählen",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(24.dp)
+                                        )
                                     }
                                 }
                             }
@@ -672,9 +685,8 @@ fun GameScreen(
                                                         if (vm.onPinchZoom != null) {
                                                             vm.onPinchZoom?.invoke(zoom)
                                                         } else {
-                                                            val currentZoom = vm.cameraZoomLevel
-                                                            val currentScale = 1f + currentZoom * 3f
-                                                            val newScale = (currentScale * zoom).coerceIn(1f, 4f)
+                                                            val currentRatio = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) vm.cameraZoomRatio else (1f + vm.cameraZoomLevel * 3f)
+                                                            val newScale = (currentRatio * zoom).coerceIn(1f, 4f)
                                                             val newZoom = (newScale - 1f) / 3f
                                                             vm.cameraZoomLevel = newZoom
                                                             vm.cameraZoomRatio = newScale
@@ -689,13 +701,13 @@ fun GameScreen(
                                                         if (event.type == androidx.compose.ui.input.pointer.PointerEventType.Scroll) {
                                                             val scrollY = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
                                                             if (scrollY != 0f) {
-                                                                val zoomMultiplier = if (scrollY < 0f) 1.1f else 0.9f
+                                                                event.changes.forEach { it.consume() }
+                                                                val zoomMultiplier = if (scrollY < 0f) 1.15f else 0.87f
                                                                 if (vm.onPinchZoom != null) {
                                                                     vm.onPinchZoom?.invoke(zoomMultiplier)
                                                                 } else {
-                                                                    val currentZoom = vm.cameraZoomLevel
-                                                                    val currentScale = 1f + currentZoom * 3f
-                                                                    val newScale = (currentScale * zoomMultiplier).coerceIn(1f, 4f)
+                                                                    val currentRatio = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) vm.cameraZoomRatio else (1f + vm.cameraZoomLevel * 3f)
+                                                                    val newScale = (currentRatio * zoomMultiplier).coerceIn(1f, 4f)
                                                                     val newZoom = (newScale - 1f) / 3f
                                                                     vm.cameraZoomLevel = newZoom
                                                                     vm.cameraZoomRatio = newScale
@@ -787,6 +799,30 @@ fun GameScreen(
                                     }
                                 }
                             }
+
+                            // Kamera-Quelle Button (z.B. Desktop USB / Stream Umschaltung)
+                            if (showCamera && vm.onRequestOpenSourceDialog != null) {
+                                IconButton(
+                                    onClick = { vm.onRequestOpenSourceDialog?.invoke() },
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(
+                                            top = 12.dp,
+                                            end = if (sessionManager != null) 66.dp else 12.dp
+                                        )
+                                        .size(46.dp)
+                                        .background(Color.Black.copy(alpha = 0.65f), CircleShape)
+                                        .border(1.dp, GlassBorder, CircleShape)
+                                        .zIndex(100f)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_camera_streaming),
+                                        contentDescription = "Kamera-Quelle wählen",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                         }
 
                         Column(
@@ -813,8 +849,17 @@ fun GameScreen(
                 }
             }
 
-        // Zoom-Indikator (zeigt aktuellen Zoom z.B. 1.0x; Klick setzt auf 1.0x zurück)
-        val isZoomActive = kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f || vm.cameraZoomLevel > 0.01f
+        // Interaktive Zoom-Steuerung ([-], [ 1.0x ], [+])
+        // Erlaubt direktes Zoomen per Klick, Scrollrad oder Gesten; Klick auf den Text setzt auf 1.0x zurück
+        val currentDisplayZoom = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) {
+            vm.cameraZoomRatio
+        } else if (vm.cameraZoomLevel > 0.01f) {
+            1.0f + vm.cameraZoomLevel * 3.0f
+        } else {
+            1.0f
+        }
+        val isZoomActive = kotlin.math.abs(currentDisplayZoom - 1.0f) > 0.05f
+
         if (showCamera && !isAnyDialogOpen) {
             Box(
                 modifier = Modifier
@@ -825,35 +870,89 @@ fun GameScreen(
                     .zIndex(20000f),
                 contentAlignment = Alignment.BottomCenter
             ) {
-                val currentDisplayZoom = if (kotlin.math.abs(vm.cameraZoomRatio - 1.0f) > 0.05f) {
-                    vm.cameraZoomRatio
-                } else if (vm.cameraZoomLevel > 0.01f) {
-                    1.0f + vm.cameraZoomLevel * 3.0f
-                } else {
-                    1.0f
-                }
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.75f), CircleShape)
-                        .border(
-                            1.5.dp,
-                            if (isZoomActive) PrimaryOrange.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.25f),
-                            CircleShape
-                        )
-                        .clickable {
-                            vm.resetZoom()
-                        }
-                        .padding(horizontal = 14.dp, vertical = 7.dp)
+                Surface(
+                    shape = CircleShape,
+                    color = Color.Black.copy(alpha = 0.8f),
+                    border = BorderStroke(
+                        1.5.dp,
+                        if (isZoomActive) PrimaryOrange.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.25f)
+                    ),
+                    shadowElevation = 6.dp
                 ) {
-                    Text(
-                        text = "${currentDisplayZoom.format(1)}x",
-                        color = if (isZoomActive) PrimaryOrange else Color.White.copy(alpha = 0.85f),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
-                        )
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                    ) {
+                        // Zoom Out (-) Button
+                        IconButton(
+                            onClick = {
+                                val currentScale = currentDisplayZoom
+                                val newScale = (currentScale - 0.2f).coerceIn(1.0f, 4.0f)
+                                if (vm.onPinchZoom != null) {
+                                    val factor = newScale / currentScale
+                                    vm.onPinchZoom?.invoke(factor)
+                                } else {
+                                    vm.cameraZoomRatio = newScale
+                                    vm.cameraZoomLevel = (newScale - 1f) / 3f
+                                }
+                            },
+                            enabled = currentDisplayZoom > 1.01f,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_minus),
+                                contentDescription = "Zoom verkleinern",
+                                tint = if (currentDisplayZoom > 1.01f) Color.White else Color.White.copy(alpha = 0.3f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+
+                        // Zoom-Wert Pill (Klick setzt auf 1.0x zurück)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isZoomActive) PrimaryOrange.copy(alpha = 0.2f) else Color.Transparent)
+                                .clickable {
+                                    vm.resetZoom()
+                                }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${currentDisplayZoom.format(1)}x",
+                                color = if (isZoomActive) PrimaryOrange else Color.White.copy(alpha = 0.9f),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
+                            )
+                        }
+
+                        // Zoom In (+) Button
+                        IconButton(
+                            onClick = {
+                                val currentScale = currentDisplayZoom
+                                val newScale = (currentScale + 0.2f).coerceIn(1.0f, 4.0f)
+                                if (vm.onPinchZoom != null) {
+                                    val factor = newScale / currentScale
+                                    vm.onPinchZoom?.invoke(factor)
+                                } else {
+                                    vm.cameraZoomRatio = newScale
+                                    vm.cameraZoomLevel = (newScale - 1f) / 3f
+                                }
+                            },
+                            enabled = currentDisplayZoom < 3.99f,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_plus),
+                                contentDescription = "Zoom vergrößern",
+                                tint = if (currentDisplayZoom < 3.99f) Color.White else Color.White.copy(alpha = 0.3f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -890,6 +989,17 @@ fun GameScreen(
             }
         }
         
+        // Modal-Hintergrund-Abdunkelung (Scrim) bei geöffneten Dialogen
+        // Auf Desktop haben AlertDialogs keine native Abdunkelung; dieser Scrim sorgt zusammen mit dem Blur für perfekten Kontrast
+        if (isAnyDialogOpen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.65f))
+                    .zIndex(8000f)
+            )
+        }
+
         // Spielabschluss-Dialog
         if (showCompletionDialog && winnerText.isNotEmpty()) {
             GameCompletionDialog(

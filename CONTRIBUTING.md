@@ -1,49 +1,49 @@
-# Richtlinien für Mitwirkende (Contributing Guidelines)
+# Contributing Guidelines
 
-Vielen Dank für dein Interesse, zur **s'Dart App** beizutragen! Open Source lebt vom Mitmachen – sei es durch Fehlerberichte, Verbesserungsvorschläge oder eigene Code-Beiträge (Pull Requests).
-
----
-
-## 1. Fehler melden (Bug Reports)
-
-Bevor du einen Fehler meldest:
-1. Prüfe bitte in den bestehenden [GitHub Issues](https://github.com), ob das Problem bereits gemeldet wurde.
-2. Beschreibe das Verhalten möglichst detailliert:
-   - **Plattform & Betriebssystem:** (z. B. Windows 11, macOS Sonoma, Android 14)
-   - **Kamera-Hardware / Auflösung:** (z. B. USB-Webcam 1080p, Smartphone-Kamera)
-   - **Schritte zur Reproduktion:** Was hast du genau getan, als der Fehler auftrat?
-   - **Erwartetes vs. tatsächliches Verhalten**
-   - Falls möglich: Screenshots oder Konsolen-Logs anhängen.
+Thank you for your interest in contributing to **s'Dart App**! Open source thrives on community participation – whether through bug reports, feature suggestions, or pull requests.
 
 ---
 
-## 2. Architekturgrundsätze für Code-Beiträge
+## 1. Reporting Bugs
 
-Damit die App über alle Zielplattformen (Desktop, Android, iOS) hinweg stabil, wartbar und einheitlich bleibt, befolge bitte strikt diese Richtlinien:
+Before submitting a bug report:
+1. Please search existing [GitHub Issues](https://github.com/marx861-stack/sDartApp/issues) to verify the problem has not already been reported.
+2. Provide as much detail as possible:
+   - **Platform & Operating System:** (e.g. Windows 11, macOS Sonoma, Android 14)
+   - **Camera Hardware / Resolution:** (e.g. USB Webcam 1080p, smartphone camera)
+   - **Steps to Reproduce:** What exact steps did you take when the issue occurred?
+   - **Expected vs. Actual Behavior**
+   - If applicable: Attach screenshots or console logs.
+
+---
+
+## 2. Architectural Principles for Code Contributions
+
+To keep the application stable, maintainable, and consistent across all target platforms (Desktop, Android, iOS), please strictly follow these guidelines:
 
 ### A. Single Source of Truth in `commonMain`
-- **Sämtliche UI-Komponenten, Compose Canvas-Routinen, Overlays, Visier-Brackets, Textausgaben und Auswertungen gehören in `commonMain`.**
-- Es darf keine doppelte UI-Implementierung in plattformspezifischen Modulen geben.
+- **All UI components, Compose Canvas routines, overlays, sight brackets, text rendering, and evaluations belong in `commonMain`.**
+- Never duplicate UI implementations across platform-specific modules.
 
-### B. Minimale `expect/actual`-Schnittstellen
-- `expect`/`actual` darf **ausschließlich** für unvermeidbare native Hardware- und System-APIs verwendet werden (z. B. CameraX auf Android, WebcamCapture/Skia auf Desktop, AVFoundation auf iOS).
-- Native Feeds beschränken sich rein auf die Bereitstellung des rohen Kamera-Frames. Sämtliche Overlays und Berechnungen liegen in `commonMain`.
+### B. Minimal `expect/actual` Interfaces
+- `expect`/`actual` must be used **exclusively** for unavoidable native hardware and platform APIs (e.g. CameraX on Android, WebcamCapture/Skia on Desktop, AVFoundation on iOS).
+- Native video feeds are strictly limited to delivering raw camera frames. All overlays, sight brackets, and math calculations reside in `commonMain`.
 
-### C. Keine festen Bildschirm- oder Kameraauflösungen
-- Berechnungen und Normalisierungen von Bounding-Boxes oder Kalibrierungspunkten dürfen keine festen Auflösungen (wie 1280x720) hardcoden, sondern müssen dynamisch die tatsächlichen Frame-Dimensionen nutzen.
+### C. No Fixed Screen or Camera Resolutions
+- Calculations and normalizations of bounding boxes or calibration points must not hardcode static dimensions (such as 1280x720); they must dynamically adapt to actual frame dimensions.
 
-### D. Dokumentation & Code-Qualität
-- Halte Code sauber, gut lesbar und verzichte auf unnötige Verschachtelungen oder unlesbare One-Liner.
-- Wenn neue Konzepte oder Schnittstellen hinzukommen, aktualisiere die Dokumentation im Ordner `docs/`.
+### D. Documentation & Code Quality
+- Keep code clean, readable, and avoid unnecessary complexity or obscure one-liners.
+- When introducing new concepts or interfaces, update the documentation in the `docs/` folder.
 
 ---
 
-## 3. Pull-Request-Workflow
+## 3. Pull Request Workflow
 
-1. **Branch anlegen:** Erstelle einen beschreibenden Branch-Namen (z. B. `fix/camera-aspect-ratio` oder `feat/cricket-cut-throat`).
-2. **Kompilierbarkeit prüfen:** Stelle sicher, dass das Projekt fehlerfrei baut:
+1. **Create a branch:** Choose a descriptive branch name (e.g. `fix/camera-aspect-ratio` or `feat/cricket-cut-throat`).
+2. **Verify builds:** Ensure the project compiles without errors:
    - Desktop: `./gradlew :composeApp:compileKotlinDesktop`
    - Android: `./gradlew :composeApp:compileDebugKotlin`
-3. **Commit-Nachrichten:** Schreibe klare und prägnante Commit-Nachrichten (vorzugsweise nach Conventional Commits wie `fix: ...`, `feat: ...`, `docs: ...`).
-4. **Keine Secrets oder lokalen Pfade:** Achte darauf, dass keine privaten Daten oder Pfade committet werden.
-5. **Pull Request öffnen:** Beschreibe kurz, was geändert wurde und wie man die Änderung am besten testen kann.
+3. **Commit messages:** Write clear, concise commit messages (preferably following Conventional Commits, such as `fix: ...`, `feat: ...`, `docs: ...`).
+4. **No secrets or local paths:** Ensure no private credentials, secrets, or machine-specific paths are committed.
+5. **Open a Pull Request:** Provide a brief summary of the changes and how to test them.
