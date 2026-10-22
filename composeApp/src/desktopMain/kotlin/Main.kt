@@ -4,7 +4,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.example.myapplication.App
+import com.sdart.app.App
 import org.jetbrains.compose.resources.painterResource
 import sdartapp.composeapp.generated.resources.Res
 import sdartapp.composeapp.generated.resources.dart_app_logo
@@ -14,7 +14,7 @@ fun main(args: Array<String>) {
     val screenshotOutput = System.getProperty("screenshot.output") ?: args.firstOrNull { it.startsWith("--output=") }?.substringAfter("--output=")
 
     if (screenshotType != null || screenshotOutput != null || args.contains("--screenshot")) {
-        com.example.myapplication.runScreenshotCapture(
+        com.sdart.app.runScreenshotCapture(
             screenType = screenshotType ?: "bracket",
             outputFilePath = screenshotOutput ?: "tournament_preview.png"
         )

@@ -17,7 +17,7 @@ static bool has_gpu = false;
 static bool is_model_loaded = false;
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_example_myapplication_NCNNDetector_init(JNIEnv* env, jobject thiz, jobject assetManager, jboolean use_gpu) {
+Java_com_sdart_app_NCNNDetector_init(JNIEnv* env, jobject thiz, jobject assetManager, jboolean use_gpu) {
     // If the model is already loaded in this process, skip initialization completely
     // to avoid fatal Vulkan crashes or OpenMP thread leaks during reload.
     if (is_model_loaded) {
@@ -78,7 +78,7 @@ Java_com_example_myapplication_NCNNDetector_init(JNIEnv* env, jobject thiz, jobj
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_example_myapplication_NCNNDetector_detect(JNIEnv* env, jobject thiz, jobject bitmap) {
+Java_com_sdart_app_NCNNDetector_detect(JNIEnv* env, jobject thiz, jobject bitmap) {
     LOGD("NCNN: Entering detect method...");
     AndroidBitmapInfo info;
     AndroidBitmap_getInfo(env, bitmap, &info);
@@ -199,7 +199,7 @@ Java_com_example_myapplication_NCNNDetector_detect(JNIEnv* env, jobject thiz, jo
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_myapplication_NCNNDetector_destroy(JNIEnv* env, jobject thiz) {
+Java_com_sdart_app_NCNNDetector_destroy(JNIEnv* env, jobject thiz) {
     // DO NOT clear the network (rtmdet.clear()).
     // The GPU instance and model weights are kept alive globally.
     // Re-creating them later in the same process causes fatal Vulkan/OpenMP crashes.

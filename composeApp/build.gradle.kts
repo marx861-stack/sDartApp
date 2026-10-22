@@ -70,8 +70,8 @@ kotlin {
                 implementation(libs.camera.lifecycle)
                 implementation(libs.camera.view)
                 
-                // Gson
-                implementation(libs.gson)
+
+
                 implementation(libs.java.websocket)
             }
         }
@@ -83,7 +83,7 @@ kotlin {
                 implementation(compose.desktop.linux_x64)
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation("com.github.sarxos:webcam-capture:0.3.12")
-                implementation(libs.gson)
+
                 implementation("javazoom:jlayer:1.0.1")
                 implementation("org.jmdns:jmdns:3.5.9")
                 implementation(libs.java.websocket)
@@ -104,11 +104,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.example.myapplication"
+    namespace = "com.sdart.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "com.sdart.app"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -159,7 +159,7 @@ compose.desktop {
             }
             macOS {
                 iconFile.set(project.file("src/desktopMain/resources/icon.icns"))
-                bundleID = "com.example.myapplication"
+                bundleID = "com.sdart.app"
             }
             linux {
                 iconFile.set(project.file("src/desktopMain/resources/icon.png"))

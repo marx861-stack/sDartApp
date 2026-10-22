@@ -1,14 +1,14 @@
-package com.example.myapplication
+package com.sdart.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
-import com.example.myapplication.tournament.*
-import com.example.myapplication.tournament.ui.TournamentViewScreen
-import com.example.myapplication.ui.theme.DarkBgGradient
-import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.sdart.app.tournament.*
+import com.sdart.app.tournament.ui.TournamentViewScreen
+import com.sdart.app.ui.theme.DarkBgGradient
+import com.sdart.app.ui.theme.MyApplicationTheme
 import org.jetbrains.skia.EncodedImageFormat
 import java.io.File
 
