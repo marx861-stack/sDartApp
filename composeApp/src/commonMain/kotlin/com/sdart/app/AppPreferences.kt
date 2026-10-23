@@ -10,7 +10,6 @@ object AppPreferences {
     private const val KEY_VOICE_CALLER_ENABLED = "pref_voice_caller_enabled"
     private const val KEY_ANNOUNCE_EACH_DART = "pref_announce_each_dart"
     private const val KEY_ANNOUNCE_TURN_TOTAL = "pref_announce_turn_total"
-    private const val KEY_DEV_MODE_UNLOCKED = "pref_dev_mode_unlocked"
     private const val KEY_SHOW_DETECTION_OVERLAY = "pref_show_detection_overlay"
     private const val KEY_SHOW_DEBUG_HUD = "pref_show_debug_hud"
     private const val KEY_SHOW_DARTBOARD_OVERLAY = "pref_show_dartboard_overlay"
@@ -71,10 +70,6 @@ object AppPreferences {
     var audioAnnounceTurnTotal: Boolean
         get() = getBoolean(KEY_ANNOUNCE_TURN_TOTAL, true)
         set(value) = saveBoolean(KEY_ANNOUNCE_TURN_TOTAL, value)
-
-    var isDevModeUnlocked: Boolean
-        get() = getBoolean(KEY_DEV_MODE_UNLOCKED, false)
-        set(value) = saveBoolean(KEY_DEV_MODE_UNLOCKED, value)
 
     var showCameraDetectionOverlay: Boolean
         get() = getBoolean(KEY_SHOW_DETECTION_OVERLAY, false)

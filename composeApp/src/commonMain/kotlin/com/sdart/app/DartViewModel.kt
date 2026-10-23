@@ -106,18 +106,14 @@ class DartViewModel : ViewModel() {
 
     // --- Entwickler-Einstellungen (versteckt, Standard: deaktiviert) ---
     // Wird durch 10x Tippen auf die Versionsnummer in den Einstellungen freigeschaltet.
-    private var _isDevModeUnlocked by mutableStateOf(AppPreferences.isDevModeUnlocked)
-    var isDevModeUnlocked: Boolean
-        get() = _isDevModeUnlocked
-        set(value) {
-            _isDevModeUnlocked = value
-            AppPreferences.isDevModeUnlocked = value
-        }
+    // Bewusst nicht gespeichert: nach jedem App-Start sind die Optionen wieder ausgeblendet.
+    // Die Overlay-Schalter wirken nur bei freigeschaltetem Modus; ihre Werte bleiben gespeichert.
+    var isDevModeUnlocked by mutableStateOf(false)
 
     // Zeigt YOLO-Bounding-Boxes und Klassen-Labels im Kamerabild an
     private var _showCameraDetectionOverlay by mutableStateOf(AppPreferences.showCameraDetectionOverlay)
     var showCameraDetectionOverlay: Boolean
-        get() = _showCameraDetectionOverlay
+        get() = _showCameraDetectionOverlay && isDevModeUnlocked
         set(value) {
             _showCameraDetectionOverlay = value
             AppPreferences.showCameraDetectionOverlay = value
@@ -126,7 +122,7 @@ class DartViewModel : ViewModel() {
     // Zeigt Inferenzzeit, FPS und GPU/CPU-Status im Kamerabild an
     private var _showCameraDebugHud by mutableStateOf(AppPreferences.showCameraDebugHud)
     var showCameraDebugHud: Boolean
-        get() = _showCameraDebugHud
+        get() = _showCameraDebugHud && isDevModeUnlocked
         set(value) {
             _showCameraDebugHud = value
             AppPreferences.showCameraDebugHud = value
@@ -135,7 +131,7 @@ class DartViewModel : ViewModel() {
     // Zeigt das kalibrierte Dartboard-Overlay (Grüne Klammern, Ringe, Heatmap) im Kamerabild an
     private var _showDartboardOverlay by mutableStateOf(AppPreferences.showDartboardOverlay)
     var showDartboardOverlay: Boolean
-        get() = _showDartboardOverlay
+        get() = _showDartboardOverlay && isDevModeUnlocked
         set(value) {
             _showDartboardOverlay = value
             AppPreferences.showDartboardOverlay = value
