@@ -53,84 +53,6 @@ fun StartScreen(
             modifier = Modifier.fillMaxSize()
         ) {
                 CenteredMenuLayout {
-                    // --- HEADER START ---
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(bottom = 30.dp)
-                    ) {
-                    // Debossed Logo
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_main_logo),
-                            contentDescription = null,
-                            tint = Color(0x26FFFFFF),
-                            modifier = Modifier
-                                .size(100.dp)
-                                .offset(x = 0.5.dp, y = 0.5.dp)
-                        )
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_main_logo),
-                            contentDescription = null,
-                            tint = Color(0xCC000000),
-                            modifier = Modifier
-                                .size(100.dp)
-                                .offset(x = (-0.5).dp, y = (-0.5).dp)
-                                .graphicsLayer { alpha = 0.8f }
-                        )
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_main_logo),
-                            contentDescription = "Dart Game Pro Logo",
-                            tint = Color(0xFF1A1A1A),
-                            modifier = Modifier.size(100.dp)
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Debossed Main Headline "DART GAME PRO"
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "DART GAME PRO",
-                            style = MaterialTheme.typography.displayMedium.copy(
-                                fontWeight = FontWeight.Black,
-                                fontSize = 30.sp,
-                                letterSpacing = 2.sp,
-                                color = Color(0x26FFFFFF)
-                            ),
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            softWrap = false,
-                            modifier = Modifier.offset(x = 0.5.dp, y = 0.5.dp)
-                        )
-                        Text(
-                            text = "DART GAME PRO",
-                            style = MaterialTheme.typography.displayMedium.copy(
-                                fontWeight = FontWeight.Black,
-                                fontSize = 30.sp,
-                                letterSpacing = 2.sp,
-                                color = Color(0xCC000000)
-                            ),
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            softWrap = false,
-                            modifier = Modifier.offset(x = (-0.5).dp, y = (-0.5).dp)
-                        )
-                        Text(
-                            text = "DART GAME PRO",
-                            style = MaterialTheme.typography.displayMedium.copy(
-                                fontWeight = FontWeight.Black,
-                                fontSize = 30.sp,
-                                letterSpacing = 2.sp,
-                                color = Color(0xFF1A1A1A)
-                            ),
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
-                }
-                // --- HEADER END ---
-
                 // Main Cards Container (skaliert zentriert und harmonisch bis 4K)
                 Column(
                     modifier = Modifier
@@ -259,7 +181,7 @@ fun GamesCard(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                painter = painterResource(Res.drawable.ic_target),
+                painter = painterResource(Res.drawable.ic_main_logo),
                 contentDescription = null,
                 modifier = Modifier
                     .size(56.dp)

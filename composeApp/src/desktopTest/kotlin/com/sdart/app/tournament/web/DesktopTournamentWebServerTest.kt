@@ -45,7 +45,7 @@ class DesktopTournamentWebServerTest {
             connIndex.readTimeout = 3000
             assertEquals(200, connIndex.responseCode)
             val htmlContent = connIndex.inputStream.bufferedReader().readText()
-            assertTrue(htmlContent.contains("s'Dart Turnier"))
+            assertTrue(htmlContent.contains("S'Dart Turnier"))
             assertTrue(htmlContent.contains("Endstand melden"))
             connIndex.disconnect()
 

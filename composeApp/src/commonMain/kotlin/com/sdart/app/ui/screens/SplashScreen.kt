@@ -41,7 +41,7 @@ import sdartapp.composeapp.generated.resources.Res
 import sdartapp.composeapp.generated.resources.ic_main_logo
 
 /**
- * Premium startup animation screen for Dart Game Pro (KMP).
+ * Premium startup animation screen for S'Dart App (KMP).
  * It displays the main logo and application title in the center in a static embossed style,
  * and then fades out after a short duration to reveal the start screen.
  */
@@ -120,11 +120,11 @@ fun SplashScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Debossed Main Headline "DART GAME PRO"
+            // Debossed Main Headline "S'Dart App"
             Box(contentAlignment = Alignment.Center) {
                 // Light Highlight (Bottom Right)
                 Text(
-                    text = "DART GAME PRO",
+                    text = "S'Dart App",
                     style = MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Black,
                         fontSize = 30.sp,
@@ -138,7 +138,7 @@ fun SplashScreen(
                 )
                 // Dark Shadow (Top Left)
                 Text(
-                    text = "DART GAME PRO",
+                    text = "S'Dart App",
                     style = MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Black,
                         fontSize = 30.sp,
@@ -152,7 +152,7 @@ fun SplashScreen(
                 )
                 // Main Text (Matches Background for Embossed Effect)
                 Text(
-                    text = "DART GAME PRO",
+                    text = "S'Dart App",
                     style = MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Black,
                         fontSize = 30.sp,

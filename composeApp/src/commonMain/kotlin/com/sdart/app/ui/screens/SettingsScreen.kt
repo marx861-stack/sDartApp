@@ -110,7 +110,7 @@ fun SettingsScreen(
                     SettingsInfoItem(
                         iconRes = Res.drawable.ic_info,
                         title = "App",
-                        value = "s'Dart App Pro",
+                        value = "S'Dart App",
                         isDark = isDark
                     )
                     VersionInfoItem(
@@ -590,7 +590,7 @@ private fun AppLicenseCard(
         ) {
             Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                 Text(
-                    text = "s'Dart App",
+                    text = "S'Dart App",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White

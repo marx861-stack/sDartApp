@@ -10,7 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Navigation-Screens der s'Dart App
+ * Navigation-Screens der S'Dart App
  */
 sealed class Screen {
     object Start : Screen()

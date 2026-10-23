@@ -1,7 +1,7 @@
 package com.sdart.app.tournament.web
 
 /**
- * Liefert das vollständige, eigenständige Mobile-Web-Portal für s'Dart Turniere.
+ * Liefert das vollständige, eigenständige Mobile-Web-Portal für S'Dart Turniere.
  * Gestaltet im modernen Apple-Sports Look (Dark Mode, Glasmorphismus, responsive für alle Smartphones).
  * Vollständig offline-fähig (keine externen CDNs oder Fonts, ausschließlich projekteigene SVG-Elemente).
  */
@@ -14,7 +14,7 @@ object TournamentWebHtml {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>s'Dart Turnier Live-Ticker</title>
+    <title>S'Dart Turnier Live-Ticker</title>
     <style>
         :root {
             --bg-color: #0c0c0e;
@@ -687,7 +687,7 @@ object TournamentWebHtml {
     <header>
         <div>
             <div class="header-title-wrap">
-                <div class="header-title" id="tourn-title">s'Dart Turnier</div>
+                <div class="header-title" id="tourn-title">S'Dart Turnier</div>
             </div>
             <div class="header-sub" id="tourn-subtitle">Verbinde zum Server...</div>
         </div>
@@ -890,7 +890,7 @@ object TournamentWebHtml {
 
             const t = tournamentData.tournament;
             const pendingMatchIds = tournamentData.pendingMatchIds || [];
-            document.getElementById('tourn-title').textContent = t.name || "s'Dart Turnier";
+            document.getElementById('tourn-title').textContent = t.name || "S'Dart Turnier";
             const modeName = t.type === 'SINGLE_ELIMINATION' ? "K.O.-System" : "Liga";
             document.getElementById('tourn-subtitle').textContent = modeName + " • " + (t.config?.mode || "501");
 
@@ -933,7 +933,7 @@ object TournamentWebHtml {
                 document.getElementById('hero-pending-box').style.display = isPending ? 'flex' : 'none';
                 document.getElementById('hero-actions').style.display = isPending ? 'none' : 'grid';
 
-                // Deep-Link zur s'Dart App
+                // Deep-Link zur S'Dart App
                 const appLink = "sdart://tournament/play?matchId=" + activeMatch.id + "&host=" + window.location.hostname + "&port=" + (window.location.port || "8080");
                 document.getElementById('hero-app-link').href = appLink;
             } else {

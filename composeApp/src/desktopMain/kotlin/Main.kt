@@ -67,7 +67,7 @@ fun main(args: Array<String>) {
 
     Window(
         onCloseRequest = ::exitApplication,
-        title = "s'Dart App",
+        title = "S'Dart App",
         state = windowState,
         icon = painterResource(Res.drawable.dart_app_logo)
     ) {

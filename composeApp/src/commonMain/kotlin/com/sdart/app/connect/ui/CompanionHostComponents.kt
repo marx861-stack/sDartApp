@@ -299,7 +299,7 @@ private fun HostMainPage(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Warte auf Geräte...\nÖffne die s'Dart App auf deinem Handy und wähle 'Geräte verbinden'.",
+                            text = "Warte auf Geräte...\nÖffne die S'Dart App auf deinem Handy und wähle 'Geräte verbinden'.",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White.copy(alpha = 0.65f),
                                 lineHeight = 18.sp

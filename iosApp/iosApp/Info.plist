@@ -11,7 +11,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>s'Dart App</string>
+	<string>S'Dart App</string>
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,9 +45,9 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>s'Dart App benötigt Zugriff auf die Kamera zur automatischen Erkennung der Pfeile auf der Dartscheibe.</string>
+	<string>S'Dart App benötigt Zugriff auf die Kamera zur automatischen Erkennung der Pfeile auf der Dartscheibe.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>s'Dart App benötigt Zugriff auf das lokale Netzwerk für die Verbindung mit Begleitgeräten und Live-Kamera-Streams.</string>
+	<string>S'Dart App benötigt Zugriff auf das lokale Netzwerk für die Verbindung mit Begleitgeräten und Live-Kamera-Streams.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_sdart-companion._tcp</string>
