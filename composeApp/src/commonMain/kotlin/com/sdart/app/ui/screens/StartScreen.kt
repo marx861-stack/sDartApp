@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.AdaptiveContainer
 import com.sdart.app.ui.CenteredMenuLayout
 import com.sdart.app.connect.SessionManager
+import com.sdart.app.ui.components.DesktopDestination
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.PrimaryOrange
 import com.sdart.app.ui.theme.ditheredBackground
@@ -40,6 +41,7 @@ fun StartScreen(
     vm: DartViewModel,
     repository: PlayerRepository,
     sessionManager: SessionManager,
+    onNavigate: (DesktopDestination) -> Unit = {},
     onGamesClick: () -> Unit = {},
     onGameModeClick: (GameMode) -> Unit = {},
     onRematchClick: (LastGameSetup) -> Unit = {},
@@ -59,6 +61,7 @@ fun StartScreen(
                 vm = vm,
                 repository = repository,
                 sessionManager = sessionManager,
+                onNavigate = onNavigate,
                 onGamesClick = onGamesClick,
                 onGameModeClick = onGameModeClick,
                 onRematchClick = onRematchClick,
@@ -66,7 +69,6 @@ fun StartScreen(
                 onResumeTournamentClick = onResumeTournamentClick,
                 onPcConnect = onPcConnect,
                 onHostOverviewClick = onHostOverviewClick,
-                onSettingsClick = onSettingsClick,
                 onManagePlayersClick = onManagePlayersClick
             )
             return@AdaptiveContainer

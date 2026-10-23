@@ -25,7 +25,9 @@ import com.sdart.app.connect.ui.CompanionConnectionScreen
 import com.sdart.app.connect.ui.HostOverviewDialog
 import com.sdart.app.tournament.ui.TournamentSetupScreen
 import com.sdart.app.tournament.ui.TournamentViewScreen
+import com.sdart.app.ui.AdaptiveContainer
 import com.sdart.app.ui.ProvideAdaptiveScale
+import com.sdart.app.ui.components.DesktopDestination
 import com.sdart.app.ui.screens.*
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.MyApplicationTheme
@@ -114,15 +116,52 @@ fun App() {
         navManager.navigateTo(Screen.Game)
     }
 
+    // Callback der Setup-Screens (mobil und Desktop) zum Starten eines Spiels
+    val startFromSetup: (List<String>, GameMode, Int, Boolean, Boolean, Int, Boolean, ATCGameState?, CricketConfig?) -> Unit =
+        { players, mode, startScore, doubleIn, doubleOut, legs, randomize, atc, cricket ->
+            startNewGame(
+                LastGameSetup(
+                    playerNames = players,
+                    mode = mode,
+                    customScore = startScore,
+                    doubleIn = doubleIn,
+                    doubleOut = doubleOut,
+                    legs = legs,
+                    randomizeOrder = randomize,
+                    atcVariant = atc?.variant,
+                    atcReverse = atc?.reverse ?: false,
+                    atcWithBulls = atc?.withBulls ?: false,
+                    cricketVariant = cricket?.variant
+                )
+            )
+        }
+
+    // Navigationsleiste der Desktop-Screens: Hauptbereiche ersetzen den Verlauf statt ihn zu stapeln
+    val navigateTopLevel: (DesktopDestination) -> Unit = { destination ->
+        navManager.reset()
+        when (destination) {
+            DesktopDestination.OVERVIEW -> Unit
+            DesktopDestination.GAMES -> navManager.navigateTo(Screen.GameModes)
+            DesktopDestination.TOURNAMENT -> {
+                val running = vm.tournamentManager.currentTournament?.let { !it.isFinished } == true
+                navManager.navigateTo(if (running) Screen.TournamentView else Screen.TournamentSetup)
+            }
+            DesktopDestination.PLAYERS -> navManager.navigateTo(Screen.PlayerManagement)
+            DesktopDestination.DEVICES -> navManager.navigateTo(Screen.PcIntegration)
+            DesktopDestination.SETTINGS -> navManager.navigateTo(Screen.Settings)
+        }
+    }
+
     val startScreen: @Composable () -> Unit = {
         StartScreen(
             vm = vm,
             repository = repository,
             sessionManager = sessionManager,
+            onNavigate = navigateTopLevel,
             onGamesClick = { navManager.navigateTo(Screen.GameModes) },
             onGameModeClick = { mode ->
                 navManager.setGameMode(mode)
-                navManager.navigateTo(Screen.PlayerSetup)
+                navManager.navigateTo(Screen.GameModes)
             },
             onRematchClick = startNewGame,
             onTournamentClick = { navManager.navigateTo(Screen.TournamentSetup) },
@@ -174,34 +213,30 @@ fun App() {
             ) { screen ->
                 when (screen) {
                 Screen.Start -> startScreen()
-                Screen.GameModes -> GameModesScreen(
-                    onGameModeSelected = { mode ->
-                        navManager.setGameMode(mode)
-                        navManager.navigateTo(Screen.PlayerSetup)
-                    },
-                    onBack = { navManager.goBack() }
-                )
+                Screen.GameModes -> AdaptiveContainer { windowInfo ->
+                    if (windowInfo.isExpanded) {
+                        DesktopGamesScreen(
+                            initialMode = navManager.selectedGameMode,
+                            repository = repository,
+                            onModeSelected = { mode -> navManager.setGameMode(mode) },
+                            onStartGame = startFromSetup,
+                            onNavigate = navigateTopLevel
+                        )
+                    } else {
+                        GameModesScreen(
+                            onGameModeSelected = { mode ->
+                                navManager.setGameMode(mode)
+                                navManager.navigateTo(Screen.PlayerSetup)
+                            },
+                            onBack = { navManager.goBack() }
+                        )
+                    }
+                }
                 Screen.PlayerSetup -> PlayerSetupScreen(
                     selectedGameMode = navManager.selectedGameMode ?: GameMode.X501,
                     repository = repository,
                     onBack = { navManager.goBack() },
-                    onStartGame = { players, mode, startScore, doubleIn, doubleOut, legs, randomize, atc, cricket ->
-                        startNewGame(
-                            LastGameSetup(
-                                playerNames = players,
-                                mode = mode,
-                                customScore = startScore,
-                                doubleIn = doubleIn,
-                                doubleOut = doubleOut,
-                                legs = legs,
-                                randomizeOrder = randomize,
-                                atcVariant = atc?.variant,
-                                atcReverse = atc?.reverse ?: false,
-                                atcWithBulls = atc?.withBulls ?: false,
-                                cricketVariant = cricket?.variant
-                            )
-                        )
-                    },
+                    onStartGame = startFromSetup,
                     onNavigateToManagement = {
                         navManager.navigateTo(Screen.PlayerManagement)
                     }

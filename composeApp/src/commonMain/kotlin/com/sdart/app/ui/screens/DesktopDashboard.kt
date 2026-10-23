@@ -33,15 +33,12 @@ import androidx.compose.ui.unit.sp
 import com.sdart.app.connect.HostState
 import com.sdart.app.connect.SessionManager
 import com.sdart.app.tournament.TournamentState
+import com.sdart.app.ui.components.*
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
-
-private val CardShape = RoundedCornerShape(15.dp)
-private val ActiveOrangeBg = Color(0xFF2E2218)
-private val OnlineGreen = Color(0xFF4CAF50)
 
 /**
  * Startseite für breite Fenster (Desktop, Tablet quer): feste Navigationsleiste links,
@@ -52,6 +49,7 @@ fun DesktopDashboard(
     vm: DartViewModel,
     repository: PlayerRepository,
     sessionManager: SessionManager,
+    onNavigate: (DesktopDestination) -> Unit,
     onGamesClick: () -> Unit,
     onGameModeClick: (GameMode) -> Unit,
     onRematchClick: (LastGameSetup) -> Unit,
@@ -59,7 +57,6 @@ fun DesktopDashboard(
     onResumeTournamentClick: () -> Unit,
     onPcConnect: () -> Unit,
     onHostOverviewClick: () -> Unit,
-    onSettingsClick: () -> Unit,
     onManagePlayersClick: () -> Unit
 ) {
     val players by produceState(initialValue = emptyList<SavedPlayer>(), repository) {
@@ -69,197 +66,51 @@ fun DesktopDashboard(
     val hostState by sessionManager.hostState.collectAsState()
     val tournament = vm.tournamentManager.currentTournament?.takeIf { !it.isFinished }
 
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .safeDrawingPadding()
-    ) {
-        DashboardNavRail(
-            onGamesClick = onGamesClick,
-            onTournamentClick = if (tournament != null) onResumeTournamentClick else onTournamentClick,
-            onManagePlayersClick = onManagePlayersClick,
-            onPcConnect = onPcConnect,
-            onSettingsClick = onSettingsClick
-        )
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
-                .padding(28.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Übersicht",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                QuickStartCard(
-                    lastGame = lastGame,
-                    onRematchClick = onRematchClick,
-                    onGameModeClick = onGameModeClick,
-                    onGamesClick = onGamesClick,
-                    modifier = Modifier.weight(2f).fillMaxHeight()
-                )
-                TournamentStatusCard(
-                    tournament = tournament,
-                    onClick = if (tournament != null) onResumeTournamentClick else onTournamentClick,
-                    modifier = Modifier.weight(1f).fillMaxHeight()
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                LeaderboardCard(
-                    players = players,
-                    onManagePlayersClick = onManagePlayersClick,
-                    modifier = Modifier.weight(2f).fillMaxHeight()
-                )
-                DevicesCard(
-                    hostState = hostState,
-                    onHostOverviewClick = onHostOverviewClick,
-                    onPcConnect = onPcConnect,
-                    modifier = Modifier.weight(1f).fillMaxHeight()
-                )
-            }
-
-            HighlightsCard(players = players)
-        }
-    }
-}
-
-// --- Navigation ---
-
-@Composable
-private fun DashboardNavRail(
-    onGamesClick: () -> Unit,
-    onTournamentClick: () -> Unit,
-    onManagePlayersClick: () -> Unit,
-    onPcConnect: () -> Unit,
-    onSettingsClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .width(220.dp)
-            .fillMaxHeight()
-            .background(Color.Black.copy(alpha = 0.28f))
-            .padding(horizontal = 14.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+    DesktopShell(
+        selected = DesktopDestination.OVERVIEW,
+        title = "Übersicht",
+        onNavigate = onNavigate
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(start = 8.dp, bottom = 20.dp)
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_main_logo),
-                contentDescription = null,
-                tint = PrimaryOrange,
-                modifier = Modifier.size(32.dp)
+            QuickStartCard(
+                lastGame = lastGame,
+                onRematchClick = onRematchClick,
+                onGameModeClick = onGameModeClick,
+                onGamesClick = onGamesClick,
+                modifier = Modifier.weight(2f).fillMaxHeight()
             )
-            Spacer(Modifier.width(10.dp))
-            Text(
-                text = "S'Dart App",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            TournamentStatusCard(
+                tournament = tournament,
+                onClick = if (tournament != null) onResumeTournamentClick else onTournamentClick,
+                modifier = Modifier.weight(1f).fillMaxHeight()
             )
         }
 
-        NavRailItem(icon = Res.drawable.ic_chart_bar, label = "Übersicht", selected = true, onClick = {})
-        NavRailItem(icon = Res.drawable.ic_target, label = stringResource(Res.string.main_title_games), onClick = onGamesClick)
-        NavRailItem(icon = Res.drawable.ic_trophy, label = stringResource(Res.string.main_title_tournament), onClick = onTournamentClick)
-        NavRailItem(icon = Res.drawable.ic_player_management, label = stringResource(Res.string.main_title_players), onClick = onManagePlayersClick)
-        NavRailItem(icon = Res.drawable.ic_mobile_connect, label = stringResource(Res.string.main_title_connect), onClick = onPcConnect)
-
-        Spacer(Modifier.weight(1f))
-
-        NavRailItem(
-            vector = Icons.Default.Settings,
-            label = stringResource(Res.string.settings),
-            onClick = onSettingsClick
-        )
-    }
-}
-
-@Composable
-private fun NavRailItem(
-    label: String,
-    onClick: () -> Unit,
-    icon: DrawableResource? = null,
-    vector: ImageVector? = null,
-    selected: Boolean = false
-) {
-    val contentColor = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (selected) ActiveOrangeBg else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 11.dp)
-    ) {
-        when {
-            icon != null -> Icon(painterResource(icon), null, tint = contentColor, modifier = Modifier.size(22.dp))
-            vector != null -> Icon(vector, null, tint = contentColor, modifier = Modifier.size(22.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            LeaderboardCard(
+                players = players,
+                onManagePlayersClick = onManagePlayersClick,
+                modifier = Modifier.weight(2f).fillMaxHeight()
+            )
+            DevicesCard(
+                hostState = hostState,
+                onHostOverviewClick = onHostOverviewClick,
+                onPcConnect = onPcConnect,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
         }
-        Spacer(Modifier.width(12.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurface
-            ),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+
+        HighlightsCard(players = players)
     }
 }
 
 // --- Karten ---
-
-@Composable
-private fun DashboardCard(
-    title: String,
-    modifier: Modifier = Modifier,
-    highlighted: Boolean = false,
-    onClick: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = modifier
-            .clip(CardShape)
-            .background(if (highlighted) ActiveOrangeBg else MaterialTheme.colorScheme.surface)
-            .border(
-                width = 2.dp,
-                color = if (highlighted) PrimaryOrange else MaterialTheme.colorScheme.outline,
-                shape = CardShape
-            )
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(20.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                letterSpacing = 0.5.sp
-            ),
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        content()
-    }
-}
 
 @Composable
 private fun QuickStartCard(
@@ -327,26 +178,6 @@ private fun QuickStartCard(
             ModeChip(Res.drawable.ic_all_fives, stringResource(Res.string.game_mode_all_fives)) { onGameModeClick(GameMode.ALL_FIVES) }
             ModeChip(Res.drawable.ic_atc, stringResource(Res.string.game_mode_atc)) { onGameModeClick(GameMode.AROUND_THE_CLOCK) }
         }
-    }
-}
-
-@Composable
-private fun ModeChip(icon: DrawableResource, label: String, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Icon(painterResource(icon), null, tint = PrimaryOrange, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-            maxLines = 1
-        )
     }
 }
 
@@ -490,22 +321,6 @@ private fun LeaderboardCard(
 }
 
 @Composable
-private fun Sparkline(values: List<Float>, color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        if (values.size < 2) return@Canvas
-        val min = values.min()
-        val range = (values.max() - min).takeIf { it > 0f } ?: 1f
-        val stepX = size.width / (values.size - 1)
-        val path = Path()
-        values.forEachIndexed { i, v ->
-            val point = Offset(i * stepX, size.height - (v - min) / range * size.height)
-            if (i == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
-        }
-        drawPath(path, color, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-    }
-}
-
-@Composable
 private fun DevicesCard(
     hostState: HostState,
     onHostOverviewClick: () -> Unit,
@@ -557,35 +372,6 @@ private fun DevicesCard(
 }
 
 @Composable
-private fun StatusLine(online: Boolean, label: String, detail: String?) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(9.dp)
-                .clip(CircleShape)
-                .background(if (online) OnlineGreen else MaterialTheme.colorScheme.outline)
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-        if (detail != null) {
-            Text(
-                text = detail,
-                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-            )
-        }
-    }
-}
-
-@Composable
 private fun HighlightsCard(players: List<SavedPlayer>) {
     val total180s = players.sumOf { it.highScores180s }
     val bestCheckout = players.maxOfOrNull { it.bestCheckout } ?: 0
@@ -599,30 +385,6 @@ private fun HighlightsCard(players: List<SavedPlayer>) {
             StatTile("Höchste Aufnahme", if (highestRound > 0) highestRound.toString() else "–", Modifier.weight(1f))
             StatTile("Kürzestes Leg", fewestDarts?.let { "$it Darts" } ?: "–", Modifier.weight(1f))
         }
-    }
-}
-
-@Composable
-private fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f))
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-            maxLines = 1
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            modifier = Modifier.padding(top = 2.dp)
-        )
     }
 }
 
