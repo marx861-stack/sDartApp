@@ -71,9 +71,10 @@ fun DesktopDashboard(
         title = "Übersicht",
         onNavigate = onNavigate
     ) {
+        // Die Kachelreihen teilen sich die Fensterhöhe, damit auch große Monitore gefüllt sind
         Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             QuickStartCard(
                 lastGame = lastGame,
@@ -90,8 +91,8 @@ fun DesktopDashboard(
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             LeaderboardCard(
                 players = players,
@@ -126,7 +127,7 @@ private fun QuickStartCard(
                 if (lastGame != null) {
                     Text(
                         text = describeGame(lastGame),
-                        style = MaterialTheme.typography.titleLarge.copy(
+                        style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -142,7 +143,7 @@ private fun QuickStartCard(
                 } else {
                     Text(
                         text = "Noch kein Spiel gespielt",
-                        style = MaterialTheme.typography.titleLarge.copy(
+                        style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -170,14 +171,41 @@ private fun QuickStartCard(
             }
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.weight(1f).heightIn(min = 18.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ModeChip(Res.drawable.ic_standard, stringResource(Res.string.game_mode_standard)) { onGameModeClick(GameMode.X501) }
-            ModeChip(Res.drawable.ic_cricket, stringResource(Res.string.game_mode_cricket)) { onGameModeClick(GameMode.CRICKET) }
-            ModeChip(Res.drawable.ic_all_fives, stringResource(Res.string.game_mode_all_fives)) { onGameModeClick(GameMode.ALL_FIVES) }
-            ModeChip(Res.drawable.ic_atc, stringResource(Res.string.game_mode_atc)) { onGameModeClick(GameMode.AROUND_THE_CLOCK) }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth().height(58.dp)
+        ) {
+            ModeTile(Res.drawable.ic_standard, stringResource(Res.string.game_mode_standard), Modifier.weight(1f)) { onGameModeClick(GameMode.X501) }
+            ModeTile(Res.drawable.ic_cricket, stringResource(Res.string.game_mode_cricket), Modifier.weight(1f)) { onGameModeClick(GameMode.CRICKET) }
+            ModeTile(Res.drawable.ic_all_fives, stringResource(Res.string.game_mode_all_fives), Modifier.weight(1f)) { onGameModeClick(GameMode.ALL_FIVES) }
+            ModeTile(Res.drawable.ic_atc, stringResource(Res.string.game_mode_atc), Modifier.weight(1f)) { onGameModeClick(GameMode.AROUND_THE_CLOCK) }
         }
+    }
+}
+
+@Composable
+private fun ModeTile(icon: DrawableResource, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(12.dp))
+            .background(GlassCardBg)
+            .border(1.dp, GlassCardBorder, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp)
+    ) {
+        Icon(painterResource(icon), null, tint = PrimaryOrange, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -200,7 +228,7 @@ private fun TournamentStatusCard(
 
             Text(
                 text = tournament.name,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold, color = PrimaryOrange),
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold, color = PrimaryOrange),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -262,7 +290,7 @@ private fun LeaderboardCard(
     val ranked = players
         .filter { it.totalRounds > 0 }
         .sortedByDescending { it.roundAverage() }
-        .take(5)
+        .take(8)
 
     DashboardCard(title = "Bestenliste · Ø pro Aufnahme", modifier = modifier) {
         if (ranked.isEmpty()) {
@@ -284,7 +312,7 @@ private fun LeaderboardCard(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .clickable(onClick = onManagePlayersClick)
-                        .padding(vertical = 7.dp, horizontal = 4.dp)
+                        .padding(vertical = 9.dp, horizontal = 4.dp)
                 ) {
                     Text(
                         text = "${index + 1}",
@@ -304,7 +332,7 @@ private fun LeaderboardCard(
                     Sparkline(
                         values = player.gameHistory.map { it.averageScore },
                         color = if (index == 0) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(120.dp).height(24.dp)
+                        modifier = Modifier.width(160.dp).height(26.dp)
                     )
                     Text(
                         text = formatOneDecimal(player.roundAverage()),

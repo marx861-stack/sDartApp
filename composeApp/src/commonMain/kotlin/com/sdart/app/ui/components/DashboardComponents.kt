@@ -48,9 +48,11 @@ fun DashboardCard(
     modifier: Modifier = Modifier,
     highlighted: Boolean = false,
     onClick: (() -> Unit)? = null,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
+        verticalArrangement = verticalArrangement,
         modifier = modifier
             .clip(DashboardCardShape)
             .background(if (highlighted) ActiveGlassBg else GlassCardBg)
@@ -60,7 +62,7 @@ fun DashboardCard(
                 shape = DashboardCardShape
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(20.dp)
+            .padding(24.dp)
     ) {
         if (title != null) {
             CardTitle(title)
@@ -121,7 +123,7 @@ fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .background(GlassCardBg)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .padding(horizontal = 18.dp, vertical = 16.dp)
     ) {
         Text(
             text = label,
@@ -130,7 +132,7 @@ fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.headlineSmall.copy(
+            style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             ),

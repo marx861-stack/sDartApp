@@ -76,6 +76,9 @@ fun calculateWindowSizeInfo(maxWidth: Dp, maxHeight: Dp): WindowSizeInfo {
  */
 val LocalUiScale = staticCompositionLocalOf { 1.0f }
 
+private val ReferenceWidth = 1500.dp
+private val ReferenceHeight = 860.dp
+
 /**
  * Skaliert die gesamte UI auf sehr großen Fenstern einheitlich hoch, damit Text und UI-Elemente
  * auf 4K nicht winzig wirken. Einmal um die ganze App legen, damit alle Screens und Dialoge
@@ -88,10 +91,12 @@ fun ProvideAdaptiveScale(
 ) {
     BoxWithConstraints(modifier = modifier) {
         val sizeInfo = calculateWindowSizeInfo(maxWidth, maxHeight)
-        val scaleFactor = when {
-            sizeInfo.isUltra && maxHeight >= 1200.dp -> 1.35f
-            sizeInfo.isUltra -> 1.2f
-            else -> 1.0f
+        // Große Fenster proportional hochskalieren, sodass effektiv etwa 1500 × 860 dp Platz bleiben;
+        // so füllen die Layouts den Bildschirm statt als kleine Elemente in viel Leerraum zu stehen
+        val scaleFactor = if (sizeInfo.isUltra) {
+            minOf(maxWidth / ReferenceWidth, maxHeight / ReferenceHeight).coerceIn(1.2f, 2.2f)
+        } else {
+            1.0f
         }
         val currentDensity = LocalDensity.current
         val scaledDensity = Density(

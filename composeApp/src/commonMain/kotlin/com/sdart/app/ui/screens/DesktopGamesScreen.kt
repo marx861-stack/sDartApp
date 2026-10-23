@@ -62,13 +62,14 @@ fun DesktopGamesScreen(
         title = "Neues Spiel",
         onNavigate = onNavigate
     ) {
+        // Modus-Karten und Setup-Panel füllen die ganze verfügbare Höhe
         Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Column(
-                modifier = Modifier.width(270.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 modeEntries.forEach { entry ->
                     ModeCard(
@@ -77,13 +78,14 @@ fun DesktopGamesScreen(
                         onClick = {
                             selectedMode = entry.mode
                             onModeSelected(entry.mode)
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-            DashboardCard(title = null, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+            DashboardCard(title = null, modifier = Modifier.weight(2.6f).fillMaxHeight()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(40.dp)) {
                     PlayersSection(
                         setup = setup,
                         onLoadClick = { showLoadDialog = true },
@@ -134,34 +136,36 @@ fun DesktopGamesScreen(
 }
 
 @Composable
-private fun ModeCard(entry: ModeEntry, selected: Boolean, onClick: () -> Unit) {
+private fun ModeCard(entry: ModeEntry, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     DashboardCard(
         title = null,
         highlighted = selected,
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 painter = painterResource(entry.icon),
                 contentDescription = null,
                 tint = PrimaryOrange,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(40.dp)
             )
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(18.dp))
             Column {
                 Text(
                     text = stringResource(entry.title),
-                    style = MaterialTheme.typography.titleMedium.copy(
+                    style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurface
                     )
                 )
                 Text(
                     text = entry.subtitle,
-                    style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
             }
         }

@@ -33,10 +33,13 @@ enum class DesktopDestination {
     OVERVIEW, GAMES, TOURNAMENT, PLAYERS, DEVICES, SETTINGS
 }
 
-private val MaxContentWidth = 1360.dp
+// Unterhalb dieser Höhe wird gescrollt statt weiter gestaucht
+private val MinContentHeight = 820.dp
 
 /**
- * Rahmen für Desktop-Screens: feste Navigationsleiste links, rechts Titel und scrollbarer Inhalt.
+ * Rahmen für Desktop-Screens: feste Navigationsleiste links, rechts Titel und Inhalt über die ganze Fläche.
+ * Der Inhalt bekommt eine feste Höhe (Fensterhöhe, mindestens [MinContentHeight]), damit Kacheln
+ * per `weight` mitwachsen und auch große Monitore füllen.
  */
 @Composable
 fun DesktopShell(
@@ -54,39 +57,27 @@ fun DesktopShell(
         DesktopNavRail(selected = selected, onNavigate = onNavigate)
 
         BoxWithConstraints(
-            contentAlignment = Alignment.TopCenter,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
         ) {
-            val viewportHeight = maxHeight
-            // Auf großen Monitoren nicht beliebig breit ziehen und kurzen Inhalt vertikal mittig halten;
-            // ist er höher als das Fenster, wird normal von oben gescrollt
+            val contentHeight = maxOf(maxHeight, MinContentHeight)
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .heightIn(min = viewportHeight)
+                    .height(contentHeight)
                     .padding(horizontal = 36.dp, vertical = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-            Column(
-                modifier = Modifier
-                    .widthIn(max = MaxContentWidth)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    )
                 )
                 content()
-            }
             }
         }
     }
