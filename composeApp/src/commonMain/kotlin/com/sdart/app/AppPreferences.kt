@@ -1,5 +1,35 @@
 package com.sdart.app
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+
+/**
+ * Einstellungen des zuletzt gestarteten Spiels, um es per "Revanche" erneut zu starten.
+ */
+@Serializable
+data class LastGameSetup(
+    val playerNames: List<String>,
+    val mode: GameMode,
+    val customScore: Int,
+    val doubleIn: Boolean,
+    val doubleOut: Boolean,
+    val legs: Int,
+    val randomizeOrder: Boolean,
+    val atcVariant: ATCVariant? = null,
+    val atcReverse: Boolean = false,
+    val atcWithBulls: Boolean = false,
+    val cricketVariant: CricketVariant? = null,
+    val startedAtMillis: Long = 0L
+) {
+    val atcConfig: ATCGameState?
+        get() = atcVariant?.let { ATCGameState(it, atcReverse, atcWithBulls) }
+
+    val cricketConfig: CricketConfig?
+        get() = cricketVariant?.let { CricketConfig(it) }
+}
+
 /**
  * Multiplatform-Speicher für Einstellungen und UI-Zustände.
  */
@@ -18,6 +48,9 @@ object AppPreferences {
     private const val KEY_CAMERA_SOURCE_TYPE = "pref_camera_source_type"
     private const val KEY_CAMERA_STREAM_URL = "pref_camera_stream_url"
     private const val KEY_SELECTED_WEBCAM_INDEX = "pref_selected_webcam_index"
+    private const val KEY_LAST_GAME_SETUP = "pref_last_game_setup"
+
+    private val lastGameJson = Json { ignoreUnknownKeys = true }
 
     fun getLastPlayerNames(): String? = loadAppPreference(KEY_LAST_PLAYERS)
 
@@ -101,5 +134,15 @@ object AppPreferences {
     var selectedWebcamIndex: Int
         get() = loadAppPreference(KEY_SELECTED_WEBCAM_INDEX)?.toIntOrNull() ?: 0
         set(value) = saveAppPreference(KEY_SELECTED_WEBCAM_INDEX, value.toString())
-}
 
+    var lastGameSetup: LastGameSetup?
+        get() {
+            val raw = loadAppPreference(KEY_LAST_GAME_SETUP) ?: return null
+            return try {
+                lastGameJson.decodeFromString<LastGameSetup>(raw)
+            } catch (_: Exception) {
+                null
+            }
+        }
+        set(value) = saveAppPreference(KEY_LAST_GAME_SETUP, value?.let { lastGameJson.encodeToString(it) } ?: "")
+}

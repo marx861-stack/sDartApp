@@ -103,6 +103,37 @@ fun App() {
         onBack = handleBack
     )
 
+    // Startet ein Spiel und merkt es sich für "Revanche" auf dem Desktop-Dashboard
+    val startNewGame: (LastGameSetup) -> Unit = { setup ->
+        AppPreferences.lastGameSetup = setup.copy(startedAtMillis = currentTimeMillis())
+        navManager.setGameMode(setup.mode)
+        vm.startGame(
+            setup.playerNames, setup.mode, setup.customScore, setup.doubleIn, setup.doubleOut,
+            setup.legs, setup.randomizeOrder, setup.atcConfig, setup.cricketConfig
+        )
+        navManager.navigateTo(Screen.Game)
+    }
+
+    val startScreen: @Composable () -> Unit = {
+        StartScreen(
+            vm = vm,
+            repository = repository,
+            sessionManager = sessionManager,
+            onGamesClick = { navManager.navigateTo(Screen.GameModes) },
+            onGameModeClick = { mode ->
+                navManager.setGameMode(mode)
+                navManager.navigateTo(Screen.PlayerSetup)
+            },
+            onRematchClick = startNewGame,
+            onTournamentClick = { navManager.navigateTo(Screen.TournamentSetup) },
+            onResumeTournamentClick = { navManager.navigateTo(Screen.TournamentView) },
+            onPcConnect = { navManager.navigateTo(Screen.PcIntegration) },
+            onHostOverviewClick = { showHostOverviewFromStart = true },
+            onSettingsClick = { navManager.navigateTo(Screen.Settings) },
+            onManagePlayersClick = { navManager.navigateTo(Screen.PlayerManagement) }
+        )
+    }
+
     MyApplicationTheme {
       ProvideAdaptiveScale(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -142,27 +173,7 @@ fun App() {
                 }
             ) { screen ->
                 when (screen) {
-                Screen.Start -> StartScreen(
-                    vm = vm,
-                    onGamesClick = {
-                        navManager.navigateTo(Screen.GameModes)
-                    },
-                    onTournamentClick = {
-                        navManager.navigateTo(Screen.TournamentSetup)
-                    },
-                    onResumeTournamentClick = {
-                        navManager.navigateTo(Screen.TournamentView)
-                    },
-                    onPcConnect = {
-                        navManager.navigateTo(Screen.PcIntegration)
-                    },
-                    onSettingsClick = {
-                        navManager.navigateTo(Screen.Settings)
-                    },
-                    onManagePlayersClick = {
-                        navManager.navigateTo(Screen.PlayerManagement)
-                    }
-                )
+                Screen.Start -> startScreen()
                 Screen.GameModes -> GameModesScreen(
                     onGameModeSelected = { mode ->
                         navManager.setGameMode(mode)
@@ -175,9 +186,21 @@ fun App() {
                     repository = repository,
                     onBack = { navManager.goBack() },
                     onStartGame = { players, mode, startScore, doubleIn, doubleOut, legs, randomize, atc, cricket ->
-                        vm.startGame(players, mode, startScore, doubleIn, doubleOut, legs, randomize, atc, cricket)
-                        // In Phase 5 verbinden wir den GameScreen mit Kamera
-                        navManager.navigateTo(Screen.Game)
+                        startNewGame(
+                            LastGameSetup(
+                                playerNames = players,
+                                mode = mode,
+                                customScore = startScore,
+                                doubleIn = doubleIn,
+                                doubleOut = doubleOut,
+                                legs = legs,
+                                randomizeOrder = randomize,
+                                atcVariant = atc?.variant,
+                                atcReverse = atc?.reverse ?: false,
+                                atcWithBulls = atc?.withBulls ?: false,
+                                cricketVariant = cricket?.variant
+                            )
+                        )
                     },
                     onNavigateToManagement = {
                         navManager.navigateTo(Screen.PlayerManagement)
@@ -247,25 +270,7 @@ fun App() {
                     onOpenHostOverview = { showHostOverviewFromStart = true },
                     vm = vm
                 )
-                else -> {
-                    StartScreen(
-                        vm = vm,
-                        onGamesClick = {
-                            navManager.navigateTo(Screen.GameModes)
-                        },
-                        onTournamentClick = {
-                            navManager.navigateTo(Screen.TournamentSetup)
-                        },
-                        onResumeTournamentClick = {
-                            navManager.navigateTo(Screen.TournamentView)
-                        },
-                        onPcConnect = {
-                            navManager.navigateTo(Screen.PcIntegration)
-                        },
-                        onSettingsClick = { navManager.navigateTo(Screen.Settings) },
-                        onManagePlayersClick = { navManager.navigateTo(Screen.PlayerManagement) }
-                    )
-                }
+                else -> startScreen()
             }
             }
 

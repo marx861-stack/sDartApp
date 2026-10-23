@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.AdaptiveContainer
 import com.sdart.app.ui.CenteredMenuLayout
+import com.sdart.app.connect.SessionManager
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.PrimaryOrange
 import com.sdart.app.ui.theme.ditheredBackground
@@ -37,16 +38,40 @@ import sdartapp.composeapp.generated.resources.*
 @Composable
 fun StartScreen(
     vm: DartViewModel,
+    repository: PlayerRepository,
+    sessionManager: SessionManager,
     onGamesClick: () -> Unit = {},
+    onGameModeClick: (GameMode) -> Unit = {},
+    onRematchClick: (LastGameSetup) -> Unit = {},
     onTournamentClick: () -> Unit = {},
     onResumeTournamentClick: () -> Unit = {},
     onPcConnect: () -> Unit = {},
+    onHostOverviewClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onManagePlayersClick: () -> Unit = {}
 ) {
     val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
 
     AdaptiveContainer(modifier = backgroundModifier) { windowInfo ->
+        // Große Fenster (Desktop, Tablet quer) bekommen das Dashboard mit Navigationsleiste
+        if (windowInfo.isExpanded) {
+            DesktopDashboard(
+                vm = vm,
+                repository = repository,
+                sessionManager = sessionManager,
+                onGamesClick = onGamesClick,
+                onGameModeClick = onGameModeClick,
+                onRematchClick = onRematchClick,
+                onTournamentClick = onTournamentClick,
+                onResumeTournamentClick = onResumeTournamentClick,
+                onPcConnect = onPcConnect,
+                onHostOverviewClick = onHostOverviewClick,
+                onSettingsClick = onSettingsClick,
+                onManagePlayersClick = onManagePlayersClick
+            )
+            return@AdaptiveContainer
+        }
+
         val isWidescreen = windowInfo.isWidescreen
 
         Box(
