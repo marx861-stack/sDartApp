@@ -37,16 +37,15 @@ enum class DesktopDestination {
 private val MinContentHeight = 820.dp
 
 /**
- * Rahmen für Desktop-Screens: feste Navigationsleiste links, rechts Titel und Inhalt über die ganze Fläche.
- * Der Inhalt bekommt eine feste Höhe (Fensterhöhe, mindestens [MinContentHeight]), damit Kacheln
- * per `weight` mitwachsen und auch große Monitore füllen.
+ * Feste Hülle der Desktop-Screens: Navigationsleiste links, rechts der Seiteninhalt.
+ * Wird einmal oberhalb der Seitenübergänge aufgebaut, damit die Leiste beim Wechsel der Bereiche
+ * stehen bleibt und nur der Inhalt ([DesktopPage]) wechselt.
  */
 @Composable
-fun DesktopShell(
+fun DesktopScaffold(
     selected: DesktopDestination,
-    title: String,
     onNavigate: (DesktopDestination) -> Unit,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -56,29 +55,44 @@ fun DesktopShell(
     ) {
         DesktopNavRail(selected = selected, onNavigate = onNavigate)
 
-        BoxWithConstraints(
+        Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
         ) {
-            val contentHeight = maxOf(maxHeight, MinContentHeight)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .height(contentHeight)
-                    .padding(horizontal = 36.dp, vertical = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+            content()
+        }
+    }
+}
+
+/**
+ * Seite im Inhaltsbereich von [DesktopScaffold]: Titel und Inhalt über die ganze Fläche.
+ * Der Inhalt bekommt eine feste Höhe (Fensterhöhe, mindestens [MinContentHeight]), damit Kacheln
+ * per `weight` mitwachsen und auch große Monitore füllen.
+ */
+@Composable
+fun DesktopPage(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val contentHeight = maxOf(maxHeight, MinContentHeight)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .height(contentHeight)
+                .padding(horizontal = 36.dp, vertical = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                content()
-            }
+            )
+            content()
         }
     }
 }
@@ -90,7 +104,7 @@ private fun DesktopNavRail(
 ) {
     Column(
         modifier = Modifier
-            .width(220.dp)
+            .width(244.dp)
             .fillMaxHeight()
             .background(Color.Black.copy(alpha = 0.35f))
             .padding(horizontal = 14.dp, vertical = 20.dp),

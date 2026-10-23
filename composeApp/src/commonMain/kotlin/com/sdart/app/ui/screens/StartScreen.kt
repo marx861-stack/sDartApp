@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.AdaptiveContainer
 import com.sdart.app.ui.CenteredMenuLayout
 import com.sdart.app.connect.SessionManager
-import com.sdart.app.ui.components.DesktopDestination
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.PrimaryOrange
 import com.sdart.app.ui.theme.ditheredBackground
@@ -41,7 +40,6 @@ fun StartScreen(
     vm: DartViewModel,
     repository: PlayerRepository,
     sessionManager: SessionManager,
-    onNavigate: (DesktopDestination) -> Unit = {},
     onGamesClick: () -> Unit = {},
     onGameModeClick: (GameMode) -> Unit = {},
     onRematchClick: (LastGameSetup) -> Unit = {},
@@ -54,14 +52,14 @@ fun StartScreen(
 ) {
     val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
 
-    AdaptiveContainer(modifier = backgroundModifier) { windowInfo ->
-        // Große Fenster (Desktop, Tablet quer) bekommen das Dashboard mit Navigationsleiste
+    AdaptiveContainer(modifier = Modifier.fillMaxSize()) { windowInfo ->
+        // Große Fenster (Desktop, Tablet quer) bekommen das Dashboard; Navigationsleiste und Hintergrund
+        // kommen von DesktopScaffold in App.kt, damit sie beim Seitenwechsel stehen bleiben
         if (windowInfo.isExpanded) {
             DesktopDashboard(
                 vm = vm,
                 repository = repository,
                 sessionManager = sessionManager,
-                onNavigate = onNavigate,
                 onGamesClick = onGamesClick,
                 onGameModeClick = onGameModeClick,
                 onRematchClick = onRematchClick,
@@ -77,7 +75,7 @@ fun StartScreen(
         val isWidescreen = windowInfo.isWidescreen
 
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = backgroundModifier
         ) {
                 CenteredMenuLayout {
                 // Main Cards Container (skaliert zentriert und harmonisch bis 4K)

@@ -49,7 +49,6 @@ fun DesktopDashboard(
     vm: DartViewModel,
     repository: PlayerRepository,
     sessionManager: SessionManager,
-    onNavigate: (DesktopDestination) -> Unit,
     onGamesClick: () -> Unit,
     onGameModeClick: (GameMode) -> Unit,
     onRematchClick: (LastGameSetup) -> Unit,
@@ -66,11 +65,7 @@ fun DesktopDashboard(
     val hostState by sessionManager.hostState.collectAsState()
     val tournament = vm.tournamentManager.currentTournament?.takeIf { !it.isFinished }
 
-    DesktopShell(
-        selected = DesktopDestination.OVERVIEW,
-        title = "Übersicht",
-        onNavigate = onNavigate
-    ) {
+    DesktopPage(title = "Übersicht") {
         // Die Kachelreihen teilen sich die Fensterhöhe, damit auch große Monitore gefüllt sind
         Row(
             modifier = Modifier.fillMaxWidth().weight(1f),

@@ -47,8 +47,7 @@ fun DesktopGamesScreen(
     initialMode: GameMode?,
     repository: PlayerRepository,
     onModeSelected: (GameMode) -> Unit,
-    onStartGame: (List<String>, GameMode, Int, Boolean, Boolean, Int, Boolean, ATCGameState?, CricketConfig?) -> Unit,
-    onNavigate: (DesktopDestination) -> Unit
+    onStartGame: (List<String>, GameMode, Int, Boolean, Boolean, Int, Boolean, ATCGameState?, CricketConfig?) -> Unit
 ) {
     // X01-Varianten laufen alle über die Standard-Karte; die Startpunktzahl wählt man im Setup
     var selectedMode by remember {
@@ -57,11 +56,7 @@ fun DesktopGamesScreen(
     val setup = rememberPlayerSetupState()
     var showLoadDialog by remember { mutableStateOf(false) }
 
-    DesktopShell(
-        selected = DesktopDestination.GAMES,
-        title = "Neues Spiel",
-        onNavigate = onNavigate
-    ) {
+    DesktopPage(title = "Neues Spiel") {
         // Modus-Karten und Setup-Panel füllen die ganze verfügbare Höhe
         Row(
             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -181,6 +176,17 @@ private fun PlayersSection(
     Column(modifier = modifier) {
         CardTitle("Spieler · ${setup.playerNames.size} von 8")
 
+        // Aktionen oberhalb der Namensfelder, damit neue Spieler nicht unter der Liste wegrutschen
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.padding(start = 22.dp, bottom = 12.dp)
+        ) {
+            if (setup.playerNames.size < 8) {
+                CardLink("Spieler hinzufügen", onClick = { setup.addPlayer() }, icon = Res.drawable.ic_plus)
+            }
+            CardLink("Gespeicherte laden", onClick = onLoadClick, primary = false, icon = Res.drawable.ic_folder)
+        }
+
         setup.playerNames.forEachIndexed { index, player ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -229,16 +235,7 @@ private fun PlayersSection(
             }
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier.padding(start = 22.dp, top = 6.dp, bottom = 16.dp)
-        ) {
-            if (setup.playerNames.size < 8) {
-                CardLink("Spieler hinzufügen", onClick = { setup.addPlayer() })
-            }
-            CardLink("Gespeicherte laden", onClick = onLoadClick, primary = false)
-        }
-
+        Spacer(Modifier.height(8.dp))
         SelectChip(
             label = "Zufällige Reihenfolge",
             selected = setup.randomizeOrder,
@@ -248,78 +245,88 @@ private fun PlayersSection(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SettingsSection(
     setup: PlayerSetupState,
     mode: GameMode,
     modifier: Modifier = Modifier
 ) {
-    val chipRow: @Composable (@Composable FlowRowScope.() -> Unit) -> Unit = { chips ->
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(bottom = 20.dp),
-            content = chips
+    // Eine Reihe gleich breiter Kacheln; Lücken am Ende füllt ein Platzhalter, damit Kacheln gleich groß bleiben
+    val tileRow: @Composable (Int, @Composable RowScope.() -> Unit) -> Unit = { _, tiles ->
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+            content = tiles
         )
+    }
+    // Erster Abschnitt bündig mit "Spieler" links, weitere mit Abstand
+    val section: @Composable (String, Boolean) -> Unit = { title, first ->
+        CardTitle(title, modifier = Modifier.padding(top = if (first) 0.dp else 14.dp))
     }
 
     Column(modifier = modifier) {
         when (mode) {
             GameMode.CRICKET -> {
-                CardTitle("Variante")
-                chipRow {
-                    SelectChip("Standard", setup.cricketVariant == CricketVariant.STANDARD, { setup.cricketVariant = CricketVariant.STANDARD })
-                    SelectChip("Cut Throat", setup.cricketVariant == CricketVariant.CUT_THROAT, { setup.cricketVariant = CricketVariant.CUT_THROAT })
+                section("Variante", true)
+                tileRow(2) {
+                    SelectTile("Standard", setup.cricketVariant == CricketVariant.STANDARD, { setup.cricketVariant = CricketVariant.STANDARD }, Modifier.weight(1f), "Punkte für dich")
+                    SelectTile("Cut Throat", setup.cricketVariant == CricketVariant.CUT_THROAT, { setup.cricketVariant = CricketVariant.CUT_THROAT }, Modifier.weight(1f), "Punkte an Gegner")
                 }
                 LegsSetting(setup)
             }
             GameMode.ALL_FIVES -> {
-                CardTitle("Ziel-Punktzahl")
-                chipRow {
+                section("Ziel-Punktzahl", true)
+                tileRow(3) {
                     listOf(50 to "Kurz", 75 to "Standard", 100 to "Lang").forEach { (score, label) ->
-                        SelectChip("$score · $label", setup.targetScore == score, { setup.targetScore = score })
+                        SelectTile("$score", setup.targetScore == score, { setup.targetScore = score }, Modifier.weight(1f), label)
                     }
                 }
                 LegsSetting(setup)
             }
             GameMode.AROUND_THE_CLOCK -> {
-                CardTitle("Variante")
-                chipRow {
+                section("Variante", true)
+                tileRow(3) {
                     listOf(
-                        ATCVariant.STANDARD to "Standard",
-                        ATCVariant.DOUBLE to "Nur Doubles",
-                        ATCVariant.TRIPLE to "Nur Triples",
-                        ATCVariant.QUICKLY to "Quickly",
-                        ATCVariant.SHANGHAI to "Shanghai"
-                    ).forEach { (variant, label) ->
-                        SelectChip(label, setup.atcVariant == variant, { setup.atcVariant = variant })
+                        Triple(ATCVariant.STANDARD, "Standard", "Einfach treffen"),
+                        Triple(ATCVariant.DOUBLE, "Doubles", "Nur Doubles"),
+                        Triple(ATCVariant.TRIPLE, "Triples", "Nur Triples")
+                    ).forEach { (variant, label, sub) ->
+                        SelectTile(label, setup.atcVariant == variant, { setup.atcVariant = variant }, Modifier.weight(1f), sub)
                     }
                 }
-                CardTitle("Optionen")
-                chipRow {
-                    SelectChip("Rückwärts 20 → 1", setup.atcReverse, { setup.atcReverse = !setup.atcReverse })
-                    SelectChip("Mit Bull", setup.atcWithBulls, { setup.atcWithBulls = !setup.atcWithBulls })
+                tileRow(3) {
+                    listOf(
+                        Triple(ATCVariant.QUICKLY, "Quickly", "S=1, D=2, T=3"),
+                        Triple(ATCVariant.SHANGHAI, "Shanghai", "S, D, T nötig")
+                    ).forEach { (variant, label, sub) ->
+                        SelectTile(label, setup.atcVariant == variant, { setup.atcVariant = variant }, Modifier.weight(1f), sub)
+                    }
+                    Spacer(Modifier.weight(1f))
+                }
+                section("Optionen", false)
+                tileRow(2) {
+                    SelectTile("Rückwärts", setup.atcReverse, { setup.atcReverse = !setup.atcReverse }, Modifier.weight(1f), "20 → 1")
+                    SelectTile("Mit Bull", setup.atcWithBulls, { setup.atcWithBulls = !setup.atcWithBulls }, Modifier.weight(1f), "Bull am Ende")
                 }
             }
             else -> {
-                CardTitle("Startpunkte")
-                chipRow {
+                section("Startpunkte", true)
+                tileRow(5) {
                     listOf(101, 301, 501, 701).forEach { score ->
-                        SelectChip("$score", setup.startScore == score, {
+                        SelectTile("$score", setup.startScore == score, {
                             setup.startScore = score
                             setup.customScore = ""
-                        })
+                        }, Modifier.weight(1f))
                     }
-                    SelectChip("Eigene", setup.startScore == 0, { setup.startScore = 0 })
+                    SelectTile("Eigene", setup.startScore == 0, { setup.startScore = 0 }, Modifier.weight(1f))
                 }
                 if (setup.startScore == 0) {
                     OutlinedTextField(
                         value = setup.customScore,
                         onValueChange = { setup.customScore = it.filter(Char::isDigit) },
-                        placeholder = { Text("z. B. 1001") },
+                        placeholder = { Text("Eigene Startpunkte, z. B. 1001") },
                         singleLine = true,
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -327,13 +334,13 @@ private fun SettingsSection(
                             focusedBorderColor = PrimaryOrange,
                             unfocusedBorderColor = GlassControlBorder
                         ),
-                        modifier = Modifier.width(180.dp).padding(bottom = 20.dp)
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
                     )
                 }
-                CardTitle("Regeln")
-                chipRow {
-                    SelectChip("Double In", setup.doubleIn, { setup.doubleIn = !setup.doubleIn })
-                    SelectChip("Double Out", setup.doubleOut, { setup.doubleOut = !setup.doubleOut })
+                section("Regeln", false)
+                tileRow(2) {
+                    SelectTile("Double In", setup.doubleIn, { setup.doubleIn = !setup.doubleIn }, Modifier.weight(1f), "Start mit Double")
+                    SelectTile("Double Out", setup.doubleOut, { setup.doubleOut = !setup.doubleOut }, Modifier.weight(1f), "Sieg mit Double")
                 }
                 LegsSetting(setup)
             }
@@ -343,12 +350,18 @@ private fun SettingsSection(
 
 @Composable
 private fun LegsSetting(setup: PlayerSetupState) {
-    CardTitle(if (setup.playerNames.size <= 1) "Legs" else "Legs · Best of")
-    Stepper(value = setup.legs, onValueChange = { setup.legs = it }, range = 1..21)
+    CardTitle(if (setup.playerNames.size <= 1) "Legs" else "Legs · Best of", modifier = Modifier.padding(top = 14.dp))
+    StepperTile(
+        value = setup.legs,
+        onValueChange = { setup.legs = it },
+        range = 1..21,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 private fun summary(setup: PlayerSetupState, mode: GameMode): String {
-    val players = setup.playerNames.count { it.name.isNotBlank() }
+    // Jede Zeile spielt mit; leere Namen werden beim Start zu "Spieler N"
+    val players = setup.playerNames.size
     val playerText = if (players == 1) "1 Spieler" else "$players Spieler"
     val modeText = when (mode) {
         GameMode.CRICKET -> "Cricket"

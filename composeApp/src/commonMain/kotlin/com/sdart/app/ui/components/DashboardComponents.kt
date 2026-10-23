@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,18 +84,36 @@ fun CardTitle(text: String, modifier: Modifier = Modifier) {
     )
 }
 
+/**
+ * Textlink in Karten. Ohne [icon] mit Pfeil für "weiter", mit [icon] steht stattdessen das Symbol vor dem Text.
+ */
 @Composable
-fun CardLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, primary: Boolean = true) {
-    Text(
-        text = "$text →",
-        style = MaterialTheme.typography.labelLarge.copy(
-            color = if (primary) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Normal
-        ),
-        maxLines = 1,
-        softWrap = false,
+fun CardLink(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    primary: Boolean = true,
+    icon: DrawableResource? = null
+) {
+    val color = if (primary) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.clickable(onClick = onClick)
-    )
+    ) {
+        if (icon != null) {
+            Icon(painterResource(icon), null, tint = color, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(
+            text = if (icon == null) "$text →" else text,
+            style = MaterialTheme.typography.labelLarge.copy(
+                color = color,
+                fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Normal
+            ),
+            maxLines = 1,
+            softWrap = false
+        )
+    }
 }
 
 @Composable
@@ -268,6 +287,100 @@ private fun StepperButton(label: String, enabled: Boolean, onClick: () -> Unit) 
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium.copy(
+                color = if (enabled) PrimaryOrange else GlassControlBorder
+            )
+        )
+    }
+}
+
+/**
+ * Große Auswahl-Kachel für Formulare (gleich hoch wie Eingabefelder), teilt sich per weight die Breite.
+ */
+@Composable
+fun SelectTile(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .heightIn(min = 60.dp)
+            .clip(shape)
+            .background(if (selected) ActiveGlassBg else GlassCardBg)
+            .border(if (selected) 1.5.dp else 1.dp, if (selected) PrimaryOrange else GlassControlBorder, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 10.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            ),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+/**
+ * Breiter Zähler im Kachel-Format: Minus links, Wert mittig, Plus rechts.
+ */
+@Composable
+fun StepperTile(
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    range: IntRange,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .height(60.dp)
+            .clip(shape)
+            .background(GlassCardBg)
+            .border(1.dp, GlassControlBorder, shape)
+    ) {
+        StepperTileButton("−", enabled = value > range.first) { onValueChange(value - 1) }
+        Text(
+            text = value.toString(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            modifier = Modifier.weight(1f)
+        )
+        StepperTileButton("+", enabled = value < range.last) { onValueChange(value + 1) }
+    }
+}
+
+@Composable
+private fun StepperTileButton(label: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(72.dp)
+            .clickable(enabled = enabled, onClick = onClick)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.headlineSmall.copy(
                 color = if (enabled) PrimaryOrange else GlassControlBorder
             )
         )

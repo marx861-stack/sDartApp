@@ -28,6 +28,7 @@ import com.sdart.app.tournament.ui.TournamentViewScreen
 import com.sdart.app.ui.AdaptiveContainer
 import com.sdart.app.ui.ProvideAdaptiveScale
 import com.sdart.app.ui.components.DesktopDestination
+import com.sdart.app.ui.components.DesktopScaffold
 import com.sdart.app.ui.screens.*
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.MyApplicationTheme
@@ -152,12 +153,13 @@ fun App() {
         }
     }
 
+    val lastShellScreen = remember { ShellScreenMemory() }
+
     val startScreen: @Composable () -> Unit = {
         StartScreen(
             vm = vm,
             repository = repository,
             sessionManager = sessionManager,
-            onNavigate = navigateTopLevel,
             onGamesClick = { navManager.navigateTo(Screen.GameModes) },
             onGameModeClick = { mode ->
                 navManager.setGameMode(mode)
@@ -173,44 +175,8 @@ fun App() {
         )
     }
 
-    MyApplicationTheme {
-      ProvideAdaptiveScale(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .ditheredBackground()
-                .edgeSwipeBack(
-                    enabled = canGoBack,
-                    onBack = handleBack
-                )
-        ) {
-            AnimatedContent(
-                targetState = navManager.currentScreen,
-                transitionSpec = {
-                    val isBackward = navManager.navigationDirection == NavigationDirection.Backward ||
-                            targetState == Screen.Start
-                    val slideOffset: (Int) -> Int = { fullWidth -> (fullWidth * 0.15f).toInt() }
-                    if (isBackward) {
-                        (slideInHorizontally(
-                            animationSpec = tween(260, easing = FastOutSlowInEasing),
-                            initialOffsetX = { -slideOffset(it) }
-                        ) + fadeIn(tween(220))) togetherWith
-                                (slideOutHorizontally(
-                                    animationSpec = tween(240, easing = FastOutSlowInEasing),
-                                    targetOffsetX = { slideOffset(it) }
-                                ) + fadeOut(tween(180)))
-                    } else {
-                        (slideInHorizontally(
-                            animationSpec = tween(260, easing = FastOutSlowInEasing),
-                            initialOffsetX = { slideOffset(it) }
-                        ) + fadeIn(tween(220))) togetherWith
-                                (slideOutHorizontally(
-                                    animationSpec = tween(240, easing = FastOutSlowInEasing),
-                                    targetOffsetX = { -slideOffset(it) }
-                                ) + fadeOut(tween(180)))
-                    }
-                }
-            ) { screen ->
+    // Inhalt eines Screens; Desktop-Hülle und Übergänge liegen darum herum
+    val screenContent: @Composable (Screen) -> Unit = { screen ->
                 when (screen) {
                 Screen.Start -> startScreen()
                 Screen.GameModes -> AdaptiveContainer { windowInfo ->
@@ -219,8 +185,7 @@ fun App() {
                             initialMode = navManager.selectedGameMode,
                             repository = repository,
                             onModeSelected = { mode -> navManager.setGameMode(mode) },
-                            onStartGame = startFromSetup,
-                            onNavigate = navigateTopLevel
+                            onStartGame = startFromSetup
                         )
                     } else {
                         GameModesScreen(
@@ -307,6 +272,71 @@ fun App() {
                 )
                 else -> startScreen()
             }
+    }
+
+    MyApplicationTheme {
+      ProvideAdaptiveScale(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .ditheredBackground()
+                .edgeSwipeBack(
+                    enabled = canGoBack,
+                    onBack = handleBack
+                )
+        ) {
+            AdaptiveContainer(modifier = Modifier.fillMaxSize()) { windowInfo ->
+                val currentScreen = navManager.currentScreen
+                // Auf großen Fenstern liegen alle Bereiche der Navigationsleiste in einer festen Hülle;
+                // der äußere Übergang sieht sie als einen Zustand, nur der Inhalt darin wechselt weich.
+                val inDesktopShell = windowInfo.isExpanded && currentScreen.desktopDestination() != null
+                AnimatedContent(
+                    targetState = if (inDesktopShell) DesktopShellKey else currentScreen,
+                    transitionSpec = {
+                        val isBackward = navManager.navigationDirection == NavigationDirection.Backward ||
+                                targetState == Screen.Start || targetState === DesktopShellKey
+                        val slideOffset: (Int) -> Int = { fullWidth -> (fullWidth * 0.15f).toInt() }
+                        if (isBackward) {
+                            (slideInHorizontally(
+                                animationSpec = tween(260, easing = FastOutSlowInEasing),
+                                initialOffsetX = { -slideOffset(it) }
+                            ) + fadeIn(tween(220))) togetherWith
+                                    (slideOutHorizontally(
+                                        animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                        targetOffsetX = { slideOffset(it) }
+                                    ) + fadeOut(tween(180)))
+                        } else {
+                            (slideInHorizontally(
+                                animationSpec = tween(260, easing = FastOutSlowInEasing),
+                                initialOffsetX = { slideOffset(it) }
+                            ) + fadeIn(tween(220))) togetherWith
+                                    (slideOutHorizontally(
+                                        animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                        targetOffsetX = { -slideOffset(it) }
+                                    ) + fadeOut(tween(180)))
+                        }
+                    }
+                ) { key ->
+                    if (key === DesktopShellKey) {
+                        // Beim Verlassen der Hülle (z. B. nach Einstellungen) bleibt zuletzt gezeigte Seite stehen
+                        val shownScreen = navManager.currentScreen
+                            .takeIf { it.desktopDestination() != null } ?: lastShellScreen.screen
+                        lastShellScreen.screen = shownScreen
+                        DesktopScaffold(
+                            selected = shownScreen.desktopDestination() ?: DesktopDestination.OVERVIEW,
+                            onNavigate = navigateTopLevel
+                        ) {
+                            AnimatedContent(
+                                targetState = shownScreen,
+                                transitionSpec = {
+                                    fadeIn(tween(160, delayMillis = 90)) togetherWith fadeOut(tween(90))
+                                }
+                            ) { screen -> screenContent(screen) }
+                        }
+                    } else {
+                        screenContent(key as Screen)
+                    }
+                }
             }
 
 
@@ -358,4 +388,23 @@ fun App() {
         }
       }
     }
+}
+
+/** Zustand für alle Screens, die auf großen Fenstern in der Desktop-Hülle liegen. */
+private data object DesktopShellKey
+
+/** Merkt sich die zuletzt gezeigte Seite der Desktop-Hülle, damit sie beim Ausblenden stehen bleibt. */
+private class ShellScreenMemory {
+    var screen: Screen = Screen.Start
+}
+
+/** Bereich der Navigationsleiste, zu dem der Screen gehört; null für Screens ohne Leiste (z. B. das Spiel). */
+private fun Screen.desktopDestination(): DesktopDestination? = when (this) {
+    Screen.Start -> DesktopDestination.OVERVIEW
+    Screen.GameModes -> DesktopDestination.GAMES
+    Screen.TournamentSetup, Screen.TournamentView -> DesktopDestination.TOURNAMENT
+    Screen.PlayerManagement -> DesktopDestination.PLAYERS
+    Screen.PcIntegration -> DesktopDestination.DEVICES
+    Screen.Settings -> DesktopDestination.SETTINGS
+    else -> null
 }
