@@ -83,37 +83,26 @@ fun PlayerSetupContent(
     repository: PlayerRepository,
     onStartGame: (List<String>, GameMode, Int, Boolean, Boolean, Int, Boolean, ATCGameState?, CricketConfig?) -> Unit,
     isWidescreen: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    state: PlayerSetupState = rememberPlayerSetupState()
 ) {
-    val savedPlayersStr = AppPreferences.getLastPlayerNames()
-    var playerNames by remember { 
-        val initialList = if (!savedPlayersStr.isNullOrEmpty()) {
-            savedPlayersStr.split("|").map { 
-                val parts = it.split(":")
-                if (parts.size >= 2) SetupPlayer(parts[0], parts[1].toBooleanStrictOrNull() ?: false)
-                else SetupPlayer(it, false)
-            }
-        } else {
-            List(1) { SetupPlayer("Spieler ${it + 1}", false) }
-        }
-        mutableStateOf(initialList)
-    }
-    var startScore by remember { mutableStateOf(501) }
-    var customScore by remember { mutableStateOf("") }
-    var doubleIn by remember { mutableStateOf(false) }
-    var doubleOut by remember { mutableStateOf(true) }
-    var legs by remember { mutableStateOf(1) }
-    var showError by remember { mutableStateOf(false) }
+    var playerNames by state::playerNames
+    var startScore by state::startScore
+    var customScore by state::customScore
+    var doubleIn by state::doubleIn
+    var doubleOut by state::doubleOut
+    var legs by state::legs
+    val showError by state::showError
     var showLoadDialog by remember { mutableStateOf(false) }
     // All Fives spezifische Einstellungen
-    var targetScore by remember { mutableStateOf<Int?>(if (selectedGameMode == GameMode.ALL_FIVES) 50 else null) } // 50, 75 oder 100
-    var randomizeOrder by remember { mutableStateOf(true) }
+    var targetScore by state::targetScore
+    var randomizeOrder by state::randomizeOrder
     // ATC spezifische Einstellungen
-    var atcVariant by remember { mutableStateOf(ATCVariant.STANDARD) }
-    var atcReverse by remember { mutableStateOf(false) }
-    var atcWithBulls by remember { mutableStateOf(false) }
+    var atcVariant by state::atcVariant
+    var atcReverse by state::atcReverse
+    var atcWithBulls by state::atcWithBulls
     // Cricket spezifische Einstellungen
-    var cricketVariant by remember { mutableStateOf(CricketVariant.STANDARD) }
+    var cricketVariant by state::cricketVariant
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -129,13 +118,7 @@ fun PlayerSetupContent(
                 )
             ) {
                 Text(
-                    text = when {
-                        playerNames.isEmpty() -> "Mindestens 1 Spieler erforderlich"
-                        playerNames.size > 8 -> "Maximal 8 Spieler erlaubt"
-                        selectedGameMode == GameMode.ALL_FIVES && targetScore == null -> "Bitte wÃ¤hlen Sie eine Ziel-Punktzahl aus"
-                        selectedGameMode == GameMode.ALL_FIVES && playerNames.size != playerNames.distinct().size -> "Spielernamen mÃ¼ssen eindeutig sein"
-                        else -> "Fehler beim Starten des Spiels. Bitte versuchen Sie es erneut."
-                    },
+                    text = state.errorMessage(selectedGameMode),
                     modifier = Modifier.padding(16.dp),
                     color = Color(0xFF721c24),
                     textAlign = TextAlign.Center
@@ -472,82 +455,7 @@ fun PlayerSetupContent(
 
         val startButtonContent: @Composable () -> Unit = {
             Button(
-                onClick = {
-                    try {
-                        println("=== PLAYERSETUPSCREEN: Starting game ===")
-                        
-                        val validPlayers = playerNames.mapIndexed { i, p -> 
-                            SetupPlayer(if (p.name.isBlank()) "Spieler ${i + 1}" else p.name.trim(), p.isLoaded)
-                        }.filter { it.name.isNotBlank() }
-                        val names = validPlayers.map { it.name }
-                        
-                        println("Validated names: $names")
-                        
-                        if (names.isNotEmpty() && names.size <= 8) {
-                            if (selectedGameMode == GameMode.ALL_FIVES) {
-                                if (targetScore == null) {
-                                    showError = true
-                                    return@Button
-                                }
-                                
-                                if (names.size != names.distinct().size) {
-                                    showError = true
-                                    return@Button
-                                }
-                                
-                                if (names.any { it.isBlank() }) {
-                                    showError = true
-                                    return@Button
-                                }
-                                
-                                AppPreferences.saveLastPlayerNames(validPlayers.joinToString("|") { "${it.name}:${it.isLoaded}" })
-                                onStartGame(names, selectedGameMode, targetScore!!, false, false, legs, randomizeOrder, null, null)
-                                showError = false
-                                println("All Fives game start request sent successfully")
-                                return@Button
-                            }
-                            
-                            println("DEBUG: Vor Validierung - startScore: $startScore, customScore: $customScore")
-                            
-                            val finalStartScore: Int = if (startScore > 0) {
-                                startScore
-                            } else if (customScore.isNotEmpty()) {
-                                val customValue = customScore.toIntOrNull()
-                                if (customValue != null && customValue > 0) customValue else 501
-                            } else {
-                                501
-                            }
-                            
-                            println("DEBUG: Finale Startpunktzahl: $finalStartScore")
-                            
-                            val atcConfig = if (selectedGameMode == GameMode.AROUND_THE_CLOCK) {
-                                ATCGameState(atcVariant, atcReverse, atcWithBulls)
-                            } else null
-                            
-                            val cricketConfig = if (selectedGameMode == GameMode.CRICKET) {
-                                CricketConfig(cricketVariant)
-                            } else null
-                            
-                            AppPreferences.saveLastPlayerNames(validPlayers.joinToString("|") { "${it.name}:${it.isLoaded}" })
-                            onStartGame(names, selectedGameMode, finalStartScore, doubleIn, doubleOut, legs, randomizeOrder, atcConfig, cricketConfig)
-                            showError = false
-                            
-                            println("Game start request sent successfully")
-                        } else if (names.isEmpty()) {
-                            println("ERROR: Not enough valid player names")
-                            showError = true
-                        } else {
-                            println("ERROR: Too many players (max 8)")
-                            showError = true
-                        }
-                    } catch (e: Exception) {
-                        println("=== ERROR IN PLAYERSETUPSCREEN ===")
-                        println("Error type: ${e.javaClass.simpleName}")
-                        println("Error message: ${e.message}")
-                        e.printStackTrace()
-                        showError = true
-                    }
-                },
+                onClick = { state.startGame(selectedGameMode, onStartGame) },
                 enabled = playerNames.any { it.name.isNotBlank() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (playerNames.any { it.name.isNotBlank() }) PrimaryOrange else Color(0xFF444444)
@@ -619,16 +527,7 @@ fun PlayerSetupContent(
         PlayerLoadDialog(
             repository = repository,
             onDismiss = { showLoadDialog = false },
-            onPlayersSelected = { selectedNames ->
-                // FÃ¼ge ausgewÃ¤hlte Spieler zur Liste hinzu
-                val newNames = playerNames.toMutableList()
-                selectedNames.forEach { selectedName ->
-                    if (newNames.size < 8 && !newNames.any { it.name == selectedName }) {
-                        newNames.add(SetupPlayer(selectedName, true))
-                    }
-                }
-                playerNames = newNames
-            }
+            onPlayersSelected = { selectedNames -> state.addLoadedPlayers(selectedNames) }
         )
     }
 }

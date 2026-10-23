@@ -175,3 +175,91 @@ fun Sparkline(values: List<Float>, color: Color, modifier: Modifier = Modifier) 
         drawPath(path, color, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
 }
+
+/**
+ * Auswahl-Chip: aktiv orange hinterlegt, sonst nur grau umrandet.
+ */
+@Composable
+fun SelectChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: DrawableResource? = null
+) {
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .clip(shape)
+            .background(if (selected) ActiveOrangeBg else Color.Transparent)
+            .border(if (selected) 1.5.dp else 1.dp, if (selected) PrimaryOrange else MaterialTheme.colorScheme.outline, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 9.dp)
+    ) {
+        if (icon != null) {
+            Icon(
+                painterResource(icon),
+                null,
+                tint = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurface,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+            ),
+            maxLines = 1
+        )
+    }
+}
+
+/**
+ * Kompakter Zähler mit Minus/Plus, z. B. für die Anzahl der Legs.
+ */
+@Composable
+fun Stepper(
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    range: IntRange,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(10.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .clip(shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+    ) {
+        StepperButton("−", enabled = value > range.first) { onValueChange(value - 1) }
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            modifier = Modifier.padding(horizontal = 14.dp)
+        )
+        StepperButton("+", enabled = value < range.last) { onValueChange(value + 1) }
+    }
+}
+
+@Composable
+private fun StepperButton(label: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(38.dp)
+            .clickable(enabled = enabled, onClick = onClick)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = if (enabled) PrimaryOrange else MaterialTheme.colorScheme.outline
+            )
+        )
+    }
+}
