@@ -97,7 +97,7 @@ fun DesktopGamesScreen(
                 }
 
                 Spacer(Modifier.weight(1f).heightIn(min = 20.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                HorizontalDivider(color = GlassCardBorder)
                 Spacer(Modifier.height(16.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -208,7 +208,7 @@ private fun PlayersSection(
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
                         unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                         focusedBorderColor = PrimaryOrange,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        unfocusedBorderColor = GlassControlBorder
                     ),
                     modifier = Modifier.weight(1f)
                 )
@@ -321,7 +321,7 @@ private fun SettingsSection(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
                             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                             focusedBorderColor = PrimaryOrange,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            unfocusedBorderColor = GlassControlBorder
                         ),
                         modifier = Modifier.width(180.dp).padding(bottom = 20.dp)
                     )

@@ -33,6 +33,8 @@ enum class DesktopDestination {
     OVERVIEW, GAMES, TOURNAMENT, PLAYERS, DEVICES, SETTINGS
 }
 
+private val MaxContentWidth = 1360.dp
+
 /**
  * Rahmen für Desktop-Screens: feste Navigationsleiste links, rechts Titel und scrollbarer Inhalt.
  */
@@ -46,26 +48,46 @@ fun DesktopShell(
     Row(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.35f))
             .safeDrawingPadding()
     ) {
         DesktopNavRail(selected = selected, onNavigate = onNavigate)
 
-        Column(
+        BoxWithConstraints(
+            contentAlignment = Alignment.TopCenter,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
-                .padding(28.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+            val viewportHeight = maxHeight
+            // Auf großen Monitoren nicht beliebig breit ziehen und kurzen Inhalt vertikal mittig halten;
+            // ist er höher als das Fenster, wird normal von oben gescrollt
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = viewportHeight)
+                    .padding(horizontal = 36.dp, vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = MaxContentWidth)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-            )
-            content()
+                content()
+            }
+            }
         }
     }
 }
@@ -79,7 +101,7 @@ private fun DesktopNavRail(
         modifier = Modifier
             .width(220.dp)
             .fillMaxHeight()
-            .background(Color.Black.copy(alpha = 0.28f))
+            .background(Color.Black.copy(alpha = 0.35f))
             .padding(horizontal = 14.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -142,7 +164,7 @@ private fun NavRailItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(if (selected) ActiveOrangeBg else Color.Transparent)
+            .background(if (selected) ActiveGlassBg else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 11.dp)
     ) {

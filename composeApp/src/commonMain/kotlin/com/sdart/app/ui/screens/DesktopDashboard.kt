@@ -217,7 +217,7 @@ private fun TournamentStatusCard(
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(RoundedCornerShape(3.dp))
-                    .background(MaterialTheme.colorScheme.outline)
+                    .background(GlassControlBorder)
             ) {
                 Box(
                     modifier = Modifier

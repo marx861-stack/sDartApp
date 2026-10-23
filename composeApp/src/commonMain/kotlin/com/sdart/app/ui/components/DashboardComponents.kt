@@ -36,6 +36,12 @@ val DashboardCardShape = RoundedCornerShape(15.dp)
 val ActiveOrangeBg = Color(0xFF2E2218)
 val OnlineGreen = Color(0xFF4CAF50)
 
+// Fast durchsichtige Kacheln wie im Spiel-Screen
+val GlassCardBg = Color.White.copy(alpha = 0.04f)
+val GlassCardBorder = Color.White.copy(alpha = 0.08f)
+val GlassControlBorder = Color.White.copy(alpha = 0.16f)
+val ActiveGlassBg = PrimaryOrange.copy(alpha = 0.10f)
+
 @Composable
 fun DashboardCard(
     title: String?,
@@ -47,10 +53,10 @@ fun DashboardCard(
     Column(
         modifier = modifier
             .clip(DashboardCardShape)
-            .background(if (highlighted) ActiveOrangeBg else MaterialTheme.colorScheme.surface)
+            .background(if (highlighted) ActiveGlassBg else GlassCardBg)
             .border(
-                width = 2.dp,
-                color = if (highlighted) PrimaryOrange else MaterialTheme.colorScheme.outline,
+                width = if (highlighted) 1.5.dp else 1.dp,
+                color = if (highlighted) PrimaryOrange else GlassCardBorder,
                 shape = DashboardCardShape
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
@@ -83,6 +89,8 @@ fun CardLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, p
             color = if (primary) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Normal
         ),
+        maxLines = 1,
+        softWrap = false,
         modifier = modifier.clickable(onClick = onClick)
     )
 }
@@ -93,7 +101,7 @@ fun ModeChip(icon: DrawableResource, label: String, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp))
+            .border(1.dp, GlassControlBorder, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
@@ -112,7 +120,7 @@ fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f))
+            .background(GlassCardBg)
             .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
         Text(
@@ -141,7 +149,7 @@ fun StatusLine(online: Boolean, label: String, detail: String?) {
             modifier = Modifier
                 .size(9.dp)
                 .clip(CircleShape)
-                .background(if (online) OnlineGreen else MaterialTheme.colorScheme.outline)
+                .background(if (online) OnlineGreen else GlassControlBorder)
         )
         Spacer(Modifier.width(10.dp))
         Text(
@@ -192,8 +200,8 @@ fun SelectChip(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .clip(shape)
-            .background(if (selected) ActiveOrangeBg else Color.Transparent)
-            .border(if (selected) 1.5.dp else 1.dp, if (selected) PrimaryOrange else MaterialTheme.colorScheme.outline, shape)
+            .background(if (selected) ActiveGlassBg else Color.Transparent)
+            .border(if (selected) 1.5.dp else 1.dp, if (selected) PrimaryOrange else GlassControlBorder, shape)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 9.dp)
     ) {
@@ -232,7 +240,7 @@ fun Stepper(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .clip(shape)
-            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .border(1.dp, GlassControlBorder, shape)
     ) {
         StepperButton("−", enabled = value > range.first) { onValueChange(value - 1) }
         Text(
@@ -258,7 +266,7 @@ private fun StepperButton(label: String, enabled: Boolean, onClick: () -> Unit) 
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium.copy(
-                color = if (enabled) PrimaryOrange else MaterialTheme.colorScheme.outline
+                color = if (enabled) PrimaryOrange else GlassControlBorder
             )
         )
     }
