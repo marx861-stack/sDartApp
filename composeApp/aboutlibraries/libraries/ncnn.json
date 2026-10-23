@@ -1,0 +1,17 @@
+{
+  "uniqueId": "com.tencent:ncnn",
+  "name": "ncnn",
+  "developers": [
+    {
+      "name": "Tencent"
+    }
+  ],
+  "organization": {
+    "name": "Tencent"
+  },
+  "description": "High-Performance Neural Network Inference Framework mit Vulkan-GPU-Beschleunigung (Android).",
+  "website": "https://github.com/Tencent/ncnn",
+  "licenses": [
+    "ncnn-license"
+  ]
+}

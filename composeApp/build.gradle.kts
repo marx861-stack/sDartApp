@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import java.util.regex.Pattern
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -6,6 +7,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.aboutLibraries)
 }
 
 kotlin {
@@ -48,6 +50,7 @@ kotlin {
                 implementation(libs.androidx.lifecycle.viewmodel)
                 implementation(libs.androidx.lifecycle.viewmodel.compose)
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.aboutlibraries.core)
             }
         }
 
@@ -141,6 +144,81 @@ android {
         }
     }
 }
+
+// Lizenzliste (Einstellungen → Lizenzen): alle Abhängigkeiten inkl. transitiver werden beim Build
+// mit Lizenztexten erfasst und als JSON in die Compose-Ressourcen geschrieben.
+// Bibliotheken ohne Maven-Artefakt (Modell, native Libs) stehen in composeApp/aboutlibraries/.
+aboutLibraries {
+    registerAndroidTasks = false
+    prettyPrint = true
+    configPath = "composeApp/aboutlibraries"
+    excludeFields = arrayOf("funding")
+    // KMP-Bibliotheken haben je Plattform ein eigenes Artefakt (z.B. -android, -jvm): zu einem Eintrag zusammenführen
+    duplicationMode = com.mikepenz.aboutlibraries.plugin.DuplicateMode.MERGE
+    duplicationRule = com.mikepenz.aboutlibraries.plugin.DuplicateRule.SIMPLE
+    // Nur Test-Abhängigkeiten – werden nicht mit der App ausgeliefert
+    exclusionPatterns = listOf(
+        "junit:junit",
+        "org\\.hamcrest:.*",
+        "org\\.jetbrains\\.kotlin:kotlin-test.*",
+        "org\\.jetbrains\\.kotlinx:kotlinx-coroutines-test.*"
+    ).map { Pattern.compile(it) }
+}
+// Ausgabepfad der Gesamtliste: aboutLibraries.exportPath in gradle.properties (Fallback für iOS)
+
+// Jede App liefert nur ihre eigenen Abhängigkeiten aus (Android: androidx-Artefakte, Desktop: JetBrains-Ports).
+// Deshalb pro Plattform eine eigene Liste, sonst würden dieselben Komponenten doppelt und mit
+// Bibliotheken der jeweils anderen Plattform erscheinen. Variante = Gradle-Konfiguration der Plattform.
+// Manuelle Einträge (aboutlibraries/), die nur auf einer Plattform ausgeliefert werden, hier ausnehmen.
+val licenseListPerPlatform = mapOf(
+    "android" to Pair("androidRelease", setOf<String>()),
+    "desktop" to Pair("desktop", setOf("com.tencent:ncnn"))
+)
+val platformLicenseTasks = licenseListPerPlatform.map { (platform, config) ->
+    val (gradleVariant, excludedIds) = config
+    tasks.register<com.mikepenz.aboutlibraries.plugin.AboutLibrariesTask>(
+        "exportLibraryDefinitions${platform.replaceFirstChar { it.uppercase() }}"
+    ) {
+        description = "Schreibt die Lizenzliste für $platform nach composeResources/files/$platform"
+        group = "Build"
+        variant = gradleVariant
+        resultDirectory = file("src/commonMain/composeResources/files/$platform")
+        dependsOn("collectDependencies")
+        doLast {
+            if (excludedIds.isEmpty()) return@doLast
+            val slurper = groovy.json.JsonSlurper()
+            @Suppress("UNCHECKED_CAST")
+            val json = slurper.parse(combinedLibrariesOutputFile) as MutableMap<String, Any?>
+            @Suppress("UNCHECKED_CAST")
+            val libs = (json["libraries"] as List<Map<String, Any?>>).filter { it["uniqueId"] !in excludedIds }
+            @Suppress("UNCHECKED_CAST")
+            val usedLicenses = libs.flatMap { it["licenses"] as? List<String> ?: emptyList() }.toSet()
+            @Suppress("UNCHECKED_CAST")
+            val licenses = (json["licenses"] as Map<String, Any?>).filterKeys { it in usedLicenses }
+            json["libraries"] = libs
+            json["licenses"] = licenses
+            val generator = groovy.json.JsonGenerator.Options().disableUnicodeEscaping().build()
+            combinedLibrariesOutputFile.writeText(
+                groovy.json.JsonOutput.prettyPrint(generator.toJson(json)), Charsets.UTF_8
+            )
+        }
+    }
+}
+
+// Eigener Lizenztext der App (GPL-3.0): immer direkt aus der LICENSE im Projektordner übernehmen,
+// damit der in der App angezeigte Text nie von der veröffentlichten Lizenz abweicht.
+val copyAppLicense by tasks.registering(Copy::class) {
+    description = "Kopiert die LICENSE der App in die Compose-Ressourcen"
+    from(rootProject.file("LICENSE"))
+    into("src/commonMain/composeResources/files")
+    rename { "app-license.txt" }
+}
+
+tasks.matching { it.name.endsWith("ComposeResourcesForCommonMain") || it.name.endsWith("ResourcesForCommonMain") }
+    .configureEach {
+        dependsOn("exportLibraryDefinitions", copyAppLicense)
+        platformLicenseTasks.forEach { dependsOn(it) }
+    }
 
 val appVersion = "1.0.0"
 

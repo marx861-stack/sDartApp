@@ -1,0 +1,9 @@
+{
+  "uniqueId": "com.hexgrad:kokoro-82m",
+  "name": "Kokoro-82M (Voice Caller)",
+  "developers": [{ "name": "hexgrad" }],
+  "organization": { "name": "hexgrad" },
+  "description": "Text-to-Speech-Modell, mit dem alle Caller-Ansagen offline erzeugt wurden (Stimme bm_lewis, britisches Englisch).",
+  "website": "https://huggingface.co/hexgrad/Kokoro-82M",
+  "licenses": ["Apache-2.0"]
+}

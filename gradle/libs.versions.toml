@@ -11,6 +11,8 @@ opencv = "4.9.0"
 litert = "1.0.1"
 serialization = "1.7.3"
 java-websocket = "1.5.7"
+# 11.2.x ist die letzte Linie, die gegen Kotlin 2.0 gebaut ist (11.6+ braucht Kotlin 2.1)
+aboutlibraries = "11.2.3"
 
 [libraries]
 # Android spezifische Hilfsbibliotheken
@@ -32,6 +34,7 @@ camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" 
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 java-websocket = { module = "org.java-websocket:Java-WebSocket", version.ref = "java-websocket" }
+aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -40,3 +43,4 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-mu
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }

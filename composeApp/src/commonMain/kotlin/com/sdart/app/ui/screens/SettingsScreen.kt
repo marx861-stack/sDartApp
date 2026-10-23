@@ -7,9 +7,13 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -19,12 +23,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.ScreenHeader
+import com.sdart.app.ui.theme.DarkTextSecondary
+import com.mikepenz.aboutlibraries.Libs
+import com.mikepenz.aboutlibraries.entity.Library
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import sdartapp.composeapp.generated.resources.*
 
@@ -114,7 +127,7 @@ fun SettingsScreen(
                     )
                     SettingsActionItem(
                         iconRes = Res.drawable.ic_standard,
-                        title = "Open-Source-Lizenzen",
+                        title = "Lizenzen",
                         value = "Anzeigen",
                         onClick = { showLicensesDialog = true },
                         isDark = isDark
@@ -169,13 +182,15 @@ fun SettingsCard(
     isDark: Boolean,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    // Ohne Schatten: die halbtransparente Glass-Fläche würde ihn als zweites Rechteck durchscheinen lassen
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -343,56 +358,89 @@ fun VersionInfoItem(
     }
 }
 
+
+/**
+ * Lizenzen aller ausgelieferten Bibliotheken. Die Liste wird beim Build vom AboutLibraries-Plugin
+ * aus den tatsächlichen Abhängigkeiten der jeweiligen Plattform erzeugt ([licensesResourcePath]) und enthält die vollen
+ * Lizenztexte. Manuelle Einträge (Modell, native Libs) liegen in composeApp/aboutlibraries/.
+ */
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun LicensesDialog(
     onDismiss: () -> Unit
 ) {
+    val libraries by produceState<List<Library>?>(initialValue = null) {
+        value = runCatching {
+            val json = Res.readBytes(licensesResourcePath()).decodeToString()
+            Libs.Builder().withJson(json).build().libraries.sortedBy { it.name.lowercase() }
+        }.getOrElse {
+            println("Error loading licenses: ${it.message}")
+            emptyList()
+        }
+    }
+    var expandedId by remember { mutableStateOf<String?>(null) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = "Open-Source-Lizenzen",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+            Column {
+                Text(
+                    text = "Lizenzen",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 )
-            )
+                libraries?.takeIf { it.isNotEmpty() }?.let {
+                    Text(
+                        text = "${it.size} Open-Source-Komponenten · Eintrag antippen für den Lizenztext",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = DarkTextSecondary
+                    )
+                }
+            }
         },
         text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                LicenseEntry(
-                    name = "RTMDet (OpenMMLab)",
-                    license = "Apache License 2.0",
-                    copyright = "Copyright (c) OpenMMLab. All rights reserved.",
-                    description = "Echtzeit-Objekterkennung für Darts und Dartboard (Modellarchitektur & Training)."
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                LicenseEntry(
-                    name = "Tencent ncnn",
-                    license = "BSD 3-Clause License",
-                    copyright = "Copyright (c) 2017, Tencent Inc. All rights reserved.",
-                    description = "High-Performance Neural Network Inference Framework mit Vulkan-GPU-Beschleunigung (Android)."
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                LicenseEntry(
-                    name = "Microsoft ONNX Runtime",
-                    license = "MIT License",
-                    copyright = "Copyright (c) Microsoft Corporation. All rights reserved.",
-                    description = "Cross-Platform Machine Learning Inference Engine (Desktop / Windows)."
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                LicenseEntry(
-                    name = "Kotlin Multiplatform & Compose Multiplatform",
-                    license = "Apache License 2.0",
-                    copyright = "Copyright (c) JetBrains s.r.o. and Google LLC.",
-                    description = "Multiplattform-Architektur und deklaratives UI-Framework."
-                )
+            val list = libraries
+            when {
+                list == null -> Box(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+                else -> LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 520.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    item(key = APP_LICENSE_ID) {
+                        AppLicenseCard(
+                            expanded = expandedId == APP_LICENSE_ID,
+                            onToggle = {
+                                expandedId = if (expandedId == APP_LICENSE_ID) null else APP_LICENSE_ID
+                            }
+                        )
+                    }
+                    if (list.isEmpty()) {
+                        item {
+                            Text(
+                                text = "Die Lizenzliste der Bibliotheken konnte nicht geladen werden.",
+                                color = DarkTextSecondary
+                            )
+                        }
+                    }
+                    items(list, key = { it.uniqueId }) { library ->
+                        LicenseEntry(
+                            library = library,
+                            expanded = expandedId == library.uniqueId,
+                            onToggle = {
+                                expandedId = if (expandedId == library.uniqueId) null else library.uniqueId
+                            }
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
@@ -407,43 +455,198 @@ fun LicensesDialog(
             }
         },
         shape = RoundedCornerShape(16.dp),
-        containerColor = MaterialTheme.colorScheme.surface
+        // Deckender Hintergrund: colorScheme.surface ist hier nur 5 % weiß und damit fast durchsichtig
+        containerColor = Color(0xFF262626)
     )
 }
 
 @Composable
 private fun LicenseEntry(
-    name: String,
-    license: String,
-    copyright: String,
-    description: String
+    library: Library,
+    expanded: Boolean,
+    onToggle: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+    val author = library.organization?.name
+        ?: library.developers.mapNotNull { it.name }.joinToString(", ").takeIf { it.isNotBlank() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF2F2F2F))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+            .clickable { onToggle() }
+            .padding(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                Text(
+                    text = library.name,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                )
+                val meta = listOfNotNull(author, library.artifactVersion).joinToString(" · ")
+                if (meta.isNotEmpty()) {
+                    Text(
+                        text = meta,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = DarkTextSecondary.copy(alpha = 0.7f)
+                    )
+                }
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                library.licenses.forEach { license ->
+                    Text(
+                        text = license.name,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
+        library.description?.takeIf { it.isNotBlank() }?.let {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = DarkTextSecondary,
+                maxLines = if (expanded) Int.MAX_VALUE else 2,
+                overflow = TextOverflow.Ellipsis
             )
-        )
-        Text(
-            text = license,
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
+        }
+        AnimatedVisibility(visible = expanded) {
+            Column(
+                modifier = Modifier.padding(top = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                library.licenses.forEach { license ->
+                    Text(
+                        text = license.licenseContent?.takeIf { it.isNotBlank() }
+                            ?: license.url
+                            ?: license.name,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        ),
+                        color = DarkTextSecondary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+                            .padding(12.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+private const val APP_LICENSE_ID = "app-license"
+private const val APP_SOURCE_URL = "https://github.com/marx861-stack/sDartApp"
+
+/**
+ * Rechtshinweise der App selbst (GPL-3.0, Abschnitt 5d): Copyright, Gewährleistungsausschluss,
+ * Quellcode-Angebot und voller Lizenztext. Der Text wird beim Build aus der LICENSE des Projekts kopiert.
+ */
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun AppLicenseCard(
+    expanded: Boolean,
+    onToggle: () -> Unit
+) {
+    val uriHandler = LocalUriHandler.current
+    val licenseText by produceState<String?>(initialValue = null, expanded) {
+        if (expanded && value == null) {
+            value = runCatching { Res.readBytes("files/app-license.txt").decodeToString() }
+                .getOrElse { "Lizenztext nicht verfügbar. Er steht unter $APP_SOURCE_URL" }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF2F2F2F))
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+            .clickable { onToggle() }
+            .padding(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                Text(
+                    text = "s'Dart App",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                )
+                Text(
+                    text = "Copyright (C) 2026 marx861-stack",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = DarkTextSecondary.copy(alpha = 0.7f)
+                )
+            }
+            Text(
+                text = "GPL v3",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                ),
+                modifier = Modifier
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        RoundedCornerShape(50)
+                    )
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
             )
-        )
-        Spacer(modifier = Modifier.height(2.dp))
+        }
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = description,
+            text = "Dieses Programm kommt ohne jegliche Gewährleistung. Es ist freie Software und darf " +
+                "unter den Bedingungen der GNU General Public License v3 weitergegeben werden.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = DarkTextSecondary
         )
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = copyright,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            text = "Quellcode: $APP_SOURCE_URL",
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline
+            ),
+            modifier = Modifier.clickable { uriHandler.openUri(APP_SOURCE_URL) }
         )
+        AnimatedVisibility(visible = expanded) {
+            Text(
+                text = licenseText ?: "…",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
+                ),
+                color = DarkTextSecondary,
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .fillMaxWidth()
+                    .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+            )
+        }
     }
 }

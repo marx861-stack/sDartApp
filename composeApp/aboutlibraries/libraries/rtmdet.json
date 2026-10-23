@@ -1,0 +1,17 @@
+{
+  "uniqueId": "org.openmmlab:rtmdet",
+  "name": "RTMDet (OpenMMLab)",
+  "developers": [
+    {
+      "name": "OpenMMLab"
+    }
+  ],
+  "organization": {
+    "name": "OpenMMLab"
+  },
+  "description": "Echtzeit-Objekterkennung für Darts und Dartboard (Modellarchitektur).",
+  "website": "https://github.com/open-mmlab/mmdetection",
+  "licenses": [
+    "Apache-2.0"
+  ]
+}
