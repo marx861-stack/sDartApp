@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.AdaptiveContainer
-import com.sdart.app.ui.WindowHeightSizeClass
+import com.sdart.app.ui.CenteredMenuLayout
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.PrimaryOrange
 import com.sdart.app.ui.theme.ditheredBackground
@@ -48,32 +48,11 @@ fun StartScreen(
 
     AdaptiveContainer(modifier = backgroundModifier) { windowInfo ->
         val isWidescreen = windowInfo.isWidescreen
-        val shouldCenterVertically = isWidescreen && windowInfo.heightClass != WindowHeightSizeClass.COMPACT
 
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .safeDrawingPadding()
-                    .verticalScroll(rememberScrollState()),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 24.dp)
-                        .then(
-                            if (shouldCenterVertically) {
-                                Modifier.defaultMinSize(minHeight = windowInfo.maxHeight - 48.dp)
-                            } else {
-                                Modifier
-                            }
-                        ),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = if (shouldCenterVertically) Arrangement.Center else Arrangement.Top
-                ) {
+                CenteredMenuLayout {
                     // --- HEADER START ---
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -156,8 +135,7 @@ fun StartScreen(
                 Column(
                     modifier = Modifier
                         .widthIn(max = windowInfo.maxContentWidth)
-                        .fillMaxWidth()
-                        .padding(bottom = if (shouldCenterVertically) 0.dp else 40.dp),
+                        .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -225,7 +203,6 @@ fun StartScreen(
                     }
                 }
             }
-        }
 
             // Settings Button (Floating Top Right)
             Box(

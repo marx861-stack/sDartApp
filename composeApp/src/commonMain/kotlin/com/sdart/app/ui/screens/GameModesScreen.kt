@@ -24,7 +24,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.AdaptiveContainer
+import com.sdart.app.ui.CenteredMenuLayout
 import com.sdart.app.ui.ScreenHeader
+import com.sdart.app.ui.theme.ditheredBackground
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -35,38 +37,24 @@ fun GameModesScreen(
     onGameModeSelected: (GameMode) -> Unit,
     onBack: () -> Unit
 ) {
-    val backgroundModifier = Modifier.fillMaxSize().background(
-        Brush.linearGradient(
-            colors = listOf(
-                Color(0xFF1A1A1A),
-                Color(0xFF2A2A2A),
-                Color(0xFF1F1F1F)
-            )
-        )
-    )
+    val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
 
     AdaptiveContainer(modifier = backgroundModifier) { windowInfo ->
         val isWidescreen = windowInfo.isWidescreen
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(20.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+        CenteredMenuLayout(
+            header = {
+                // Einheitlicher Screen-Header (exakt gleiche Position wie in PlayerSetupScreen etc.)
+                ScreenHeader(
+                    title = stringResource(Res.string.main_title_games),
+                    onBack = onBack
+                )
+            }
         ) {
-            // Einheitlicher Screen-Header (exakt gleiche Position wie in PlayerSetupScreen etc.)
-            ScreenHeader(
-                title = stringResource(Res.string.main_title_games),
-                onBack = onBack
-            )
-
             Column(
                 modifier = Modifier
                     .widthIn(max = windowInfo.maxContentWidth)
-                    .fillMaxWidth()
-                    .padding(bottom = 30.dp),
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {

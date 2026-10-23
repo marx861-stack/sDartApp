@@ -1,5 +1,6 @@
 package com.sdart.app.ui.screens
 
+import com.sdart.app.ui.theme.ditheredBackground
 import com.sdart.app.*
 
 import androidx.compose.foundation.BorderStroke
@@ -70,7 +71,7 @@ fun PlayerManagementScreen(
     
     if (repository == null) {
         // Fallback UI wenn Repository nicht erstellt werden kann
-        val backgroundModifier = Modifier.fillMaxSize().background(com.sdart.app.ui.theme.DarkBgGradient)
+        val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
         
         Box(
             modifier = backgroundModifier,
@@ -117,27 +118,33 @@ fun PlayerManagementScreen(
         }
     }
     
-    val backgroundModifier = Modifier.fillMaxSize().background(com.sdart.app.ui.theme.DarkBgGradient)
+    val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
     
     Box(
         modifier = backgroundModifier
     ) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
                 .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+        // Einheitlicher Screen-Header
+        ScreenHeader(
+            title = "Spieler",
+            onBack = onBack
+        )
+
+        // Inhalt auf dieselbe Maximalbreite begrenzt wie die Einstellungen
+        LazyColumn(
+            modifier = Modifier
+                .widthIn(max = 640.dp)
+                .fillMaxWidth()
+                .weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
-            item {
-                ScreenHeader(
-                    title = "Spieler",
-                    onBack = onBack
-                )
-            }
-            
             // Neuer Spieler Button
             item {
                 Button(
@@ -243,8 +250,9 @@ fun PlayerManagementScreen(
                 }
             }
         }
+        }
     }
-    
+
     // Create Dialog
     if (showCreateDialog && repository != null) {
         CreatePlayerDialog(

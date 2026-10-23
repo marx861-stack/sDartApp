@@ -1,5 +1,6 @@
 package com.sdart.app.ui.screens
 
+import com.sdart.app.ui.theme.ditheredBackground
 import com.sdart.app.core.detection.*
 
 import com.sdart.app.*
@@ -224,7 +225,7 @@ fun GameScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBgGradient),
+                .ditheredBackground(),
             contentAlignment = Alignment.Center
         ) {
             Text("Spiel wird geladen...", color = Color.White)
@@ -311,7 +312,7 @@ fun GameScreen(
                     // ==========================================
                     // DESKTOP / TABLET WIDESCREEN (Side-by-Side)
                     // ==========================================
-                    Box(modifier = Modifier.fillMaxSize().background(DarkBgGradient)) {
+                    Box(modifier = Modifier.fillMaxSize().ditheredBackground()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -552,7 +553,7 @@ fun GameScreen(
                             calibrationSystem = calibrationSystem
                         )
                     } else {
-                        Box(modifier = Modifier.fillMaxSize().background(DarkBgGradient))
+                        Box(modifier = Modifier.fillMaxSize().ditheredBackground())
                     }
                     
                     Column(

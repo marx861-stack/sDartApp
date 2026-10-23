@@ -1,5 +1,6 @@
 package com.sdart.app.ui.screens
 
+import com.sdart.app.ui.theme.ditheredBackground
 import com.sdart.app.*
 
 import androidx.compose.foundation.BorderStroke
@@ -75,7 +76,7 @@ fun PlayerSetupScreen(
     var cricketVariant by remember { mutableStateOf(CricketVariant.STANDARD) }
     
     val isDark = true
-    val backgroundModifier = Modifier.fillMaxSize().background(DarkBgGradient)
+    val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
 
 
     AdaptiveContainer(modifier = backgroundModifier) { windowInfo ->

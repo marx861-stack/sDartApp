@@ -2,7 +2,11 @@ package com.sdart.app.ui
 
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -67,37 +71,52 @@ fun calculateWindowSizeInfo(maxWidth: Dp, maxHeight: Dp): WindowSizeInfo {
     )
 }
 
+/**
+ * Aktiver UI-Skalierungsfaktor aus [ProvideAdaptiveScale] (1.0 = keine Skalierung).
+ */
+val LocalUiScale = staticCompositionLocalOf { 1.0f }
+
+/**
+ * Skaliert die gesamte UI auf sehr großen Fenstern einheitlich hoch, damit Text und UI-Elemente
+ * auf 4K nicht winzig wirken. Einmal um die ganze App legen, damit alle Screens und Dialoge
+ * gleich groß dargestellt werden.
+ */
 @Composable
-fun AdaptiveContainer(
+fun ProvideAdaptiveScale(
     modifier: Modifier = Modifier,
-    content: @Composable (WindowSizeInfo) -> Unit
+    content: @Composable () -> Unit
 ) {
     BoxWithConstraints(modifier = modifier) {
         val sizeInfo = calculateWindowSizeInfo(maxWidth, maxHeight)
-        
-        // Bei sehr großen Auflösungen (z.B. 4K-Monitoren ab 1600dp Fensterbreite oder 1200dp Höhe)
-        // skalieren wir die Density sanft hoch (z.B. 1.25x - 1.5x), damit Text und UI-Elemente
-        // auf 4K nicht winzig wirken, sondern perfekt lesbar bleiben.
-        val currentDensity = androidx.compose.ui.platform.LocalDensity.current
         val scaleFactor = when {
             sizeInfo.isUltra && maxHeight >= 1200.dp -> 1.35f
             sizeInfo.isUltra -> 1.2f
             else -> 1.0f
         }
+        val currentDensity = LocalDensity.current
+        val scaledDensity = Density(
+            density = currentDensity.density * scaleFactor,
+            // sp skaliert bereits über density mit; fontScale bleibt unverändert
+            fontScale = currentDensity.fontScale
+        )
+        CompositionLocalProvider(
+            LocalDensity provides scaledDensity,
+            LocalUiScale provides scaleFactor,
+            content = content
+        )
+    }
+}
 
-        if (scaleFactor != 1.0f) {
-            val scaledDensity = androidx.compose.ui.unit.Density(
-                density = currentDensity.density * scaleFactor,
-                // sp skaliert bereits über density mit; fontScale bleibt unverändert
-                fontScale = currentDensity.fontScale
-            )
-            androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.ui.platform.LocalDensity provides scaledDensity
-            ) {
-                content(sizeInfo)
-            }
-        } else {
-            content(sizeInfo)
-        }
+@Composable
+fun AdaptiveContainer(
+    modifier: Modifier = Modifier,
+    content: @Composable (WindowSizeInfo) -> Unit
+) {
+    val scale = LocalUiScale.current
+    BoxWithConstraints(modifier = modifier) {
+        // Größenklassen aus der unskalierten Fenstergröße, Maße in skalierten dp
+        val sizeInfo = calculateWindowSizeInfo(maxWidth * scale, maxHeight * scale)
+            .copy(maxWidth = maxWidth, maxHeight = maxHeight)
+        content(sizeInfo)
     }
 }

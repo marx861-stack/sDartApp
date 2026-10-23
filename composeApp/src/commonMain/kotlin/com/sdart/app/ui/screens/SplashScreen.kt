@@ -1,5 +1,6 @@
 package com.sdart.app.ui.screens
 
+import com.sdart.app.ui.theme.ditheredBackground
 import com.sdart.app.*
 
 import androidx.compose.animation.core.LinearEasing
@@ -68,7 +69,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBgGradient)
+            .ditheredBackground()
             .graphicsLayer { this.alpha = alpha }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

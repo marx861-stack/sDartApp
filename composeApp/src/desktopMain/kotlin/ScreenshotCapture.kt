@@ -7,6 +7,7 @@ import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import com.sdart.app.tournament.*
 import com.sdart.app.tournament.ui.TournamentViewScreen
+import com.sdart.app.ui.ProvideAdaptiveScale
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.MyApplicationTheme
 import org.jetbrains.skia.EncodedImageFormat
@@ -79,7 +80,7 @@ fun runScreenshotCapture(screenType: String, outputFilePath: String) {
         height = sceneHeight
     ) {
         MyApplicationTheme {
-            Box(modifier = Modifier.fillMaxSize().background(DarkBgGradient)) {
+            ProvideAdaptiveScale(modifier = Modifier.fillMaxSize().background(DarkBgGradient)) {
                 TournamentViewScreen(
                     tournamentManager = manager,
                     onBack = {},

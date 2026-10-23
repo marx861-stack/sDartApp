@@ -1,5 +1,6 @@
 package com.sdart.app.tournament.ui
 
+import com.sdart.app.ui.theme.ditheredBackground
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -46,7 +47,7 @@ fun TournamentViewScreen(
     AdaptiveContainer(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBgGradient)
+            .ditheredBackground()
     ) { windowInfo ->
         val isWidescreen = windowInfo.isWidescreen
 

@@ -25,6 +25,7 @@ import com.sdart.app.connect.ui.CompanionConnectionScreen
 import com.sdart.app.connect.ui.HostOverviewDialog
 import com.sdart.app.tournament.ui.TournamentSetupScreen
 import com.sdart.app.tournament.ui.TournamentViewScreen
+import com.sdart.app.ui.ProvideAdaptiveScale
 import com.sdart.app.ui.screens.*
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.MyApplicationTheme
@@ -103,6 +104,7 @@ fun App() {
     )
 
     MyApplicationTheme {
+      ProvideAdaptiveScale(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -314,5 +316,6 @@ fun App() {
                 )
             }
         }
+      }
     }
 }

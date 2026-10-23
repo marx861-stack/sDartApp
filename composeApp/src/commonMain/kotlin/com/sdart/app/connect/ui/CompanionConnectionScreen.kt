@@ -1,5 +1,6 @@
 package com.sdart.app.connect.ui
 
+import com.sdart.app.ui.theme.ditheredBackground
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sdart.app.ui.CenteredScrollColumn
 import com.sdart.app.ui.game.InteractiveDartboard
 import com.sdart.app.ui.game.MagnifierOverlay
 import com.sdart.app.connect.*
@@ -99,7 +101,7 @@ fun CompanionConnectionScreen(
     AdaptiveContainer(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBgGradient)
+            .ditheredBackground()
     ) { windowInfo ->
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -199,11 +201,10 @@ private fun IdleRoleSelection(
     onOpenHostOverview: () -> Unit,
     isWidescreen: Boolean
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    CenteredScrollColumn(
+        modifier = Modifier.fillMaxSize(),
+        spacing = 10.dp,
+        horizontalAlignment = Alignment.Start
     ) {
         Text(
             text = "Geräterolle wählen:",

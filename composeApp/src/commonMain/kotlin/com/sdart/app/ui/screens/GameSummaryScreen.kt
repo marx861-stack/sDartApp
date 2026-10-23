@@ -1,5 +1,6 @@
 package com.sdart.app.ui.screens
 
+import com.sdart.app.ui.theme.ditheredBackground
 import com.sdart.app.domain.player.PlayerStatistics
 
 import com.sdart.app.*
@@ -37,7 +38,7 @@ fun GameSummaryScreen(
     val game = vm.game
     val isDark = true
 
-    val backgroundModifier = Modifier.fillMaxSize().background(DarkBgGradient)
+    val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
 
     Scaffold(
         containerColor = Color.Transparent,

@@ -1,5 +1,6 @@
 package com.sdart.app.ui.screens
 
+import com.sdart.app.ui.theme.ditheredBackground
 import com.sdart.app.*
 
 import androidx.compose.foundation.BorderStroke
@@ -39,7 +40,7 @@ fun PlayerDetailScreen(
     isDark: Boolean = true,
     onBack: () -> Unit
 ) {
-    val backgroundModifier = Modifier.fillMaxSize().background(com.sdart.app.ui.theme.DarkBgGradient)
+    val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
 
     Box(
         modifier = backgroundModifier
