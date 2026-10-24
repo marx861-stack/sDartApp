@@ -249,8 +249,8 @@ fun App() {
                 Screen.TournamentSetup -> TournamentSetupScreen(
                     repository = repository,
                     onBack = { navManager.goBack() },
-                    onStartTournament = { name, type, config, players, randomize ->
-                        vm.tournamentManager.createTournament(name, type, config, players, randomize)
+                    onStartTournament = { name, type, config, players, randomize, groupCount, qualifiers ->
+                        vm.tournamentManager.createTournament(name, type, config, players, randomize, groupCount, qualifiers)
                         navManager.navigateTo(Screen.TournamentView)
                     }
                 )

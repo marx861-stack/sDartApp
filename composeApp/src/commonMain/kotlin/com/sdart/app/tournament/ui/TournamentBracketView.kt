@@ -35,7 +35,9 @@ fun TournamentBracketView(
     state: TournamentState,
     isWidescreen: Boolean,
     onMatchClick: (TournamentMatch) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Eigene Rundentitel (Runde, letzte Runde), z. B. für die Gewinnerrunde im Doppel-K.-o.
+    roundTitle: ((Int, Int) -> String)? = null
 ) {
     val rounds = remember(state.matches) {
         state.matches.groupBy { it.round }.toSortedMap()
@@ -46,6 +48,7 @@ fun TournamentBracketView(
     var mobileViewMode by remember { mutableStateOf(0) } // 0 = Rundenliste, 1 = Turnierbaum
 
     fun getRoundTitle(round: Int): String {
+        roundTitle?.let { return it(round, maxRound) }
         return when {
             round == maxRound -> "Finale"
             round == maxRound - 1 -> "Halbfinale"

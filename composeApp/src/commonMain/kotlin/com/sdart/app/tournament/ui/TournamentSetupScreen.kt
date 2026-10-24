@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.*
@@ -23,6 +24,8 @@ import com.sdart.app.tournament.*
 import com.sdart.app.ui.AdaptiveContainer
 import com.sdart.app.ui.ScreenHeader
 import com.sdart.app.ui.SetupTile
+import com.sdart.app.ui.components.*
+import org.jetbrains.compose.resources.DrawableResource
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.painterResource
@@ -32,10 +35,12 @@ import sdartapp.composeapp.generated.resources.*
 fun TournamentSetupScreen(
     repository: PlayerRepository = remember { createPersistentPlayerRepository() },
     onBack: () -> Unit,
-    onStartTournament: (name: String, type: TournamentType, config: TournamentGameConfig, players: List<TournamentPlayer>, randomize: Boolean) -> Unit
+    onStartTournament: (name: String, type: TournamentType, config: TournamentGameConfig, players: List<TournamentPlayer>, randomize: Boolean, groupCount: Int, qualifiersPerGroup: Int) -> Unit
 ) {
     var tournamentName by remember { mutableStateOf("Dart-Turnier") }
     var tournamentType by remember { mutableStateOf(TournamentType.SINGLE_ELIMINATION) }
+    var groupCount by remember { mutableStateOf(2) }
+    var qualifiersPerGroup by remember { mutableStateOf(2) }
     var selectedGameMode by remember { mutableStateOf(GameMode.X501) }
     var legs by remember { mutableStateOf(3) }
     var doubleIn by remember { mutableStateOf(false) }
@@ -57,11 +62,82 @@ fun TournamentSetupScreen(
     var showLoadDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    AdaptiveContainer(
-        modifier = Modifier
-            .fillMaxSize()
-            .ditheredBackground()
-    ) { windowInfo ->
+    // Gewählte Gruppenzahl, passend zur aktuellen Teilnehmerzahl
+    val groupOptions = groupCountOptions(participants.size)
+    val effectiveGroupCount = groupOptions.lastOrNull { it <= groupCount } ?: groupOptions.firstOrNull() ?: groupCount
+
+    val startTournament: () -> Unit = start@{
+        val cleanPlayers = participants.map { it.copy(name = it.name.trim()) }
+        if (cleanPlayers.any { it.name.isBlank() }) {
+            errorMessage = "Bitte allen Spielern einen gültigen Namen geben."
+            return@start
+        }
+        if (cleanPlayers.size < 2) {
+            errorMessage = "Mindestens 2 Spieler erforderlich."
+            return@start
+        }
+        if (tournamentType == TournamentType.ROUND_ROBIN && cleanPlayers.size < 3) {
+            errorMessage = "Für den Jeder-gegen-Jeden-Modus sind mindestens 3 Spieler erforderlich."
+            return@start
+        }
+        if (tournamentType == TournamentType.DOUBLE_ELIMINATION && cleanPlayers.size < 3) {
+            errorMessage = "Für Doppel-K.-o. sind mindestens 3 Spieler erforderlich."
+            return@start
+        }
+        if (tournamentType == TournamentType.GROUPS_KNOCKOUT && groupOptions.isEmpty()) {
+            errorMessage = "Für Gruppenphase plus K.-o. sind mindestens 6 Spieler erforderlich."
+            return@start
+        }
+
+        val config = TournamentGameConfig(
+            mode = selectedGameMode,
+            customStartScore = if (selectedGameMode == GameMode.X301) 301 else 501,
+            legs = legs,
+            doubleIn = doubleIn,
+            doubleOut = doubleOut,
+            cricketVariant = cricketVariant
+        )
+
+        onStartTournament(tournamentName, tournamentType, config, cleanPlayers, randomizeOrder, effectiveGroupCount, qualifiersPerGroup)
+    }
+
+    AdaptiveContainer(modifier = Modifier.fillMaxSize()) { windowInfo ->
+        if (windowInfo.isExpanded) {
+            DesktopTournamentSetup(
+                tournamentName = tournamentName,
+                onNameChange = { tournamentName = it },
+                tournamentType = tournamentType,
+                onTypeChange = {
+                    tournamentType = it
+                    errorMessage = null
+                },
+                gameMode = selectedGameMode,
+                onGameModeChange = { selectedGameMode = it },
+                legs = legs,
+                onLegsChange = { legs = it },
+                doubleIn = doubleIn,
+                onDoubleInChange = { doubleIn = it },
+                doubleOut = doubleOut,
+                onDoubleOutChange = { doubleOut = it },
+                groupOptions = groupOptions,
+                groupCount = effectiveGroupCount,
+                onGroupCountChange = { groupCount = it },
+                qualifiersPerGroup = qualifiersPerGroup,
+                onQualifiersChange = { qualifiersPerGroup = it },
+                randomizeOrder = randomizeOrder,
+                onRandomizeChange = { randomizeOrder = it },
+                participants = participants,
+                onParticipantsChange = {
+                    participants = it
+                    errorMessage = null
+                },
+                errorMessage = errorMessage,
+                onLoadClick = { showLoadDialog = true },
+                onStart = startTournament
+            )
+            return@AdaptiveContainer
+        }
+
         val isWidescreen = windowInfo.isWidescreen
 
         // Linke Spalte: Teilnehmer & Presets
@@ -337,12 +413,89 @@ fun TournamentSetupScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SetupTile(
+                        title = "Doppel-K.-o.",
+                        subtitle = "Mit zweiter Chance",
+                        selected = tournamentType == TournamentType.DOUBLE_ELIMINATION,
+                        onClick = {
+                            tournamentType = TournamentType.DOUBLE_ELIMINATION
+                            errorMessage = null
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    SetupTile(
+                        title = "Gruppenphase",
+                        subtitle = "Danach K.-o.-Runde",
+                        selected = tournamentType == TournamentType.GROUPS_KNOCKOUT,
+                        onClick = {
+                            tournamentType = TournamentType.GROUPS_KNOCKOUT
+                            errorMessage = null
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                if (tournamentType == TournamentType.GROUPS_KNOCKOUT) {
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(
+                        text = "Gruppen",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    if (groupOptions.isEmpty()) {
+                        Text("Ab 6 Spielern möglich", color = Color(0x80FFFFFF), fontSize = 13.sp)
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            groupOptions.forEach { option ->
+                                SetupTile(
+                                    title = "$option Gruppen",
+                                    subtitle = groupSizeText(participants.size, option),
+                                    selected = effectiveGroupCount == option,
+                                    onClick = { groupCount = option },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(18.dp))
+                    Text(
+                        text = "Weiter pro Gruppe",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(1 to "Nur Gruppensieger", 2 to "Erste und Zweite").forEach { (count, sub) ->
+                            SetupTile(
+                                title = "$count",
+                                subtitle = sub,
+                                selected = qualifiersPerGroup == count,
+                                onClick = { qualifiersPerGroup = count },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                // Dart-Spielmodus
+                // Turniere laufen immer im Standard-Modus; wählbar ist nur die Startpunktzahl
                 Text(
-                    text = "Dart-Spielmodus",
+                    text = "Startpunkte",
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -364,34 +517,6 @@ fun TournamentSetupScreen(
                         subtitle = "Kurz",
                         selected = selectedGameMode == GameMode.X301,
                         onClick = { selectedGameMode = GameMode.X301 },
-                        modifier = Modifier.weight(1f)
-                    )
-                    SetupTile(
-                        title = "Cricket",
-                        subtitle = "Taktisch",
-                        selected = selectedGameMode == GameMode.CRICKET,
-                        onClick = { selectedGameMode = GameMode.CRICKET },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SetupTile(
-                        title = "All Fives",
-                        subtitle = "Teilbar durch 5",
-                        selected = selectedGameMode == GameMode.ALL_FIVES,
-                        onClick = { selectedGameMode = GameMode.ALL_FIVES },
-                        modifier = Modifier.weight(1f)
-                    )
-                    SetupTile(
-                        title = "Around Clock",
-                        subtitle = "1 bis 20 & Bull",
-                        selected = selectedGameMode == GameMode.AROUND_THE_CLOCK,
-                        onClick = { selectedGameMode = GameMode.AROUND_THE_CLOCK },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -436,8 +561,8 @@ fun TournamentSetupScreen(
                     }
                 }
 
-                // Spielspezifische Regeln
-                if (selectedGameMode == GameMode.X501 || selectedGameMode == GameMode.X301) {
+                // X01-Regeln
+                run {
                     Spacer(modifier = Modifier.height(18.dp))
                     Text(
                         text = "X01 Regeln",
@@ -465,34 +590,6 @@ fun TournamentSetupScreen(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                } else if (selectedGameMode == GameMode.CRICKET) {
-                    Spacer(modifier = Modifier.height(18.dp))
-                    Text(
-                        text = "Cricket Variante",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        SetupTile(
-                            title = "Standard",
-                            subtitle = "Eigene Punkte",
-                            selected = cricketVariant == CricketVariant.STANDARD,
-                            onClick = { cricketVariant = CricketVariant.STANDARD },
-                            modifier = Modifier.weight(1f)
-                        )
-                        SetupTile(
-                            title = "Cut-Throat",
-                            subtitle = "Gegner Punkte",
-                            selected = cricketVariant == CricketVariant.CUT_THROAT,
-                            onClick = { cricketVariant = CricketVariant.CUT_THROAT },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
                 }
             }
         }
@@ -500,32 +597,7 @@ fun TournamentSetupScreen(
         // Start-Button
         val startButtonContent: @Composable () -> Unit = {
             Button(
-                onClick = {
-                    val cleanPlayers = participants.map { it.copy(name = it.name.trim()) }
-                    if (cleanPlayers.any { it.name.isBlank() }) {
-                        errorMessage = "Bitte allen Spielern einen gültigen Namen geben."
-                        return@Button
-                    }
-                    if (cleanPlayers.size < 2) {
-                        errorMessage = "Mindestens 2 Spieler erforderlich."
-                        return@Button
-                    }
-                    if (tournamentType == TournamentType.ROUND_ROBIN && cleanPlayers.size < 3) {
-                        errorMessage = "Für den Jeder-gegen-Jeden-Modus sind mindestens 3 Spieler erforderlich."
-                        return@Button
-                    }
-
-                    val config = TournamentGameConfig(
-                        mode = selectedGameMode,
-                        customStartScore = if (selectedGameMode == GameMode.X301) 301 else 501,
-                        legs = legs,
-                        doubleIn = doubleIn,
-                        doubleOut = doubleOut,
-                        cricketVariant = cricketVariant
-                    )
-
-                    onStartTournament(tournamentName, tournamentType, config, cleanPlayers, randomizeOrder)
-                },
+                onClick = startTournament,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
@@ -546,6 +618,7 @@ fun TournamentSetupScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .ditheredBackground()
                 .safeDrawingPadding()
                 .padding(20.dp)
                 .verticalScroll(rememberScrollState()),
@@ -660,19 +733,383 @@ fun TournamentSetupScreen(
                 }
             }
         }
+    }
 
-        if (showLoadDialog) {
-            PlayerLoadDialog(
-                repository = repository,
-                onDismiss = { showLoadDialog = false },
-                onPlayersSelected = { selectedNames ->
-                    showLoadDialog = false
-                    val loaded = selectedNames.mapIndexed { idx, name ->
-                        TournamentPlayer(id = "loaded_${currentTimeMillis()}_$idx", name = name, savedPlayerName = name)
-                    }
-                    participants = participants + loaded
+    if (showLoadDialog) {
+        PlayerLoadDialog(
+            repository = repository,
+            onDismiss = { showLoadDialog = false },
+            onPlayersSelected = { selectedNames ->
+                showLoadDialog = false
+                val loaded = selectedNames.mapIndexed { idx, name ->
+                    TournamentPlayer(id = "loaded_${currentTimeMillis()}_$idx", name = name, savedPlayerName = name)
                 }
-            )
+                participants = participants + loaded
+            }
+        )
+    }
+}
+
+/**
+ * Turnier-Setup für breite Fenster im Stil von "Neues Spiel": Turnier-Modus links, Teilnehmer und
+ * Einstellungen kompakt in einer Karte daneben. Gespielt wird immer Standard (501 oder 301).
+ */
+@Composable
+private fun DesktopTournamentSetup(
+    tournamentName: String,
+    onNameChange: (String) -> Unit,
+    tournamentType: TournamentType,
+    onTypeChange: (TournamentType) -> Unit,
+    gameMode: GameMode,
+    onGameModeChange: (GameMode) -> Unit,
+    legs: Int,
+    onLegsChange: (Int) -> Unit,
+    doubleIn: Boolean,
+    onDoubleInChange: (Boolean) -> Unit,
+    doubleOut: Boolean,
+    onDoubleOutChange: (Boolean) -> Unit,
+    groupOptions: List<Int>,
+    groupCount: Int,
+    onGroupCountChange: (Int) -> Unit,
+    qualifiersPerGroup: Int,
+    onQualifiersChange: (Int) -> Unit,
+    randomizeOrder: Boolean,
+    onRandomizeChange: (Boolean) -> Unit,
+    participants: List<TournamentPlayer>,
+    onParticipantsChange: (List<TournamentPlayer>) -> Unit,
+    errorMessage: String?,
+    onLoadClick: () -> Unit,
+    onStart: () -> Unit
+) {
+    DesktopPage(title = "Neues Turnier") {
+        Row(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                TypeCard(
+                    icon = Res.drawable.ic_trophy,
+                    title = "K.-o.-System",
+                    subtitle = "Turnierbaum",
+                    selected = tournamentType == TournamentType.SINGLE_ELIMINATION,
+                    onClick = { onTypeChange(TournamentType.SINGLE_ELIMINATION) },
+                    modifier = Modifier.weight(1f)
+                )
+                TypeCard(
+                    icon = Res.drawable.ic_refresh,
+                    title = "Doppel-K.-o.",
+                    subtitle = "Mit zweiter Chance",
+                    selected = tournamentType == TournamentType.DOUBLE_ELIMINATION,
+                    onClick = { onTypeChange(TournamentType.DOUBLE_ELIMINATION) },
+                    modifier = Modifier.weight(1f)
+                )
+                TypeCard(
+                    icon = Res.drawable.ic_player_management,
+                    title = "Gruppenphase",
+                    subtitle = "Danach K.-o.-Runde",
+                    selected = tournamentType == TournamentType.GROUPS_KNOCKOUT,
+                    onClick = { onTypeChange(TournamentType.GROUPS_KNOCKOUT) },
+                    modifier = Modifier.weight(1f)
+                )
+                TypeCard(
+                    icon = Res.drawable.ic_chart_bar,
+                    title = "Liga",
+                    subtitle = "Jeder gegen jeden",
+                    selected = tournamentType == TournamentType.ROUND_ROBIN,
+                    onClick = { onTypeChange(TournamentType.ROUND_ROBIN) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            DashboardCard(title = null, modifier = Modifier.weight(2.6f).fillMaxHeight()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(40.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    ParticipantsSection(
+                        participants = participants,
+                        onParticipantsChange = onParticipantsChange,
+                        randomizeOrder = randomizeOrder,
+                        onRandomizeChange = onRandomizeChange,
+                        onLoadClick = onLoadClick,
+                        modifier = Modifier.weight(1f).fillMaxHeight()
+                    )
+
+                    Column(modifier = Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
+                        CardTitle("Turniername")
+                        OutlinedTextField(
+                            value = tournamentName,
+                            onValueChange = onNameChange,
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            textStyle = MaterialTheme.typography.bodyLarge,
+                            colors = desktopFieldColors(),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                        )
+
+                        if (tournamentType == TournamentType.GROUPS_KNOCKOUT) {
+                            CardTitle("Gruppen", modifier = Modifier.padding(top = 14.dp))
+                            if (groupOptions.isEmpty()) {
+                                Text(
+                                    text = "Ab 6 Spielern möglich",
+                                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                                    modifier = Modifier.padding(bottom = 10.dp)
+                                )
+                            } else {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                                ) {
+                                    groupOptions.forEach { option ->
+                                        SelectTile("$option", groupCount == option, { onGroupCountChange(option) }, Modifier.weight(1f), groupSizeText(participants.size, option))
+                                    }
+                                }
+                            }
+                            CardTitle("Weiter pro Gruppe", modifier = Modifier.padding(top = 14.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                            ) {
+                                SelectTile("1", qualifiersPerGroup == 1, { onQualifiersChange(1) }, Modifier.weight(1f), "Gruppensieger")
+                                SelectTile("2", qualifiersPerGroup == 2, { onQualifiersChange(2) }, Modifier.weight(1f), "Erste und Zweite")
+                            }
+                        }
+
+                        CardTitle("Startpunkte", modifier = Modifier.padding(top = 14.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                        ) {
+                            SelectTile("501", gameMode == GameMode.X501, { onGameModeChange(GameMode.X501) }, Modifier.weight(1f), "Standard")
+                            SelectTile("301", gameMode == GameMode.X301, { onGameModeChange(GameMode.X301) }, Modifier.weight(1f), "Kurz")
+                        }
+                        CardTitle("Regeln", modifier = Modifier.padding(top = 14.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                        ) {
+                            SelectTile("Double In", doubleIn, { onDoubleInChange(!doubleIn) }, Modifier.weight(1f), "Start mit Double")
+                            SelectTile("Double Out", doubleOut, { onDoubleOutChange(!doubleOut) }, Modifier.weight(1f), "Sieg mit Double")
+                        }
+
+                        CardTitle("Legs · Best of", modifier = Modifier.padding(top = 14.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            listOf(1, 3, 5, 7).forEach { option ->
+                                SelectTile("$option", legs == option, { onLegsChange(option) }, Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+                HorizontalDivider(color = GlassCardBorder)
+                Spacer(Modifier.height(16.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = errorMessage ?: tournamentSummary(tournamentType, gameMode, legs, doubleOut, participants.size, groupCount),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = if (errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Button(
+                        onClick = onStart,
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange, contentColor = Color.Black),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 12.dp)
+                    ) {
+                        Icon(painterResource(Res.drawable.ic_trophy), contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Turnier starten", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
         }
     }
+}
+
+/** Auswahlkarte für den Turnier-Modus, gestaltet wie die Spielmodus-Karten in "Neues Spiel". */
+@Composable
+private fun TypeCard(
+    icon: DrawableResource,
+    title: String,
+    subtitle: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    DashboardCard(
+        title = null,
+        highlighted = selected,
+        onClick = onClick,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = PrimaryOrange,
+                modifier = Modifier.size(40.dp)
+            )
+            Spacer(Modifier.width(18.dp))
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ParticipantsSection(
+    participants: List<TournamentPlayer>,
+    onParticipantsChange: (List<TournamentPlayer>) -> Unit,
+    randomizeOrder: Boolean,
+    onRandomizeChange: (Boolean) -> Unit,
+    onLoadClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        CardTitle("Teilnehmer · ${participants.size} von 32")
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.padding(start = 22.dp, bottom = 12.dp)
+        ) {
+            if (participants.size < 32) {
+                CardLink("Hinzufügen", onClick = {
+                    val next = participants.size + 1
+                    onParticipantsChange(participants + TournamentPlayer("p_$next", "Spieler $next"))
+                }, icon = Res.drawable.ic_plus)
+            }
+            CardLink("Laden", onClick = onLoadClick, primary = false, icon = Res.drawable.ic_folder)
+        }
+
+        // Teilnehmerzahl schnell auf eine Baumgröße bringen
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(start = 22.dp, bottom = 12.dp)
+        ) {
+            listOf(4, 8, 16).forEach { count ->
+                SelectChip(
+                    label = "$count",
+                    selected = participants.size == count,
+                    onClick = {
+                        onParticipantsChange(
+                            if (participants.size < count) {
+                                participants + (participants.size + 1..count).map { TournamentPlayer("p_$it", "Spieler $it") }
+                            } else {
+                                participants.take(count)
+                            }
+                        )
+                    }
+                )
+            }
+        }
+
+        Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            participants.forEachIndexed { index, player ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                        modifier = Modifier.width(22.dp)
+                    )
+                    OutlinedTextField(
+                        value = player.name,
+                        onValueChange = { newName ->
+                            onParticipantsChange(participants.toMutableList().also { it[index] = player.copy(name = newName) })
+                        },
+                        placeholder = { Text("Spieler ${index + 1}") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        trailingIcon = if (player.savedPlayerName != null) {
+                            {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_folder),
+                                    contentDescription = "Gespeicherter Spieler",
+                                    tint = PrimaryOrange,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        } else null,
+                        colors = desktopFieldColors(),
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (participants.size > 2) {
+                        IconButton(onClick = { onParticipantsChange(participants.toMutableList().also { it.removeAt(index) }) }) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_trash),
+                                contentDescription = "Spieler entfernen",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        SelectChip(
+            label = "Zufällige Setzliste",
+            selected = randomizeOrder,
+            onClick = { onRandomizeChange(!randomizeOrder) },
+            icon = Res.drawable.ic_refresh
+        )
+    }
+}
+
+@Composable
+private fun desktopFieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedBorderColor = PrimaryOrange,
+    unfocusedBorderColor = GlassControlBorder
+)
+
+private fun tournamentSummary(type: TournamentType, mode: GameMode, legs: Int, doubleOut: Boolean, players: Int, groupCount: Int): String {
+    val typeText = when (type) {
+        TournamentType.SINGLE_ELIMINATION -> "K.-o."
+        TournamentType.ROUND_ROBIN -> "Liga"
+        TournamentType.DOUBLE_ELIMINATION -> "Doppel-K.-o."
+        TournamentType.GROUPS_KNOCKOUT -> "$groupCount Gruppen + K.-o."
+    }
+    val modeText = "${if (mode == GameMode.X301) 301 else 501} · ${if (doubleOut) "Double Out" else "Single Out"}"
+    return "$typeText · $modeText · Best of $legs · $players Spieler"
+}
+
+/** Gruppenzahlen, bei denen jede Gruppe mindestens drei Spieler hat. */
+private fun groupCountOptions(players: Int): List<Int> = listOf(2, 4, 8).filter { players >= it * 3 }
+
+/** Gruppengröße als Text, z. B. "je 4" oder "je 3–4". */
+private fun groupSizeText(players: Int, groups: Int): String {
+    val small = players / groups
+    val large = (players + groups - 1) / groups
+    return if (small == large) "je $small Spieler" else "je $small–$large Spieler"
 }

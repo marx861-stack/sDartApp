@@ -891,7 +891,13 @@ object TournamentWebHtml {
             const t = tournamentData.tournament;
             const pendingMatchIds = tournamentData.pendingMatchIds || [];
             document.getElementById('tourn-title').textContent = t.name || "S'Dart Turnier";
-            const modeName = t.type === 'SINGLE_ELIMINATION' ? "K.O.-System" : "Liga";
+            const modeNames = {
+                SINGLE_ELIMINATION: "K.O.-System",
+                ROUND_ROBIN: "Liga",
+                DOUBLE_ELIMINATION: "Doppel-K.-o.",
+                GROUPS_KNOCKOUT: "Gruppen + K.-o."
+            };
+            const modeName = modeNames[t.type] || "Turnier";
             document.getElementById('tourn-subtitle').textContent = modeName + " • " + (t.config?.mode || "501");
 
             // Turniersieger-Celebration Banner
@@ -925,7 +931,7 @@ object TournamentWebHtml {
             const heroCard = document.getElementById('hero-card');
             if (activeMatch) {
                 heroCard.style.display = 'block';
-                document.getElementById('hero-round').textContent = 'Runde ' + activeMatch.round;
+                document.getElementById('hero-round').textContent = stageLabel(t, activeMatch);
                 document.getElementById('hero-p1').textContent = activeMatch.player1.name;
                 document.getElementById('hero-p2').textContent = activeMatch.player2.name;
 
@@ -974,7 +980,7 @@ object TournamentWebHtml {
 
                 card.innerHTML = `
                     <div class="match-card-header">
-                        <span>Runde ${'$'}{m.round} • Spiel ${'$'}{m.matchIndexInRound + 1}</span>
+                        <span>${'$'}{stageLabel(t, m)} • Spiel ${'$'}{m.matchIndexInRound + 1}</span>
                         ${'$'}{statusBadge}
                     </div>
 
@@ -1008,9 +1014,20 @@ object TournamentWebHtml {
             // Standings Tabelle (Apple Inset-Grouped mit Podium-Badges)
             const tbody = document.getElementById('standings-tbody');
             tbody.innerHTML = '';
-            if (tournamentData.standings && tournamentData.standings.length > 0) {
+            // Gruppenphase: alle Gruppen untereinander, jeweils mit Gruppen-Überschrift
+            const groupTables = tournamentData.groupStandings || [];
+            const tableSections = groupTables.length > 0
+                ? groupTables.map((rows, g) => ({ title: 'Gruppe ' + String.fromCharCode(65 + g), rows: rows }))
+                : [{ title: null, rows: tournamentData.standings || [] }];
+            if (tableSections.some(s => s.rows.length > 0)) {
                 document.getElementById('tab-table-btn').style.display = 'block';
-                tournamentData.standings.forEach(row => {
+                tableSections.forEach(section => {
+                    if (section.title) {
+                        const head = document.createElement('tr');
+                        head.innerHTML = '<td colspan="7" style="padding-top: 14px; font-weight: 700; color: var(--primary-orange);">' + section.title + '</td>';
+                        tbody.appendChild(head);
+                    }
+                    section.rows.forEach(row => {
                     const tr = document.createElement('tr');
                     const diffSign = row.legDifference > 0 ? '+' : '';
 
@@ -1035,12 +1052,24 @@ object TournamentWebHtml {
                         <td style="text-align: center; color: ${'$'}{row.legDifference > 0 ? 'var(--success-color)' : (row.legDifference < 0 ? 'var(--danger-color)' : 'inherit')}; font-weight: 600;">${'$'}{diffSign}${'$'}{row.legDifference}</td>
                     `;
                     tbody.appendChild(tr);
+                    });
                 });
             } else {
-                if (t.type === 'SINGLE_ELIMINATION') {
+                if (t.type === 'SINGLE_ELIMINATION' || t.type === 'DOUBLE_ELIMINATION') {
                     document.getElementById('tab-table-btn').style.display = 'none';
                 }
             }
+        }
+
+        // Bezeichnung eines Matches je nach Turnierteil, z. B. "Gruppe A • Runde 2" oder "Zweite Chance • Runde 3"
+        function stageLabel(t, m) {
+            const bracket = m.bracket || 'MAIN';
+            if (bracket === 'GROUP') return 'Gruppe ' + String.fromCharCode(65 + (m.group || 0)) + ' • Runde ' + m.round;
+            if (bracket === 'LOSERS') return 'Zweite Chance • Runde ' + m.round;
+            if (bracket === 'GRAND_FINAL') return m.round === 1 ? 'Grand Final' : 'Entscheidungsspiel';
+            if (t.type === 'DOUBLE_ELIMINATION') return 'Hauptrunde ' + m.round;
+            if (t.type === 'GROUPS_KNOCKOUT') return 'K.-o.-Runde ' + m.round;
+            return 'Runde ' + m.round;
         }
 
         function onPlayerSelected() {

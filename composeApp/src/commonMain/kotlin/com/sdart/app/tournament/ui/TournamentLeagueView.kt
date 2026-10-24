@@ -1,6 +1,7 @@
 package com.sdart.app.tournament.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,7 +27,9 @@ fun TournamentLeagueView(
     state: TournamentState,
     standings: List<LeagueStandingRow>,
     onMatchClick: (TournamentMatch) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Gruppenphase: so viele Plätze oben kommen in die K.-o.-Runde
+    qualifierCount: Int = 0
 ) {
     Box(
         modifier = modifier.fillMaxSize(),
@@ -67,7 +70,11 @@ fun TournamentLeagueView(
                         )
 
                         Text(
-                            text = "${standings.size} Teilnehmer",
+                            text = if (qualifierCount > 0) {
+                                "${standings.size} Teilnehmer · $qualifierCount kommen weiter"
+                            } else {
+                                "${standings.size} Teilnehmer"
+                            },
                             color = Color(0x66FFFFFF),
                             fontSize = 11.sp
                         )
@@ -154,6 +161,14 @@ fun TournamentLeagueView(
                                 modifier = Modifier.weight(0.38f),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                if (row.rank <= qualifierCount) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(Color(0xFF4CAF50), CircleShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
                                 Text(
                                     text = row.player.name,
                                     color = if (isLeader) Color.White else Color(0xCCFFFFFF),

@@ -21,7 +21,7 @@ class DesktopTournamentWebServerTest {
 
     @Test
     fun testServerLifecycleAndHttpEndpoints() {
-        val manager = TournamentManager()
+        val manager = TournamentManager(persistent = false)
         val players = makePlayers(4)
         val state = manager.createTournament(
             name = "Live Test Cup",
@@ -99,7 +99,7 @@ class DesktopTournamentWebServerTest {
 
     @Test
     fun testSubmitWithUmlautsAndContentLength() {
-        val manager = TournamentManager()
+        val manager = TournamentManager(persistent = false)
         val players = listOf(
             TournamentPlayer(id = "p1", name = "Jürgen Müller"),
             TournamentPlayer(id = "p2", name = "Björn Schütz")

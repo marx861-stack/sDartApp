@@ -12,8 +12,11 @@ import kotlinx.serialization.json.Json
 /**
  * Zentraler Manager für den Zustand, die Spiellogik und die Persistenz
  * von Dart-Turnieren.
+ *
+ * Mit [persistent] = false bleibt das Turnier nur im Speicher; so berühren Tests und
+ * Demo-Turniere nicht das aktive Turnier in den App-Einstellungen.
  */
-class TournamentManager {
+class TournamentManager(private val persistent: Boolean = true) {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -42,10 +45,13 @@ class TournamentManager {
         type: TournamentType,
         config: TournamentGameConfig,
         players: List<TournamentPlayer>,
-        randomizeOrder: Boolean = false
+        randomizeOrder: Boolean = false,
+        groupCount: Int = 2,
+        qualifiersPerGroup: Int = 2
     ): TournamentState {
         val preparedPlayers = if (randomizeOrder) players.shuffled() else players
         val tId = "tourn_${currentTimeMillis()}"
+        var groups = emptyList<List<String>>()
 
         val matches = when (type) {
             TournamentType.SINGLE_ELIMINATION -> {
@@ -53,6 +59,14 @@ class TournamentManager {
             }
             TournamentType.ROUND_ROBIN -> {
                 TournamentScheduler.createRoundRobinSchedule(tId, preparedPlayers)
+            }
+            TournamentType.DOUBLE_ELIMINATION -> {
+                TournamentScheduler.createDoubleEliminationSchedule(tId, preparedPlayers)
+            }
+            TournamentType.GROUPS_KNOCKOUT -> {
+                val assigned = TournamentScheduler.assignGroups(preparedPlayers, groupCount)
+                groups = assigned.map { group -> group.map { it.id } }
+                TournamentScheduler.createGroupStageSchedule(tId, assigned)
             }
         }
 
@@ -64,7 +78,9 @@ class TournamentManager {
             players = preparedPlayers,
             matches = matches,
             isFinished = false,
-            winner = null
+            winner = null,
+            groups = groups,
+            qualifiersPerGroup = qualifiersPerGroup
         )
 
         currentTournament = state
@@ -104,37 +120,72 @@ class TournamentManager {
             player2Result = player2Result
         )
 
-        val updatedMatches = state.matches.toMutableList()
+        var updatedMatches = state.matches.toMutableList()
         updatedMatches[matchIndex] = updatedMatch
 
         var tournamentWinner = state.winner
         var isTournamentFinished = state.isFinished
 
-        when (state.type) {
-            TournamentType.SINGLE_ELIMINATION -> {
-                if (match.nextMatchId != null) {
-                    val nextIndex = updatedMatches.indexOfFirst { it.id == match.nextMatchId }
-                    if (nextIndex >= 0) {
-                        val nextMatch = updatedMatches[nextIndex]
-                        val advanced = if (match.nextMatchSlot == 1) {
-                            nextMatch.copy(player1 = winner)
-                        } else {
-                            nextMatch.copy(player2 = winner)
-                        }
-                        updatedMatches[nextIndex] = advanced
-                    }
-                } else {
-                    // Final-Sieg!
-                    tournamentWinner = winner
-                    isTournamentFinished = true
-                }
+        // K.-o.-Baum: Sieger in die Folgerunde, ohne Folgematch ist es das Finale
+        fun advanceInKnockout() {
+            if (match.nextMatchId != null) {
+                TournamentScheduler.placePlayer(updatedMatches, match.nextMatchId, match.nextMatchSlot, winner)
+            } else {
+                tournamentWinner = winner
+                isTournamentFinished = true
             }
+        }
+
+        when (state.type) {
+            TournamentType.SINGLE_ELIMINATION -> advanceInKnockout()
             TournamentType.ROUND_ROBIN -> {
                 val allDone = updatedMatches.all { it.isFinished }
                 if (allDone) {
                     isTournamentFinished = true
                     val standings = calculateStandingsForMatches(state.players, updatedMatches)
                     tournamentWinner = standings.firstOrNull()?.player
+                }
+            }
+            TournamentType.DOUBLE_ELIMINATION -> {
+                if (match.bracket == MatchBracket.GRAND_FINAL) {
+                    // Gewinnt der Spieler aus der Verliererrunde das erste Grand Final, haben beide eine
+                    // Niederlage – dann entscheidet ein zweites Spiel
+                    val loserBracketChampionWon = match.round == 1 && winner.id == match.player2?.id
+                    if (loserBracketChampionWon) {
+                        updatedMatches.add(
+                            TournamentMatch(
+                                id = "${state.id}_gf_m1",
+                                round = 2,
+                                matchIndexInRound = 0,
+                                player1 = match.player1,
+                                player2 = match.player2,
+                                bracket = MatchBracket.GRAND_FINAL
+                            )
+                        )
+                    } else {
+                        tournamentWinner = winner
+                        isTournamentFinished = true
+                    }
+                } else {
+                    val loser = if (winner.id == match.player1?.id) match.player2 else match.player1
+                    TournamentScheduler.placePlayer(updatedMatches, match.nextMatchId, match.nextMatchSlot, winner)
+                    if (loser != null) {
+                        TournamentScheduler.placePlayer(updatedMatches, match.loserNextMatchId, match.loserNextMatchSlot, loser)
+                    }
+                    updatedMatches = TournamentScheduler.resolveAutomaticMatches(updatedMatches).toMutableList()
+                }
+            }
+            TournamentType.GROUPS_KNOCKOUT -> {
+                if (match.bracket == MatchBracket.GROUP) {
+                    val groupStageDone = updatedMatches.filter { it.bracket == MatchBracket.GROUP }.all { it.isFinished }
+                    if (groupStageDone && updatedMatches.none { it.bracket == MatchBracket.MAIN }) {
+                        val ranked = groupStandings(state, updatedMatches).map { rows -> rows.map { it.player } }
+                        updatedMatches.addAll(
+                            TournamentScheduler.createKnockoutFromGroups(state.id, ranked, state.qualifiersPerGroup)
+                        )
+                    }
+                } else {
+                    advanceInKnockout()
                 }
             }
         }
@@ -186,12 +237,21 @@ class TournamentManager {
         val state = currentTournament ?: return false
         val match = state.matches.find { it.id == matchId } ?: return false
 
-        // Prüfen, ob das Folgematch bereits gespielt wurde
-        if (match.nextMatchId != null) {
-            val nextMatch = state.matches.find { it.id == match.nextMatchId }
-            if (nextMatch != null && nextMatch.isFinished) {
-                return false // Kann nicht mehr überschrieben werden, wenn Folge-Match bereits fertig ist
-            }
+        // Prüfen, ob ein Folgematch (Sieger oder Verlierer) bereits gespielt wurde
+        val followUps = listOfNotNull(match.nextMatchId, match.loserNextMatchId)
+        if (followUps.any { id -> state.matches.find { it.id == id }?.isFinished == true }) {
+            return false // Kann nicht mehr überschrieben werden, wenn Folge-Match bereits fertig ist
+        }
+        // Gruppenspiele stehen fest, sobald die K.-o.-Runde ausgelost ist
+        if (match.bracket == MatchBracket.GROUP && state.matches.any { it.bracket == MatchBracket.MAIN }) {
+            return false
+        }
+
+        // Ein offenes Entscheidungsspiel im Grand Final hängt am ersten Grand Final und wird neu bestimmt
+        val resetMatchId = "${state.id}_gf_m1"
+        val isFirstGrandFinal = match.bracket == MatchBracket.GRAND_FINAL && match.round == 1
+        if (isFirstGrandFinal && state.matches.find { it.id == resetMatchId }?.isFinished == true) {
+            return false
         }
 
         val winner = if (match.player1?.id == winnerPlayerId) match.player1 else match.player2
@@ -201,10 +261,12 @@ class TournamentManager {
         val p2Result = match.player2Result.copy(legsWon = p2LegsWon)
 
         // Temporär auf unfertig setzen, um resolveMatch erneut aufzurufen
-        val updatedMatches = state.matches.toMutableList()
+        val updatedMatches = state.matches
+            .filterNot { isFirstGrandFinal && it.id == resetMatchId }
+            .toMutableList()
         val idx = updatedMatches.indexOfFirst { it.id == matchId }
         updatedMatches[idx] = match.copy(isFinished = false)
-        currentTournament = state.copy(matches = updatedMatches)
+        currentTournament = state.copy(matches = updatedMatches, isFinished = false, winner = null)
 
         return resolveMatch(matchId, winner.id, p1Result, p2Result)
     }
@@ -236,6 +298,27 @@ class TournamentManager {
     fun getLeagueStandings(): List<LeagueStandingRow> {
         val state = currentTournament ?: return emptyList()
         return calculateStandingsForMatches(state.players, state.matches)
+    }
+
+    /**
+     * Tabellen der Gruppenphase, eine Liste je Gruppe in der Reihenfolge A, B, C …
+     */
+    fun getGroupStandings(): List<List<LeagueStandingRow>> {
+        val state = currentTournament ?: return emptyList()
+        return groupStandings(state, state.matches)
+    }
+
+    private fun groupStandings(
+        state: TournamentState,
+        matches: List<TournamentMatch>
+    ): List<List<LeagueStandingRow>> {
+        val playersById = state.players.associateBy { it.id }
+        return state.groups.mapIndexed { groupIndex, ids ->
+            calculateStandingsForMatches(
+                ids.mapNotNull { playersById[it] },
+                matches.filter { it.bracket == MatchBracket.GROUP && it.group == groupIndex }
+            )
+        }
     }
 
     private fun calculateStandingsForMatches(
@@ -346,7 +429,7 @@ class TournamentManager {
      */
     fun saveToPreferences() {
         val state = currentTournament
-        if (state != null) {
+        if (state != null && persistent) {
             try {
                 val str = json.encodeToString(TournamentState.serializer(), state)
                 saveAppPreference(PREF_KEY_ACTIVE_TOURNAMENT, str)
@@ -361,6 +444,7 @@ class TournamentManager {
      * Lädt den persistenten Turnierstatus falls vorhanden.
      */
     fun loadFromPreferences(): Boolean {
+        if (!persistent) return false
         try {
             val str = loadAppPreference(PREF_KEY_ACTIVE_TOURNAMENT)
             if (!str.isNullOrBlank()) {
@@ -380,7 +464,9 @@ class TournamentManager {
     fun clearTournament() {
         currentTournament = null
         pendingSubmissions.clear()
-        saveAppPreference(PREF_KEY_ACTIVE_TOURNAMENT, "")
+        if (persistent) {
+            saveAppPreference(PREF_KEY_ACTIVE_TOURNAMENT, "")
+        }
         onTournamentUpdated?.invoke()
     }
 

@@ -190,6 +190,8 @@ fun TournamentViewScreen(
                                 val modeLabel = when (state.type) {
                                     TournamentType.SINGLE_ELIMINATION -> "K.O.-System"
                                     TournamentType.ROUND_ROBIN -> "Liga"
+                                    TournamentType.DOUBLE_ELIMINATION -> "Doppel-K.-o."
+                                    TournamentType.GROUPS_KNOCKOUT -> "Gruppen + K.-o."
                                 }
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
@@ -295,6 +297,30 @@ fun TournamentViewScreen(
                         TournamentLeagueView(
                             state = state,
                             standings = standings,
+                            onMatchClick = { match ->
+                                selectedMatchForAction = match
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    TournamentType.DOUBLE_ELIMINATION -> {
+                        DoubleEliminationView(
+                            state = state,
+                            isWidescreen = isWidescreen,
+                            onMatchClick = { match ->
+                                selectedMatchForAction = match
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    TournamentType.GROUPS_KNOCKOUT -> {
+                        val groupStandings = remember(state.matches) {
+                            tournamentManager.getGroupStandings()
+                        }
+                        GroupStageView(
+                            state = state,
+                            groupStandings = groupStandings,
+                            isWidescreen = isWidescreen,
                             onMatchClick = { match ->
                                 selectedMatchForAction = match
                             },

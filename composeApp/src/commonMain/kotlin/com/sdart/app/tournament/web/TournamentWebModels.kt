@@ -40,6 +40,8 @@ data class PendingMatchSubmission(
 data class TournamentWebOverview(
     val tournament: TournamentState?,
     val standings: List<LeagueStandingRow>? = null,
+    // Gruppenphase: eine Tabelle je Gruppe (A, B, C …)
+    val groupStandings: List<List<LeagueStandingRow>>? = null,
     val pendingMatchIds: List<String> = emptyList(),
     val serverTime: Long = currentTimeMillis(),
     val allowScoreSubmission: Boolean = true,

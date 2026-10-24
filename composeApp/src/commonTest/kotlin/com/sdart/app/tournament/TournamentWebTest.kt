@@ -32,7 +32,7 @@ class TournamentWebTest {
 
     @Test
     fun testExternalSubmissionWithHostApproval() {
-        val manager = TournamentManager()
+        val manager = TournamentManager(persistent = false)
         val players = makePlayers(4)
         val state = manager.createTournament(
             name = "Test Cup",
@@ -91,7 +91,7 @@ class TournamentWebTest {
 
     @Test
     fun testExternalSubmissionDirectAutoApply() {
-        val manager = TournamentManager()
+        val manager = TournamentManager(persistent = false)
         val players = makePlayers(4)
         val state = manager.createTournament(
             name = "Test Cup Direct",
@@ -122,7 +122,7 @@ class TournamentWebTest {
 
     @Test
     fun testRejectSubmission() {
-        val manager = TournamentManager()
+        val manager = TournamentManager(persistent = false)
         val players = makePlayers(4)
         val state = manager.createTournament(
             name = "Test Cup Reject",
@@ -156,7 +156,7 @@ class TournamentWebTest {
 
     @Test
     fun testHostManualScoreSubmissionWithLegs() {
-        val manager = TournamentManager()
+        val manager = TournamentManager(persistent = false)
         val players = makePlayers(4)
         val state = manager.createTournament(
             name = "Manual Legs Cup",

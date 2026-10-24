@@ -12,7 +12,21 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class TournamentType {
     SINGLE_ELIMINATION,
-    ROUND_ROBIN
+    ROUND_ROBIN,
+    DOUBLE_ELIMINATION,
+    GROUPS_KNOCKOUT
+}
+
+/**
+ * Teil des Turniers, zu dem ein Match gehört.
+ * MAIN ist der K.-o.-Baum (bei Doppel-K.-o. die Gewinnerrunde).
+ */
+@Serializable
+enum class MatchBracket {
+    MAIN,
+    LOSERS,
+    GRAND_FINAL,
+    GROUP
 }
 
 /**
@@ -69,7 +83,13 @@ data class TournamentMatch(
     val nextMatchSlot: Int = 1, // 1 für Spieler 1 im Folgematch, 2 für Spieler 2
     val player1Result: MatchPlayerResult = MatchPlayerResult(),
     val player2Result: MatchPlayerResult = MatchPlayerResult(),
-    val isBye: Boolean = false // Freilos-Match
+    val isBye: Boolean = false, // Freilos-Match
+    val bracket: MatchBracket = MatchBracket.MAIN,
+    // Doppel-K.-o.: Wohin der Verlierer wechselt (Verliererrunde bzw. Grand Final)
+    val loserNextMatchId: String? = null,
+    val loserNextMatchSlot: Int = 1,
+    // Gruppenphase: Index der Gruppe (0 = Gruppe A)
+    val group: Int? = null
 ) {
     val isReady: Boolean
         get() = !isFinished && player1 != null && player2 != null
@@ -88,8 +108,14 @@ data class TournamentState(
     val matches: List<TournamentMatch>,
     val isFinished: Boolean = false,
     val winner: TournamentPlayer? = null,
-    val createdAt: Long = currentTimeMillis()
+    val createdAt: Long = currentTimeMillis(),
+    // Gruppenphase: Spieler-IDs je Gruppe und wie viele pro Gruppe in die K.-o.-Runde kommen
+    val groups: List<List<String>> = emptyList(),
+    val qualifiersPerGroup: Int = 2
 )
+
+/** Buchstabe einer Gruppe, z. B. 0 → "A". */
+fun groupLabel(index: Int): String = ('A' + index).toString()
 
 /**
  * Zeile in der Tabelle eines Jeder-gegen-Jeden-Turniers

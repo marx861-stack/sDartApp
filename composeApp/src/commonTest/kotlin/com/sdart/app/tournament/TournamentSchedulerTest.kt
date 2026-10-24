@@ -69,7 +69,7 @@ class TournamentSchedulerTest {
 
     @Test
     fun testTournamentManagerKOProgression() {
-        val manager = TournamentManager()
+        val manager = TournamentManager(persistent = false)
         val players = makePlayers(4)
         val config = TournamentGameConfig(mode = GameMode.X501, legs = 3)
 
@@ -122,7 +122,7 @@ class TournamentSchedulerTest {
 
     @Test
     fun testRoundRobinScheduleAndStandings() {
-        val manager = TournamentManager()
+        val manager = TournamentManager(persistent = false)
         val players = makePlayers(3)
         val config = TournamentGameConfig(mode = GameMode.X501, legs = 1)
 

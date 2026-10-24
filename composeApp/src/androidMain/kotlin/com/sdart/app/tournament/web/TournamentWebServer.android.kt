@@ -209,11 +209,15 @@ class AndroidTournamentWebServer(
                     val standings = if (state?.type == TournamentType.ROUND_ROBIN) {
                         tournamentManager.getLeagueStandings()
                     } else null
+                    val groupStandings = if (state?.type == TournamentType.GROUPS_KNOCKOUT) {
+                        tournamentManager.getGroupStandings()
+                    } else null
 
                     val pendingMatchIds = tournamentManager.pendingSubmissions.map { it.matchId }
                     val overview = TournamentWebOverview(
                         tournament = state,
                         standings = standings,
+                        groupStandings = groupStandings,
                         pendingMatchIds = pendingMatchIds,
                         allowScoreSubmission = allowScoreSubmission,
                         requireHostApproval = requireHostApproval

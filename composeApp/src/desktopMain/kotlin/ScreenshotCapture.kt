@@ -15,7 +15,7 @@ import java.io.File
 
 fun runScreenshotCapture(screenType: String, outputFilePath: String) {
     val isLeague = screenType.contains("league", ignoreCase = true)
-    val manager = TournamentManager().apply {
+    val manager = TournamentManager(persistent = false).apply {
         val p = listOf(
             TournamentPlayer("p1", "Max M."),
             TournamentPlayer("p2", "Lukas K."),

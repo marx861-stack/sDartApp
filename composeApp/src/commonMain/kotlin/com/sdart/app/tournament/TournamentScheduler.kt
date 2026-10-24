@@ -181,6 +181,192 @@ object TournamentScheduler {
     }
 
     /**
+     * Erstellt einen Doppel-K.-o.-Spielplan aus Gewinnerrunde ([MatchBracket.MAIN]), Verliererrunde
+     * ([MatchBracket.LOSERS]) und Grand Final. Wer in der Gewinnerrunde verliert, wechselt in die
+     * Verliererrunde; erst die zweite Niederlage scheidet aus.
+     *
+     * Bei 2^k Plätzen hat die Verliererrunde 2·(k−1) Runden: In ungeraden Runden spielen die
+     * Verlierer-Sieger gegeneinander, in geraden Runden kommen die Verlierer der nächsten
+     * Gewinnerrunde dazu. Freilose werden über [resolveAutomaticMatches] durchgereicht.
+     */
+    fun createDoubleEliminationSchedule(
+        tournamentId: String,
+        players: List<TournamentPlayer>
+    ): List<TournamentMatch> {
+        require(players.size >= 3) { "Ein Doppel-K.-o.-Turnier benötigt mindestens 3 Spieler." }
+
+        val winnersBracket = createSingleEliminationSchedule(tournamentId, players)
+        val numRounds = winnersBracket.maxOf { it.round }
+        val totalSlots = 1 shl numRounds
+        val loserRounds = 2 * (numRounds - 1)
+
+        val grandFinal = TournamentMatch(
+            id = "${tournamentId}_gf_m0",
+            round = 1,
+            matchIndexInRound = 0,
+            bracket = MatchBracket.GRAND_FINAL
+        )
+
+        fun loserId(round: Int, index: Int) = "${tournamentId}_lb_r${round}_m${index}"
+
+        // Verliererrunde: Runde 1 und 2 haben je ein Viertel der Plätze, danach halbiert sich die Zahl alle zwei Runden
+        val losersBracket = mutableListOf<TournamentMatch>()
+        for (round in 1..loserRounds) {
+            val count = totalSlots shr ((round + 1) / 2 + 1)
+            for (i in 0 until count) {
+                val (nextId, nextSlot) = when {
+                    round == loserRounds -> grandFinal.id to 2
+                    round % 2 == 1 -> loserId(round + 1, i) to 1
+                    else -> loserId(round + 1, i / 2) to (i % 2 + 1)
+                }
+                losersBracket.add(
+                    TournamentMatch(
+                        id = loserId(round, i),
+                        round = round,
+                        matchIndexInRound = i,
+                        nextMatchId = nextId,
+                        nextMatchSlot = nextSlot,
+                        bracket = MatchBracket.LOSERS
+                    )
+                )
+            }
+        }
+
+        // Gewinnerrunde mit Verliererrunde und Grand Final verknüpfen
+        val linkedWinners = winnersBracket.map { m ->
+            when {
+                m.round == numRounds -> m.copy(
+                    nextMatchId = grandFinal.id,
+                    nextMatchSlot = 1,
+                    loserNextMatchId = loserId(loserRounds, 0),
+                    loserNextMatchSlot = 2
+                )
+                m.round == 1 -> m.copy(
+                    loserNextMatchId = loserId(1, m.matchIndexInRound / 2),
+                    loserNextMatchSlot = m.matchIndexInRound % 2 + 1
+                )
+                else -> {
+                    // Verlierer aus Gewinnerrunde r steigen in Verliererrunde 2(r−1) ein; jede zweite Runde
+                    // in umgekehrter Reihenfolge, damit sich Paarungen nicht sofort wiederholen
+                    val dropRound = 2 * (m.round - 1)
+                    val count = totalSlots shr m.round
+                    val target = if ((m.round - 1) % 2 == 1) count - 1 - m.matchIndexInRound else m.matchIndexInRound
+                    m.copy(loserNextMatchId = loserId(dropRound, target), loserNextMatchSlot = 2)
+                }
+            }
+        }
+
+        return resolveAutomaticMatches(linkedWinners + losersBracket + grandFinal)
+    }
+
+    /**
+     * Schließt Matches automatisch ab, in die höchstens ein Spieler gelangen kann (Freilos oder leeres
+     * Match), und reicht den Spieler weiter. Wird wiederholt, bis sich nichts mehr ändert.
+     */
+    internal fun resolveAutomaticMatches(matches: List<TournamentMatch>): List<TournamentMatch> {
+        val result = matches.toMutableList()
+
+        // Ein Platz ist offen, solange ein noch nicht beendetes Match ihn beliefert
+        fun isSlotOpen(match: TournamentMatch, slot: Int): Boolean {
+            if ((if (slot == 1) match.player1 else match.player2) != null) return false
+            return result.any {
+                !it.isFinished && (
+                    (it.nextMatchId == match.id && it.nextMatchSlot == slot) ||
+                        (it.loserNextMatchId == match.id && it.loserNextMatchSlot == slot)
+                    )
+            }
+        }
+
+        var changed = true
+        while (changed) {
+            changed = false
+            for (index in result.indices) {
+                val match = result[index]
+                if (match.isFinished || (match.player1 != null && match.player2 != null)) continue
+                if (isSlotOpen(match, 1) || isSlotOpen(match, 2)) continue
+
+                val advancing = match.player1 ?: match.player2
+                result[index] = match.copy(winner = advancing, isFinished = true, isBye = true)
+                if (advancing != null) {
+                    placePlayer(result, match.nextMatchId, match.nextMatchSlot, advancing)
+                }
+                changed = true
+            }
+        }
+        return result
+    }
+
+    /** Trägt einen Spieler in Platz [slot] des Matches [matchId] ein. */
+    internal fun placePlayer(
+        matches: MutableList<TournamentMatch>,
+        matchId: String?,
+        slot: Int,
+        player: TournamentPlayer
+    ) {
+        val index = matches.indexOfFirst { it.id == matchId }
+        if (index < 0) return
+        val target = matches[index]
+        matches[index] = if (slot == 1) target.copy(player1 = player) else target.copy(player2 = player)
+    }
+
+    /**
+     * Verteilt die Spieler in Schlangenlinie auf die Gruppen (A, B, C, C, B, A, …), damit die
+     * Setzliste gleichmäßig auf alle Gruppen fällt.
+     */
+    fun assignGroups(players: List<TournamentPlayer>, groupCount: Int): List<List<TournamentPlayer>> {
+        require(groupCount >= 1) { "Mindestens eine Gruppe erforderlich." }
+        val groups = List(groupCount) { mutableListOf<TournamentPlayer>() }
+        players.forEachIndexed { index, player ->
+            val lap = index / groupCount
+            val pos = index % groupCount
+            groups[if (lap % 2 == 0) pos else groupCount - 1 - pos].add(player)
+        }
+        return groups
+    }
+
+    /** Jeder-gegen-Jeden innerhalb jeder Gruppe. */
+    fun createGroupStageSchedule(
+        tournamentId: String,
+        groups: List<List<TournamentPlayer>>
+    ): List<TournamentMatch> {
+        require(groups.all { it.size >= 2 }) { "Jede Gruppe benötigt mindestens 2 Spieler." }
+        return groups.flatMapIndexed { groupIndex, groupPlayers ->
+            createRoundRobinSchedule("${tournamentId}_g$groupIndex", groupPlayers)
+                .map { it.copy(bracket = MatchBracket.GROUP, group = groupIndex) }
+        }
+    }
+
+    /**
+     * K.-o.-Runde aus den Gruppenplatzierungen: zuerst alle Gruppensieger, dann die Zweiten.
+     * Die Reihenfolge der Zweiten wird so rotiert, dass sich in der ersten Runde möglichst keine
+     * Spieler derselben Gruppe treffen.
+     */
+    fun createKnockoutFromGroups(
+        tournamentId: String,
+        rankedGroups: List<List<TournamentPlayer>>,
+        qualifiersPerGroup: Int
+    ): List<TournamentMatch> {
+        val groupOf = rankedGroups.flatMapIndexed { g, players -> players.map { it.id to g } }.toMap()
+        val winners = rankedGroups.mapNotNull { it.getOrNull(0) }
+        val runnersUp = if (qualifiersPerGroup >= 2) rankedGroups.mapNotNull { it.getOrNull(1) } else emptyList()
+
+        val candidates = if (runnersUp.isEmpty()) {
+            listOf(winners)
+        } else {
+            runnersUp.indices.map { shift -> winners + runnersUp.drop(shift) + runnersUp.take(shift) }
+        }
+
+        fun sameGroupPairings(schedule: List<TournamentMatch>) = schedule.count {
+            it.round == 1 && it.player1 != null && it.player2 != null &&
+                groupOf[it.player1.id] == groupOf[it.player2.id]
+        }
+
+        return candidates
+            .map { seeds -> createSingleEliminationSchedule("${tournamentId}_ko", seeds) }
+            .minBy { sameGroupPairings(it) }
+    }
+
+    /**
      * Berechnet die Standard-Setzreihenfolge für eine gegebene Zweierpotenz.
      * Beispiel für 8 Slots: [1, 8, 4, 5, 2, 7, 3, 6]
      */
