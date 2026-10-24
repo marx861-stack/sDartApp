@@ -403,7 +403,7 @@ private fun Screen.desktopDestination(): DesktopDestination? = when (this) {
     Screen.Start -> DesktopDestination.OVERVIEW
     Screen.GameModes -> DesktopDestination.GAMES
     Screen.TournamentSetup, Screen.TournamentView -> DesktopDestination.TOURNAMENT
-    Screen.PlayerManagement -> DesktopDestination.PLAYERS
+    Screen.PlayerManagement, is Screen.PlayerDetail -> DesktopDestination.PLAYERS
     Screen.PcIntegration -> DesktopDestination.DEVICES
     Screen.Settings -> DesktopDestination.SETTINGS
     else -> null

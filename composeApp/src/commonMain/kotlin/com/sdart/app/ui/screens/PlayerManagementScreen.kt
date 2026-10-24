@@ -26,7 +26,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.sdart.app.ui.AdaptiveContainer
 import com.sdart.app.ui.ScreenHeader
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
+import com.sdart.app.ui.components.ActiveGlassBg
+import com.sdart.app.ui.components.CardLink
+import com.sdart.app.ui.components.DashboardCard
+import com.sdart.app.ui.components.DesktopPage
+import com.sdart.app.ui.theme.PrimaryOrange
+import org.jetbrains.compose.resources.painterResource
+import sdartapp.composeapp.generated.resources.*
 import kotlinx.coroutines.launch
 
 /**
@@ -119,8 +132,17 @@ fun PlayerManagementScreen(
     }
     
     val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
-    
-    Box(
+
+    AdaptiveContainer { windowInfo ->
+    if (windowInfo.isExpanded) {
+        DesktopPlayerList(
+            players = players,
+            isLoading = isLoading,
+            errorMessage = errorMessage,
+            onCreate = { showCreateDialog = true },
+            onDelete = { playerToDelete = it }
+        )
+    } else Box(
         modifier = backgroundModifier
     ) {
         Column(
@@ -251,6 +273,7 @@ fun PlayerManagementScreen(
             }
         }
         }
+    }
     }
 
     // Create Dialog
@@ -476,3 +499,128 @@ private fun CreatePlayerDialog(
     }
 }
 
+
+
+/**
+ * Spieler für breite Fenster, aufgebaut wie "Neues Spiel": Spielerkarten links, rechts die Statistik
+ * des gewählten Spielers.
+ */
+@Composable
+private fun DesktopPlayerList(
+    players: List<SavedPlayer>,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onCreate: () -> Unit,
+    onDelete: (SavedPlayer) -> Unit
+) {
+    var selectedName by remember { mutableStateOf<String?>(null) }
+    // Nach dem Löschen oder beim ersten Laden springt die Auswahl auf den ersten Spieler
+    val selected = players.firstOrNull { it.name == selectedName } ?: players.firstOrNull()
+
+    // Seite genau fensterhoch: Spielerliste und Statistik scrollen jeweils für sich
+    DesktopPage(title = "Spieler", minHeight = 0.dp) {
+        Row(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                CardLink(
+                    text = "Neuer Spieler",
+                    onClick = onCreate,
+                    icon = Res.drawable.ic_plus,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 14.dp)
+                )
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.error),
+                        modifier = Modifier.padding(bottom = 14.dp)
+                    )
+                }
+                when {
+                    isLoading -> CircularProgressIndicator(color = PrimaryOrange)
+                    players.isEmpty() -> Text(
+                        text = "Noch keine Spieler. Lege oben einen neuen Spieler an.",
+                        style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+                    else -> LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        items(players, key = { it.name }) { player ->
+                            PlayerCard(
+                                player = player,
+                                selected = player.name == selected?.name,
+                                onClick = { selectedName = player.name },
+                                onDelete = { onDelete(player) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Box(modifier = Modifier.weight(2.6f).fillMaxHeight()) {
+                if (selected != null) {
+                    DesktopPlayerStats(
+                        player = selected,
+                        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlayerCard(player: SavedPlayer, selected: Boolean, onClick: () -> Unit, onDelete: () -> Unit) {
+    DashboardCard(
+        title = null,
+        highlighted = selected,
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(ActiveGlassBg)
+            ) {
+                Text(
+                    text = player.name.take(1).uppercase(),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold, color = PrimaryOrange)
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = player.name,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurface
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = if (player.totalGames > 0) {
+                        "${player.totalGames} ${if (player.totalGames == 1) "Spiel" else "Spiele"} · Ø ${player.bestAverageScorePerRound}"
+                    } else "Noch keine Spiele",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+            IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_trash),
+                    contentDescription = "Spieler löschen",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}

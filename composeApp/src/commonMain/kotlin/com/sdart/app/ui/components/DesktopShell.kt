@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.DrawableResource
@@ -67,21 +68,23 @@ fun DesktopScaffold(
 
 /**
  * Seite im Inhaltsbereich von [DesktopScaffold]: Titel und Inhalt über die ganze Fläche.
- * Der Inhalt bekommt eine feste Höhe (Fensterhöhe, mindestens [MinContentHeight]), damit Kacheln
+ * Der Inhalt bekommt eine feste Höhe (Fensterhöhe, mindestens [minHeight]), damit Kacheln
  * per `weight` mitwachsen und auch große Monitore füllen.
  */
 @Composable
 fun DesktopPage(
     title: String,
+    fillHeight: Boolean = true,
+    minHeight: Dp = MinContentHeight,
     content: @Composable ColumnScope.() -> Unit
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val contentHeight = maxOf(maxHeight, MinContentHeight)
+        val contentHeight = maxOf(maxHeight, minHeight)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .height(contentHeight)
+                .then(if (fillHeight) Modifier.height(contentHeight) else Modifier)
                 .padding(horizontal = 36.dp, vertical = 32.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
