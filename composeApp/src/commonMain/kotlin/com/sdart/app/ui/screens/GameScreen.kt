@@ -37,6 +37,7 @@ import com.sdart.app.ui.game.AllFivesRoundAnimation
 import com.sdart.app.ui.game.PlayerStatsDialog
 import com.sdart.app.ui.game.PlayerScoreRow
 import com.sdart.app.ui.game.DesktopCurrentPlayerCard
+import com.sdart.app.ui.game.DesktopCricketScoreboardTable
 import com.sdart.app.ui.game.DesktopPlayerScoreboardTable
 import com.sdart.app.ui.game.DesktopCurrentTurnPanel
 import com.sdart.app.ui.game.CricketScoreTable
@@ -472,47 +473,43 @@ fun GameScreen(
                                     .fillMaxHeight(),
                                 verticalArrangement = Arrangement.SpaceBetween
                             ) {
+                                // Große Spieleranzeige oben, darunter die Tabelle aller Spieler; sie scrollt selbst im freien Platz
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .fillMaxWidth()
-                                        .verticalScroll(rememberScrollState()),
+                                        .fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
+                                    DesktopCurrentPlayerCard(
+                                        game = game,
+                                        currentPlayer = currentPlayer,
+                                        currentPlayerIndex = currentPlayerIndex,
+                                        vm = vm,
+                                        onPlayerClick = { activeStatsPlayer = it },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    HorizontalDivider(
+                                        color = Color.White.copy(alpha = 0.12f),
+                                        thickness = 1.dp,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    )
+
                                     if (game.mode == GameMode.CRICKET) {
-                                        GameHeader(
-                                            game = game, 
-                                            currentPlayer = currentPlayer, 
-                                            currentPlayerIndex = currentPlayerIndex, 
-                                            vm = vm,
+                                        DesktopCricketScoreboardTable(
+                                            game = game,
+                                            currentPlayerIndex = currentPlayerIndex,
                                             onPlayerClick = { activeStatsPlayer = it },
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth().weight(1f, fill = false)
                                         )
                                     } else {
-                                        // 1. Große aktuelle Spieler-Anzeige inkl. dezenter Würfe dazwischen (ohne Kachel)
-                                        DesktopCurrentPlayerCard(
-                                            game = game,
-                                            currentPlayer = currentPlayer,
-                                            currentPlayerIndex = currentPlayerIndex,
-                                            vm = vm,
-                                            onPlayerClick = { activeStatsPlayer = it },
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-
-                                        HorizontalDivider(
-                                            color = Color.White.copy(alpha = 0.12f),
-                                            thickness = 1.dp,
-                                            modifier = Modifier.padding(vertical = 4.dp)
-                                        )
-
-                                        // 2. Alle Spieler als Liste untereinander mit Spalten (ohne Kachel)
                                         DesktopPlayerScoreboardTable(
                                             game = game,
                                             currentPlayer = currentPlayer,
                                             currentPlayerIndex = currentPlayerIndex,
                                             vm = vm,
                                             onPlayerClick = { activeStatsPlayer = it },
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth().weight(1f, fill = false)
                                         )
                                     }
                                 }

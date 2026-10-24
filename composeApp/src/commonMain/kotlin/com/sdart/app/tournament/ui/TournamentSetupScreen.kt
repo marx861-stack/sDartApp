@@ -290,7 +290,8 @@ private fun TournamentSetupContent(
         }
     }
 
-    DesktopPage(title = "Neues Turnier") {
+    // Genau fensterhoch: Teilnehmer und Einstellungen scrollen für sich, die Seite selbst nicht
+    DesktopPage(title = "Neues Turnier", minHeight = 0.dp) {
         if (compact) {
             // Karten einer Reihe gleich hoch, auch wenn ein Untertitel zweizeilig wird
             TypeOptions.chunked(2).forEach { row ->

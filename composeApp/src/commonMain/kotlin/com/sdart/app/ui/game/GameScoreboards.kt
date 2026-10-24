@@ -18,11 +18,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.sp
 import com.sdart.app.DartViewModel
 import com.sdart.app.Game
@@ -73,7 +78,7 @@ fun DesktopCurrentPlayerCard(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    val checkoutInfo = if (game.mode == GameMode.ALL_FIVES || game.mode == GameMode.AROUND_THE_CLOCK) null else when {
+                    val checkoutInfo = if (game.mode == GameMode.ALL_FIVES || game.mode == GameMode.AROUND_THE_CLOCK || game.mode == GameMode.CRICKET) null else when {
                         player.currentScore == 0 -> "🏆 Spiel gewonnen!"
                         player.currentScore in CHECKOUT_PATHS.keys -> {
                             val paths = CHECKOUT_PATHS[player.currentScore]
@@ -104,6 +109,8 @@ fun DesktopCurrentPlayerCard(
                     val avgText = if (game.mode == GameMode.AROUND_THE_CLOCK) {
                         val avgHits = PlayerStatistics.getAverageHitsPerRound(player, game.atcConfig)
                         "Ø ${avgHits.format(2)} Treffer/Runde"
+                    } else if (game.mode == GameMode.CRICKET) {
+                        "MPR ${PlayerStatistics.getCricketMPR(player).format(2)}"
                     } else {
                         val avgScore = PlayerStatistics.getAverageScorePerRound(player)
                         "Ø ${avgScore} Pkt./Runde"
@@ -148,7 +155,7 @@ fun DesktopCurrentPlayerCard(
                             )
                         )
                         Text(
-                            text = "REST",
+                            text = if (game.mode == GameMode.CRICKET) "PUNKTE" else "REST",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
@@ -278,7 +285,7 @@ fun DesktopPlayerScoreboardTable(
             val listState = rememberFollowingListState(currentPlayerIndex)
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
+                modifier = Modifier.fillMaxWidth().weight(1f, fill = false).nestedScroll(KeepScrollInList),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 itemsIndexed(game.players) { index, player ->
@@ -609,6 +616,163 @@ fun DesktopCurrentTurnPanel(
     }
 }
 
+/**
+ * Cricket-Tabelle für breite Fenster im Format der Standard-Tabelle ([DesktopPlayerScoreboardTable]):
+ * Spaltenköpfe in Großbuchstaben, jeder Spieler als abgerundete Zeile, der Spieler am Zug orange umrandet.
+ */
+@Composable
+fun DesktopCricketScoreboardTable(
+    game: Game,
+    currentPlayerIndex: Int,
+    onPlayerClick: (Player) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val players = game.players
+    val segments = listOf(15, 16, 17, 18, 19, 20, 25)
+    val showLegs = game.totalLegs > 1
+    val headerStyle = MaterialTheme.typography.labelSmall.copy(
+        fontWeight = FontWeight.Bold,
+        color = Color.White.copy(alpha = 0.5f),
+        letterSpacing = 1.sp,
+        fontSize = 11.sp
+    )
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (showLegs) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Leg ${game.currentLeg}/${game.totalLegs}",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryOrange,
+                        fontSize = 14.sp
+                    )
+                )
+                Text(
+                    text = if (players.size == 1) "Legs: ${game.totalLegs}" else "Best of ${game.totalLegs}",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = Color.LightGray)
+                )
+            }
+            HorizontalDivider(
+                color = Color.White.copy(alpha = 0.12f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+        }
+
+        // Spaltenköpfe
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("SPIELER", style = headerStyle, modifier = Modifier.weight(1.6f))
+            Text("P.", style = headerStyle, modifier = Modifier.weight(0.8f), textAlign = TextAlign.Center)
+            if (showLegs) {
+                Text("LEGS", style = headerStyle, modifier = Modifier.weight(0.6f), textAlign = TextAlign.Center)
+            }
+            segments.forEach { segment ->
+                Text(
+                    text = if (segment == 25) "BULL" else "$segment",
+                    style = headerStyle,
+                    modifier = Modifier.weight(0.6f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Bei vielen Spielern scrollt die Liste im freien Platz und folgt dem Spieler am Zug
+        val listState = rememberFollowingListState(currentPlayerIndex)
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxWidth().weight(1f, fill = false).nestedScroll(KeepScrollInList),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            itemsIndexed(players) { index, player ->
+                val isCurrentPlayer = index == currentPlayerIndex
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clickable { onPlayerClick(player) },
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isCurrentPlayer) PrimaryOrange.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.04f),
+                    border = if (isCurrentPlayer) BorderStroke(2.dp, PrimaryOrange)
+                        else BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = player.name,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = if (isCurrentPlayer) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                fontSize = if (isCurrentPlayer) 20.sp else 17.sp,
+                                color = Color.White
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1.6f)
+                        )
+                        Text(
+                            text = player.currentScore.toString(),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontSize = if (isCurrentPlayer) 24.sp else 20.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
+                            ),
+                            modifier = Modifier.weight(0.8f),
+                            textAlign = TextAlign.Center
+                        )
+                        if (showLegs) {
+                            Text(
+                                text = player.wonLegs.toString(),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (player.wonLegs > 0) Color(0xFF4CAF50) else Color.White
+                                ),
+                                modifier = Modifier.weight(0.6f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        segments.forEach { segment ->
+                            val marks = player.cricketMarks.getOrDefault(segment, 0)
+                            val closedByAll = players.all { it.cricketMarks.getOrDefault(segment, 0) >= 3 }
+                            Text(
+                                text = when {
+                                    closedByAll -> "●"
+                                    marks >= 3 -> "⊗"
+                                    marks == 2 -> "X"
+                                    marks == 1 -> "/"
+                                    else -> ""
+                                },
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = if (closedByAll || marks >= 3) 22.sp else 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when {
+                                        closedByAll -> Color.White.copy(alpha = 0.35f)
+                                        marks >= 3 -> PrimaryOrange
+                                        else -> Color.White
+                                    }
+                                ),
+                                modifier = Modifier.weight(0.6f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** Höhe einer Spielerzeile in der Cricket-Tabelle. */
 private val CricketRowHeight = 44.dp
 
@@ -706,6 +870,7 @@ fun CricketScoreTable(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = CricketRowHeight * visibleRows + 2.dp)
+                .nestedScroll(KeepScrollInList)
         ) {
             itemsIndexed(players) { index, player ->
                 val isCurrentPlayer = index == currentPlayerIndex
@@ -817,6 +982,15 @@ fun CricketScoreTable(
         }
         Spacer(modifier = Modifier.height(4.dp))
     }
+}
+
+/**
+ * Behält das Scrollen in der Spielertabelle: Am Listenende wird der Rest nicht an die umgebende,
+ * scrollbare Seitenleiste weitergereicht, damit sie beim Scrollen durch die Spieler nicht mitläuft.
+ */
+private val KeepScrollInList = object : NestedScrollConnection {
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = available
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available
 }
 
 /**

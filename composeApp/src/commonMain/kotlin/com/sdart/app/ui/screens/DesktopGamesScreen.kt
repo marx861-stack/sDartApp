@@ -126,7 +126,8 @@ fun DesktopGamesScreen(
         }
     }
 
-    DesktopPage(title = "Neues Spiel") {
+    // Genau fensterhoch: Spielerliste und Einstellungen scrollen für sich, die Seite selbst nicht
+    DesktopPage(title = "Neues Spiel", minHeight = 0.dp) {
         if (compact) {
             // Karten einer Reihe gleich hoch, auch wenn ein Untertitel zweizeilig wird
             modeEntries.chunked(2).forEach { row ->
