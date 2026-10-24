@@ -1,6 +1,21 @@
 package com.sdart.app.ui.game
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import com.sdart.app.ui.components.GlassCardBg
+import com.sdart.app.ui.components.GlassControlBorder
+import com.sdart.app.ui.theme.PrimaryOrange
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import sdartapp.composeapp.generated.resources.Res
+import sdartapp.composeapp.generated.resources.ic_camera_placeholder
+import sdartapp.composeapp.generated.resources.ic_target
+import sdartapp.composeapp.generated.resources.ic_undo
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -128,25 +143,64 @@ fun ActionButtonsSection(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Button(
+        ActionTile(
+            label = "Rückgängig",
+            icon = Res.drawable.ic_undo,
             onClick = onUndo,
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6c757d)),
-            shape = RoundedCornerShape(8.dp),
-            enabled = enabled
-        ) {
-            Text("Rückgängig")
-        }
-        Button(
-            onClick = onCameraClick, 
-            modifier = Modifier.weight(1f), 
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary), 
-            shape = RoundedCornerShape(8.dp),
-            enabled = enabled
-        ) {
-            Text(if (showCamera) "Board" else "Kamera")
-        }
+            enabled = enabled,
+            background = GlassCardBg,
+            borderColor = GlassControlBorder,
+            contentColor = Color.White,
+            modifier = Modifier.weight(1f)
+        )
+        ActionTile(
+            label = if (showCamera) "Board" else "Kamera",
+            icon = if (showCamera) Res.drawable.ic_target else Res.drawable.ic_camera_placeholder,
+            onClick = onCameraClick,
+            enabled = enabled,
+            background = if (showCamera) PrimaryOrange else PrimaryOrange.copy(alpha = 0.14f),
+            borderColor = if (showCamera) PrimaryOrange else PrimaryOrange.copy(alpha = 0.6f),
+            contentColor = if (showCamera) Color(0xFF1A1A1A) else PrimaryOrange,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun ActionTile(
+    label: String,
+    icon: DrawableResource,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    background: Color,
+    borderColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        modifier = modifier
+            .height(52.dp)
+            .alpha(if (enabled) 1f else 0.4f)
+            .clip(shape)
+            .background(background)
+            .border(1.dp, borderColor, shape)
+            .clickable(enabled = enabled, onClick = onClick)
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+            color = contentColor
+        )
     }
 }
