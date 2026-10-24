@@ -22,7 +22,6 @@ import com.sdart.app.*
 import com.sdart.app.ui.screens.PlayerLoadDialog
 import com.sdart.app.tournament.*
 import com.sdart.app.ui.LocalCompactLayout
-import com.sdart.app.ui.SetupTile
 import com.sdart.app.ui.components.*
 import org.jetbrains.compose.resources.DrawableResource
 import com.sdart.app.ui.theme.DarkBgGradient

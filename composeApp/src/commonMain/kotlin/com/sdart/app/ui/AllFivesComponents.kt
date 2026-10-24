@@ -20,61 +20,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 
 @Composable
-fun AllFivesScoreTable(
-    players: List<Player>,
-    currentPlayerIndex: Int,
-    targetScore: Int,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        players.forEachIndexed { index, player ->
-            val isCurrentPlayer = index == currentPlayerIndex
-            
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isCurrentPlayer) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
-                ),
-                border = if (isCurrentPlayer) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = player.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (isCurrentPlayer) FontWeight.Bold else FontWeight.Normal
-                        )
-                        Text(
-                             text = "Legs: ${player.wonLegs}",
-                             style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    
-                    // Score
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "${player.currentScore / 5} / ${targetScore / 5}",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun AllFivesMainDisplay(
     currentRoundTotal: Int,
     missed: Boolean,

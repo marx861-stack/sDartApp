@@ -40,27 +40,3 @@ fun CenteredScrollColumn(
         )
     }
 }
-
-/**
- * Einheitliches Layout für Auswahlmenüs (Startscreen, Games, …):
- * optionaler [ScreenHeader] oben an fester Position, das Menü darunter im restlichen Platz zentriert.
- */
-@Composable
-fun CenteredMenuLayout(
-    header: (@Composable () -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .safeDrawingPadding()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        header?.invoke()
-        CenteredScrollColumn(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            content = content
-        )
-    }
-}

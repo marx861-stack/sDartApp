@@ -819,67 +819,6 @@ fun CricketScoreTable(
     }
 }
 
-@Composable
-fun AllFivesScoreTable(
-    players: List<Player>,
-    currentPlayerIndex: Int,
-    targetScore: Int,
-    isDarkTheme: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val headerBgColor = if (isDarkTheme) Color(0xFF2d2d2d) else Color(0xFFf8f9fa)
-    val headerTextColor = if (isDarkTheme) Color(0xFFe0e0e0) else Color(0xFF495057)
-    val dividerColor = if (isDarkTheme) Color(0xFF404040) else Color(0xFFdee2e6)
-    val idleTextColor = if (isDarkTheme) Color(0xFFd0d0d0) else Color(0xFF495057)
-
-    Column(modifier = modifier.fillMaxWidth().padding(16.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(headerBgColor)
-                .padding(vertical = 12.dp, horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Spieler", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = headerTextColor), modifier = Modifier.width(250.dp), textAlign = TextAlign.Center)
-            Text("Punkte", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = headerTextColor), modifier = Modifier.width(150.dp), textAlign = TextAlign.Center)
-            Text("Ziel", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = headerTextColor), modifier = Modifier.width(150.dp), textAlign = TextAlign.Center)
-            Text("Runden", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = headerTextColor), modifier = Modifier.width(150.dp), textAlign = TextAlign.Center)
-            Text("Legs", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold, color = headerTextColor), modifier = Modifier.width(100.dp), textAlign = TextAlign.Center)
-        }
-        
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = dividerColor, thickness = 1.dp)
-        
-        players.forEachIndexed { index, player ->
-            val isCurrentPlayer = index == currentPlayerIndex
-            val textColor = if (isCurrentPlayer) MaterialTheme.colorScheme.primary else idleTextColor
-            val fontSize = if (isCurrentPlayer) 20.sp else 16.sp
-            val fontWeight = if (isCurrentPlayer) FontWeight.Bold else FontWeight.Normal
-            
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                    .then(
-                        if (isCurrentPlayer) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp)) else Modifier
-                    )
-                    .background(if (isCurrentPlayer) MaterialTheme.colorScheme.primary.copy(alpha = 0.05f) else Color.Transparent, RoundedCornerShape(8.dp))
-                    .padding(vertical = 12.dp, horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = if (isCurrentPlayer) "● ${player.name}" else player.name, style = MaterialTheme.typography.bodyMedium.copy(fontSize = fontSize, fontWeight = fontWeight, color = textColor), modifier = Modifier.width(250.dp), textAlign = TextAlign.Center)
-                Text(text = (player.currentScore / 5).toString(), style = MaterialTheme.typography.bodyMedium.copy(fontSize = fontSize, fontWeight = fontWeight, color = textColor), modifier = Modifier.width(150.dp), textAlign = TextAlign.Center)
-                Text(text = (targetScore / 5).toString(), style = MaterialTheme.typography.bodyMedium.copy(fontSize = fontSize, fontWeight = fontWeight, color = textColor), modifier = Modifier.width(150.dp), textAlign = TextAlign.Center)
-                Text(text = player.totalRounds.toString(), style = MaterialTheme.typography.bodyMedium.copy(fontSize = fontSize, fontWeight = fontWeight, color = textColor), modifier = Modifier.width(150.dp), textAlign = TextAlign.Center)
-                Text(text = player.wonLegs.toString(), style = MaterialTheme.typography.bodyMedium.copy(fontSize = fontSize, fontWeight = fontWeight, color = textColor), modifier = Modifier.width(100.dp), textAlign = TextAlign.Center)
-            }
-            if (index < players.size - 1) {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp), color = Color(0xFFdee2e6), thickness = 0.5.dp)
-            }
-        }
-    }
-}
-
 /**
  * Listenzustand für Spielertabellen: scrollt zum Spieler am Zug, sobald er nicht vollständig sichtbar ist.
  */

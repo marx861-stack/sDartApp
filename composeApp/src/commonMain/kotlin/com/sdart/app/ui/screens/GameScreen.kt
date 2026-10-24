@@ -40,7 +40,6 @@ import com.sdart.app.ui.game.DesktopCurrentPlayerCard
 import com.sdart.app.ui.game.DesktopPlayerScoreboardTable
 import com.sdart.app.ui.game.DesktopCurrentTurnPanel
 import com.sdart.app.ui.game.CricketScoreTable
-import com.sdart.app.ui.game.AllFivesScoreTable
 import com.sdart.app.ui.game.GameHeader
 import com.sdart.app.connect.DeviceRole
 import com.sdart.app.connect.SessionManager

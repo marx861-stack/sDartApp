@@ -128,26 +128,6 @@ fun CardLink(
 }
 
 @Composable
-fun ModeChip(icon: DrawableResource, label: String, onClick: () -> Unit) {
-    androidx.compose.foundation.layout.Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, GlassControlBorder, RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Icon(painterResource(icon), null, tint = PrimaryOrange, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
 fun StatTile(label: String, value: String, modifier: Modifier = Modifier, compact: Boolean = false) {
     Column(
         modifier = modifier
