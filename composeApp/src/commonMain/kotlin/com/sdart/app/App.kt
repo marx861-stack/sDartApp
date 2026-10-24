@@ -10,6 +10,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import com.sdart.app.ui.LocalWindowControlsInset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -315,12 +317,17 @@ fun App() {
                                 ) { screen -> screenContent(screen) }
                             }
                             if (expanded) {
+                                // Die Menüleiste hält selbst Abstand zu den Fenster-Buttons
                                 DesktopScaffold(selected = selected, onNavigate = navigateTopLevel, content = pages)
                             } else {
-                                MobileScaffold(selected = selected, onNavigate = navigateTopLevel, content = pages)
+                                Box(Modifier.padding(top = LocalWindowControlsInset.current)) {
+                                    MobileScaffold(selected = selected, onNavigate = navigateTopLevel, content = pages)
+                                }
                             }
                         } else {
-                            screenContent(key as Screen)
+                            Box(Modifier.padding(top = LocalWindowControlsInset.current)) {
+                                screenContent(key as Screen)
+                            }
                         }
                     }
                 }

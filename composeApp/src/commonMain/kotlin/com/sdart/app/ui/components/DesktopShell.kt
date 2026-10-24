@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sdart.app.ui.LocalCompactLayout
+import com.sdart.app.ui.LocalWindowControlsInset
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -276,6 +277,7 @@ private fun DesktopNavRail(
             .width(244.dp)
             .fillMaxHeight()
             .background(Color.Black.copy(alpha = 0.35f))
+            .padding(top = LocalWindowControlsInset.current)
             .padding(horizontal = 14.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {

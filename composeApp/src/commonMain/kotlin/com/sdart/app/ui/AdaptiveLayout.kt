@@ -78,6 +78,12 @@ fun calculateWindowSizeInfo(maxWidth: Dp, maxHeight: Dp): WindowSizeInfo {
 val LocalCompactLayout = staticCompositionLocalOf { false }
 
 /**
+ * Höhe, die oben für die Fenster-Buttons des Systems frei bleiben muss (macOS: Ampel-Knöpfe oben links,
+ * Inhalt reicht bis in die Titelleiste). 0 überall sonst. Wird in Main.kt (Desktop) gesetzt.
+ */
+val LocalWindowControlsInset = staticCompositionLocalOf { 0.dp }
+
+/**
  * Aktiver UI-Skalierungsfaktor aus [ProvideAdaptiveScale] (1.0 = keine Skalierung).
  */
 val LocalUiScale = staticCompositionLocalOf { 1.0f }

@@ -87,6 +87,8 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation("com.github.sarxos:webcam-capture:0.3.12")
 
+                implementation("net.java.dev.jna:jna-platform:5.14.0")
+                implementation("org.jetbrains.runtime:jbr-api:1.5.0")
                 implementation("javazoom:jlayer:1.0.1")
                 implementation("org.jmdns:jmdns:3.5.9")
                 implementation(libs.java.websocket)
