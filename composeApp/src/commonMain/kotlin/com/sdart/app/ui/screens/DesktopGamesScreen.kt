@@ -3,6 +3,8 @@ package com.sdart.app.ui.screens
 import com.sdart.app.*
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -16,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.sdart.app.ui.LocalCompactLayout
 import com.sdart.app.ui.components.*
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.DrawableResource
@@ -28,19 +31,50 @@ private data class ModeEntry(
     val mode: GameMode,
     val icon: DrawableResource,
     val title: StringResource,
-    val subtitle: String
+    // Spielregeln als kurze Absätze, angezeigt über das Info-Symbol der Karte
+    val rules: List<String>
 )
 
 private val modeEntries = listOf(
-    ModeEntry(GameMode.X501, Res.drawable.ic_standard, Res.string.game_mode_standard, "101 bis 701 oder eigene"),
-    ModeEntry(GameMode.CRICKET, Res.drawable.ic_cricket, Res.string.game_mode_cricket, "15 bis 20 und Bull schließen"),
-    ModeEntry(GameMode.ALL_FIVES, Res.drawable.ic_all_fives, Res.string.game_mode_all_fives, "Nur Fünfer-Aufnahmen zählen"),
-    ModeEntry(GameMode.AROUND_THE_CLOCK, Res.drawable.ic_atc, Res.string.game_mode_atc, "Der Reihe nach 1 bis 20")
+    ModeEntry(
+        GameMode.X501, Res.drawable.ic_standard, Res.string.game_mode_standard, listOf(
+            "Alle starten mit 501 Punkten (oder 101, 301, 701 bzw. eigenen). Pro Aufnahme wirfst du drei Darts, " +
+                "ihre Summe wird abgezogen.",
+            "Wer zuerst genau auf 0 kommt, gewinnt das Leg. Bei Double Out muss der letzte Dart ein Double sein, " +
+                "bei Double In zählt erst ab dem ersten Double.",
+            "Wer unter 0 fällt (bei Double Out auch auf 1), überwirft sich: Die Aufnahme zählt nicht."
+        )
+    ),
+    ModeEntry(
+        GameMode.CRICKET, Res.drawable.ic_cricket, Res.string.game_mode_cricket, listOf(
+            "Es zählen nur 15 bis 20 und das Bull. Jede Zahl ist nach drei Treffern geschlossen; Double zählt " +
+                "zweifach, Triple dreifach, beim Bull Single einfach und Double zweifach.",
+            "Weitere Treffer auf eine eigene geschlossene Zahl, die ein Gegner noch offen hat, bringen Punkte.",
+            "Das Leg endet, wenn alle alles geschlossen haben. Standard: Die Punkte bekommst du selbst, die meisten " +
+                "gewinnen. Cut Throat: Die Punkte gehen an die Gegner, die wenigsten gewinnen."
+        )
+    ),
+    ModeEntry(
+        GameMode.ALL_FIVES, Res.drawable.ic_all_fives, Res.string.game_mode_all_fives, listOf(
+            "Eine Aufnahme zählt nur, wenn alle drei Darts treffen und ihre Summe durch 5 teilbar ist. " +
+                "Dann wird die ganze Summe gutgeschrieben.",
+            "Wer zuerst die Ziel-Punktzahl erreicht (50, 75 oder 100), gewinnt das Leg."
+        )
+    ),
+    ModeEntry(
+        GameMode.AROUND_THE_CLOCK, Res.drawable.ic_atc, Res.string.game_mode_atc, listOf(
+            "Triff die Zahlen der Reihe nach von 1 bis 20, auf Wunsch rückwärts oder mit dem Bull am Ende. " +
+                "Wer zuerst durch ist, gewinnt.",
+            "Standard: Jedes Feld der Zahl zählt. Doubles bzw. Triples: Nur dieses Feld zählt.",
+            "Quickly: Single, Double und Triple bringen dich 1, 2 oder 3 Zahlen weiter. Shanghai: Auf jeder Zahl " +
+                "nacheinander Single, Double und Triple treffen."
+        )
+    )
 )
 
 /**
- * "Neues Spiel" für breite Fenster: Spielmodus links, Spieler und Einstellungen kompakt in einer Karte daneben.
- * Ersetzt auf dem Desktop die Abfolge GameModesScreen → PlayerSetupScreen; die Logik teilt es über [PlayerSetupState].
+ * "Neues Spiel": Spielmodus, Spieler und Einstellungen auf einer Seite. Breite Fenster zeigen die Modi links
+ * und Spieler und Einstellungen kompakt in einer Karte daneben, schmale Fenster stapeln alles untereinander.
  */
 @Composable
 fun DesktopGamesScreen(
@@ -55,8 +89,65 @@ fun DesktopGamesScreen(
     }
     val setup = rememberPlayerSetupState()
     var showLoadDialog by remember { mutableStateOf(false) }
+    val compact = LocalCompactLayout.current
+
+    val modeCard: @Composable (ModeEntry, Modifier) -> Unit = { entry, modifier ->
+        ModeCard(
+            entry = entry,
+            selected = entry.mode == selectedMode,
+            onClick = {
+                selectedMode = entry.mode
+                onModeSelected(entry.mode)
+            },
+            modifier = modifier
+        )
+    }
+    val summaryText: @Composable (Modifier) -> Unit = { modifier ->
+        Text(
+            text = if (setup.showError) setup.errorMessage(selectedMode) else summary(setup, selectedMode),
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = if (setup.showError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+            modifier = modifier
+        )
+    }
+    val startButton: @Composable (Modifier) -> Unit = { modifier ->
+        Button(
+            onClick = { setup.startGame(selectedMode, onStartGame) },
+            enabled = setup.canStart,
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange, contentColor = Color.Black),
+            shape = RoundedCornerShape(10.dp),
+            contentPadding = PaddingValues(horizontal = 22.dp, vertical = 12.dp),
+            modifier = modifier
+        ) {
+            Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(6.dp))
+            Text("Spiel starten", fontWeight = FontWeight.SemiBold)
+        }
+    }
 
     DesktopPage(title = "Neues Spiel") {
+        if (compact) {
+            // Karten einer Reihe gleich hoch, auch wenn ein Untertitel zweizeilig wird
+            modeEntries.chunked(2).forEach { row ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
+                ) {
+                    row.forEach { entry -> modeCard(entry, Modifier.weight(1f).fillMaxHeight()) }
+                }
+            }
+            DashboardCard(title = null, modifier = Modifier.fillMaxWidth(), contentPadding = 16.dp) {
+                PlayersSection(setup = setup, onLoadClick = { showLoadDialog = true }, modifier = Modifier.fillMaxWidth())
+            }
+            DashboardCard(title = null, modifier = Modifier.fillMaxWidth(), contentPadding = 16.dp) {
+                SettingsSection(setup = setup, mode = selectedMode, modifier = Modifier.fillMaxWidth())
+            }
+            summaryText(Modifier.padding(horizontal = 4.dp))
+            startButton(Modifier.fillMaxWidth())
+            return@DesktopPage
+        }
+
         // Modus-Karten und Setup-Panel füllen die ganze verfügbare Höhe
         Row(
             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -66,56 +157,36 @@ fun DesktopGamesScreen(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                modeEntries.forEach { entry ->
-                    ModeCard(
-                        entry = entry,
-                        selected = entry.mode == selectedMode,
-                        onClick = {
-                            selectedMode = entry.mode
-                            onModeSelected(entry.mode)
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                modeEntries.forEach { entry -> modeCard(entry, Modifier.weight(1f)) }
             }
 
             DashboardCard(title = null, modifier = Modifier.weight(2.6f).fillMaxHeight()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+                // Spieler und Einstellungen teilen sich die Kartenhöhe und scrollen bei Bedarf jeweils für sich,
+                // damit auch viele Spieler erreichbar bleiben und der Start-Button unten stehen bleibt
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(40.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
                     PlayersSection(
                         setup = setup,
                         onLoadClick = { showLoadDialog = true },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        scrollList = true
                     )
                     SettingsSection(
                         setup = setup,
                         mode = selectedMode,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())
                     )
                 }
 
-                Spacer(Modifier.weight(1f).heightIn(min = 20.dp))
+                Spacer(Modifier.height(20.dp))
                 HorizontalDivider(color = GlassCardBorder)
                 Spacer(Modifier.height(16.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = if (setup.showError) setup.errorMessage(selectedMode) else summary(setup, selectedMode),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = if (setup.showError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.weight(1f)
-                    )
-                    Button(
-                        onClick = { setup.startGame(selectedMode, onStartGame) },
-                        enabled = setup.canStart,
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange, contentColor = Color.Black),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 22.dp, vertical = 12.dp)
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Spiel starten", fontWeight = FontWeight.SemiBold)
-                    }
+                    summaryText(Modifier.weight(1f))
+                    startButton(Modifier)
                 }
             }
         }
@@ -132,38 +203,43 @@ fun DesktopGamesScreen(
 
 @Composable
 private fun ModeCard(entry: ModeEntry, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    DashboardCard(
-        title = null,
-        highlighted = selected,
-        onClick = onClick,
-        verticalArrangement = Arrangement.Center,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(entry.icon),
-                contentDescription = null,
-                tint = PrimaryOrange,
-                modifier = Modifier.size(40.dp)
-            )
-            Spacer(Modifier.width(18.dp))
-            Column {
+    val compact = LocalCompactLayout.current
+    val title = stringResource(entry.title)
+    Box(modifier = modifier.fillMaxWidth()) {
+        DashboardCard(
+            title = null,
+            highlighted = selected,
+            onClick = onClick,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+            contentPadding = if (compact) 14.dp else 24.dp
+        ) {
+            // Auf dem Handy sind die Karten flach: rechts Platz lassen für das Info-Symbol in der Ecke
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(end = if (compact) 18.dp else 0.dp)
+            ) {
+                Icon(
+                    painter = painterResource(entry.icon),
+                    contentDescription = null,
+                    tint = PrimaryOrange,
+                    modifier = Modifier.size(if (compact) 26.dp else 40.dp)
+                )
+                Spacer(Modifier.width(if (compact) 10.dp else 18.dp))
                 Text(
-                    text = stringResource(entry.title),
-                    style = MaterialTheme.typography.titleLarge.copy(
+                    text = title,
+                    style = (if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleLarge).copy(
                         fontWeight = FontWeight.SemiBold,
                         color = if (selected) PrimaryOrange else MaterialTheme.colorScheme.onSurface
-                    )
-                )
-                Text(
-                    text = entry.subtitle,
-                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp)
+                    ),
+                    // Lange Namen wie "Around the Clock" dürfen umbrechen (neben dem Info-Symbol ist wenig Platz)
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
+
+        RulesInfoButton(title = title, rules = entry.rules, modifier = Modifier.align(Alignment.TopEnd).padding(2.dp))
     }
 }
 
@@ -171,78 +247,21 @@ private fun ModeCard(entry: ModeEntry, selected: Boolean, onClick: () -> Unit, m
 private fun PlayersSection(
     setup: PlayerSetupState,
     onLoadClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    scrollList: Boolean = false
 ) {
-    Column(modifier = modifier) {
-        CardTitle("Spieler · ${setup.playerNames.size} von 8")
-
-        // Aktionen oberhalb der Namensfelder, damit neue Spieler nicht unter der Liste wegrutschen
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = Modifier.padding(start = 22.dp, bottom = 12.dp)
-        ) {
-            if (setup.playerNames.size < 8) {
-                CardLink("Spieler hinzufügen", onClick = { setup.addPlayer() }, icon = Res.drawable.ic_plus)
-            }
-            CardLink("Gespeicherte laden", onClick = onLoadClick, primary = false, icon = Res.drawable.ic_folder)
-        }
-
-        setup.playerNames.forEachIndexed { index, player ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            ) {
-                Text(
-                    text = "${index + 1}",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                    modifier = Modifier.width(22.dp)
-                )
-                OutlinedTextField(
-                    value = player.name,
-                    onValueChange = { setup.renamePlayer(index, it) },
-                    placeholder = { Text("Spieler ${index + 1}") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(10.dp),
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    trailingIcon = if (player.isLoaded) {
-                        {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_folder),
-                                contentDescription = "Gespeicherter Spieler",
-                                tint = PrimaryOrange,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    } else null,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        focusedBorderColor = PrimaryOrange,
-                        unfocusedBorderColor = GlassControlBorder
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
-                if (setup.playerNames.size > 1) {
-                    IconButton(onClick = { setup.removePlayer(index) }) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_trash),
-                            contentDescription = "Spieler entfernen",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-        SelectChip(
-            label = "Zufällige Reihenfolge",
-            selected = setup.randomizeOrder,
-            onClick = { setup.randomizeOrder = !setup.randomizeOrder },
-            icon = Res.drawable.ic_refresh
-        )
-    }
+    PlayerListSection(
+        players = setup.playerNames.map { PlayerListEntry(it.name, it.isLoaded) },
+        minPlayers = 1,
+        onAdd = { setup.addPlayer() },
+        onLoad = onLoadClick,
+        onRename = { index, name -> setup.renamePlayer(index, name) },
+        onRemove = { index -> setup.removePlayer(index) },
+        randomize = setup.randomizeOrder,
+        onRandomizeChange = { setup.randomizeOrder = it },
+        modifier = modifier,
+        scrollList = scrollList
+    )
 }
 
 @Composable
@@ -311,6 +330,10 @@ private fun SettingsSection(
             }
             else -> {
                 section("Startpunkte", true)
+                val compact = LocalCompactLayout.current
+                val customTile: @Composable (Modifier) -> Unit = { m ->
+                    SelectTile(if (compact) "Eigene Startpunkte" else "Eigene", setup.startScore == 0, { setup.startScore = 0 }, m)
+                }
                 tileRow(5) {
                     listOf(101, 301, 501, 701).forEach { score ->
                         SelectTile("$score", setup.startScore == score, {
@@ -318,7 +341,11 @@ private fun SettingsSection(
                             setup.customScore = ""
                         }, Modifier.weight(1f))
                     }
-                    SelectTile("Eigene", setup.startScore == 0, { setup.startScore = 0 }, Modifier.weight(1f))
+                    if (!compact) customTile(Modifier.weight(1f))
+                }
+                // Auf dem Handy reicht die Breite nicht für fünf Kacheln, "Eigene" bekommt eine eigene Reihe
+                if (compact) {
+                    tileRow(1) { customTile(Modifier.weight(1f)) }
                 }
                 if (setup.startScore == 0) {
                     OutlinedTextField(

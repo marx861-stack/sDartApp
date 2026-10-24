@@ -27,7 +27,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.connect.HostState
@@ -41,8 +43,9 @@ import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 /**
- * Startseite für breite Fenster (Desktop, Tablet quer): feste Navigationsleiste links,
- * daneben Schnellstart, Turnierstatus, Bestenliste, Geräte und Bestwerte.
+ * Startseite mit Schnellstart, Turnierstatus, Bestenliste, Geräten und Bestwerten.
+ * Breite Fenster (Desktop, Tablet quer) zeigen die Karten als Raster neben der Navigationsleiste,
+ * schmale Fenster ([compact], Handy) untereinander mit eigener Kopfzeile.
  */
 @Composable
 fun DesktopDashboard(
@@ -56,7 +59,9 @@ fun DesktopDashboard(
     onResumeTournamentClick: () -> Unit,
     onPcConnect: () -> Unit,
     onHostOverviewClick: () -> Unit,
-    onManagePlayersClick: () -> Unit
+    onManagePlayersClick: () -> Unit,
+    onSettingsClick: () -> Unit = {},
+    compact: Boolean = false
 ) {
     val players by produceState(initialValue = emptyList<SavedPlayer>(), repository) {
         value = repository.loadAllPlayers()
@@ -64,6 +69,28 @@ fun DesktopDashboard(
     val lastGame = remember { AppPreferences.lastGameSetup }
     val hostState by sessionManager.hostState.collectAsState()
     val tournament = vm.tournamentManager.currentTournament?.takeIf { !it.isFinished }
+
+    if (compact) {
+        CompactDashboardPage(onSettingsClick = onSettingsClick) {
+            QuickStartCard(
+                lastGame = lastGame,
+                onRematchClick = onRematchClick,
+                onGameModeClick = onGameModeClick,
+                onGamesClick = onGamesClick,
+                compact = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            CompactTiles(
+                tournament = tournament,
+                hostState = hostState,
+                players = players,
+                onTournamentClick = if (tournament != null) onResumeTournamentClick else onTournamentClick,
+                onDevicesClick = onPcConnect,
+                onPlayersClick = onManagePlayersClick
+            )
+        }
+        return
+    }
 
     DesktopPage(title = "Übersicht") {
         // Die Kachelreihen teilen sich die Fensterhöhe, damit auch große Monitore gefüllt sind
@@ -106,6 +133,272 @@ fun DesktopDashboard(
     }
 }
 
+/**
+ * Seite des Dashboards auf schmalen Fenstern: Kopfzeile mit Logo und Einstellungen,
+ * darunter die Karten in einer scrollbaren Spalte.
+ */
+@Composable
+private fun CompactDashboardPage(
+    onSettingsClick: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    // Systemleisten-Abstand außen, sonst scrollt der Inhalt unter die Statusleiste
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.35f))
+            .safeDrawingPadding(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 640.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 14.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_main_logo),
+                    contentDescription = null,
+                    tint = PrimaryOrange,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "S'Dart App",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onSettingsClick) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(Res.string.settings),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            content()
+        }
+    }
+}
+
+/**
+ * Übersicht auf dem Handy als Kachelraster: Turnier und Geräte nebeneinander, darunter die Bestenliste
+ * über die ganze Breite und die Bestwerte als einzelne Kacheln. Jede Kachel führt in ihren Bereich.
+ */
+@Composable
+private fun CompactTiles(
+    tournament: TournamentState?,
+    hostState: HostState,
+    players: List<SavedPlayer>,
+    onTournamentClick: () -> Unit,
+    onDevicesClick: () -> Unit,
+    onPlayersClick: () -> Unit
+) {
+    val ranked = players.filter { it.totalRounds > 0 }.sortedByDescending { it.roundAverage() }
+    val host = hostState as? HostState.Active
+
+    TileRow {
+        if (tournament != null) {
+            val finished = tournament.matches.count { it.isFinished }
+            val total = tournament.matches.size.coerceAtLeast(1)
+            DashboardTile(
+                icon = Res.drawable.ic_trophy,
+                title = "Turnier läuft",
+                value = tournament.name,
+                valueColor = PrimaryOrange,
+                highlighted = true,
+                onClick = onTournamentClick,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(GlassControlBorder)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(finished.toFloat() / total)
+                            .fillMaxHeight()
+                            .background(PrimaryOrange)
+                    )
+                }
+                TileDetail("$finished von ${tournament.matches.size} Matches")
+            }
+        } else {
+            DashboardTile(
+                icon = Res.drawable.ic_trophy,
+                title = stringResource(Res.string.main_title_tournament),
+                value = "Neues Turnier",
+                onClick = onTournamentClick,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            ) {
+                TileDetail("K.-o., Liga oder Gruppen")
+            }
+        }
+        DashboardTile(
+            icon = Res.drawable.ic_mobile_connect,
+            title = "Geräte",
+            value = if (host != null) "${host.participants.size} verbunden" else "Host aus",
+            onClick = onDevicesClick,
+            modifier = Modifier.weight(1f).fillMaxHeight()
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(if (host != null) OnlineGreen else GlassControlBorder)
+                )
+                Spacer(Modifier.width(6.dp))
+                TileDetail(if (host != null) "Port ${host.port}" else "Tippen zum Verbinden", topPadding = 0.dp)
+            }
+        }
+    }
+
+    // Bestenliste über die ganze Breite: die ersten drei mit Verlauf und Schnitt
+    DashboardTile(
+        icon = Res.drawable.ic_chart_bar,
+        title = "Bestenliste · Ø pro Aufnahme",
+        value = if (ranked.isEmpty()) "Noch leer" else null,
+        onClick = onPlayersClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        if (ranked.isEmpty()) {
+            TileDetail("Erscheint nach dem ersten Spiel gespeicherter Spieler")
+        } else {
+            Spacer(Modifier.height(6.dp))
+            ranked.take(3).forEachIndexed { index, player ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp)
+                ) {
+                    Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = if (index == 0) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.width(24.dp)
+                    )
+                    Text(
+                        text = player.name,
+                        style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Sparkline(
+                        values = player.gameHistory.map { it.averageScore },
+                        color = if (index == 0) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.width(72.dp).height(22.dp)
+                    )
+                    Text(
+                        text = formatOneDecimal(player.roundAverage()),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.width(56.dp)
+                    )
+                }
+            }
+        }
+    }
+
+    val total180s = players.sumOf { it.highScores180s }
+    val bestCheckout = players.maxOfOrNull { it.bestCheckout } ?: 0
+    val highestRound = players.maxOfOrNull { it.highestRoundScore } ?: 0
+    val fewestDarts = players.map { it.bestMatchDarts }.filter { it > 0 }.minOrNull()
+    CardTitle("Bestwerte aller Spieler", modifier = Modifier.padding(start = 4.dp, top = 6.dp))
+    listOf(
+        "180er" to total180s.toString(),
+        "Bestes Checkout" to if (bestCheckout > 0) bestCheckout.toString() else "–",
+        "Höchste Aufnahme" to if (highestRound > 0) highestRound.toString() else "–",
+        "Kürzestes Leg" to (fewestDarts?.let { "$it Darts" } ?: "–")
+    ).chunked(2).forEach { row ->
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            row.forEach { (label, value) -> StatTile(label, value, Modifier.weight(1f), compact = true) }
+        }
+    }
+}
+
+/** Zwei gleich hohe Kacheln nebeneinander. */
+@Composable
+private fun TileRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        content = content
+    )
+}
+
+/** Kachel der Handy-Übersicht: Symbol und kleiner Titel, darunter der Hauptwert (falls vorhanden) und Details. */
+@Composable
+private fun DashboardTile(
+    icon: DrawableResource,
+    title: String,
+    value: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    valueColor: Color = Color.Unspecified,
+    highlighted: Boolean = false,
+    details: @Composable ColumnScope.() -> Unit
+) {
+    DashboardCard(
+        title = null,
+        highlighted = highlighted,
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 128.dp),
+        contentPadding = 14.dp
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(painterResource(icon), null, tint = PrimaryOrange, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        if (value != null) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (valueColor != Color.Unspecified) valueColor else MaterialTheme.colorScheme.onSurface
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 12.dp)
+            )
+        }
+        details()
+    }
+}
+
+@Composable
+private fun TileDetail(text: String, topPadding: Dp = 2.dp) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(top = topPadding)
+    )
+}
+
 // --- Karten ---
 
 @Composable
@@ -114,69 +407,106 @@ private fun QuickStartCard(
     onRematchClick: (LastGameSetup) -> Unit,
     onGameModeClick: (GameMode) -> Unit,
     onGamesClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
-    DashboardCard(title = "Schnellstart", modifier = modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                if (lastGame != null) {
-                    Text(
-                        text = describeGame(lastGame),
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-                    Text(
-                        text = lastGame.playerNames.joinToString(", ") +
-                                (if (lastGame.startedAtMillis > 0) " · ${relativeDay(lastGame.startedAtMillis)}" else ""),
-                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+    val onStart = { if (lastGame != null) onRematchClick(lastGame) else onGamesClick() }
+    DashboardCard(title = "Schnellstart", modifier = modifier, contentPadding = cardPadding(compact)) {
+        // Auf dem Handy steht der Button unter der Beschreibung, damit der Text Platz hat
+        if (compact) {
+            QuickStartSummary(lastGame, compact = true)
+            QuickStartButton(lastGame, onStart, Modifier.fillMaxWidth().padding(top = 10.dp), compact = true)
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                QuickStartSummary(lastGame, Modifier.weight(1f))
+                Spacer(Modifier.width(16.dp))
+                QuickStartButton(lastGame, onStart)
+            }
+        }
+
+        // In der scrollbaren Handy-Spalte gibt es keine Resthöhe zu verteilen, daher fester Abstand
+        Spacer(if (compact) Modifier.height(12.dp) else Modifier.weight(1f).heightIn(min = 18.dp))
+
+        val modes = listOf(
+            Triple(Res.drawable.ic_standard, stringResource(Res.string.game_mode_standard), GameMode.X501),
+            Triple(Res.drawable.ic_cricket, stringResource(Res.string.game_mode_cricket), GameMode.CRICKET),
+            Triple(Res.drawable.ic_all_fives, stringResource(Res.string.game_mode_all_fives), GameMode.ALL_FIVES),
+            // Kurzform, der volle Name passt in keine der Kacheln
+            Triple(Res.drawable.ic_atc, "ATC", GameMode.AROUND_THE_CLOCK)
+        )
+        // Auf dem Handy alle vier Modi in einer Reihe, Symbol über dem Namen
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
+            modifier = Modifier.fillMaxWidth().height(if (compact) 72.dp else 58.dp)
+        ) {
+            modes.forEach { (icon, label, mode) ->
+                if (compact) {
+                    CompactModeTile(icon, label, Modifier.weight(1f)) { onGameModeClick(mode) }
                 } else {
-                    Text(
-                        text = "Noch kein Spiel gespielt",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-                    Text(
-                        text = "Wähle unten einen Spielmodus, um loszulegen.",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                    ModeTile(icon, label, Modifier.weight(1f)) { onGameModeClick(mode) }
                 }
             }
-            Spacer(Modifier.width(16.dp))
-            Button(
-                onClick = { if (lastGame != null) onRematchClick(lastGame) else onGamesClick() },
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange, contentColor = Color.Black),
-                shape = RoundedCornerShape(10.dp),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
-            ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = if (lastGame != null) "Revanche" else "Spiel starten",
-                    fontWeight = FontWeight.SemiBold
+        }
+    }
+}
+
+@Composable
+private fun QuickStartSummary(lastGame: LastGameSetup?, modifier: Modifier = Modifier, compact: Boolean = false) {
+    val titleStyle = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall
+    Column(modifier = modifier) {
+        if (lastGame != null) {
+            Text(
+                text = describeGame(lastGame),
+                style = titleStyle.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-            }
+            )
+            Text(
+                text = lastGame.playerNames.joinToString(", ") +
+                        (if (lastGame.startedAtMillis > 0) " · ${relativeDay(lastGame.startedAtMillis)}" else ""),
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        } else {
+            Text(
+                text = "Noch kein Spiel gespielt",
+                style = titleStyle.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            )
+            Text(
+                text = "Wähle unten einen Spielmodus, um loszulegen.",
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
+    }
+}
 
-        Spacer(Modifier.weight(1f).heightIn(min = 18.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth().height(58.dp)
-        ) {
-            ModeTile(Res.drawable.ic_standard, stringResource(Res.string.game_mode_standard), Modifier.weight(1f)) { onGameModeClick(GameMode.X501) }
-            ModeTile(Res.drawable.ic_cricket, stringResource(Res.string.game_mode_cricket), Modifier.weight(1f)) { onGameModeClick(GameMode.CRICKET) }
-            ModeTile(Res.drawable.ic_all_fives, stringResource(Res.string.game_mode_all_fives), Modifier.weight(1f)) { onGameModeClick(GameMode.ALL_FIVES) }
-            ModeTile(Res.drawable.ic_atc, stringResource(Res.string.game_mode_atc), Modifier.weight(1f)) { onGameModeClick(GameMode.AROUND_THE_CLOCK) }
-        }
+@Composable
+private fun QuickStartButton(
+    lastGame: LastGameSetup?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange, contentColor = Color.Black),
+        shape = RoundedCornerShape(10.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = if (compact) 8.dp else 12.dp),
+        modifier = modifier
+    ) {
+        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = if (lastGame != null) "Revanche" else "Spiel starten",
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -200,6 +530,31 @@ private fun ModeTile(icon: DrawableResource, label: String, modifier: Modifier =
             style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun CompactModeTile(icon: DrawableResource, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(12.dp))
+            .background(GlassCardBg)
+            .border(1.dp, GlassCardBorder, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 6.dp)
+    ) {
+        Icon(painterResource(icon), null, tint = PrimaryOrange, modifier = Modifier.size(20.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurface),
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
@@ -300,43 +655,46 @@ private fun LeaderboardCard(
                 modifier = Modifier.padding(top = 12.dp).clickable(onClick = onManagePlayersClick)
             )
         } else {
-            ranked.forEachIndexed { index, player ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = onManagePlayersClick)
-                        .padding(vertical = 9.dp, horizontal = 4.dp)
-                ) {
-                    Text(
-                        text = "${index + 1}",
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = if (index == 0) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier.width(28.dp)
-                    )
-                    Text(
-                        text = player.name,
-                        style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Sparkline(
-                        values = player.gameHistory.map { it.averageScore },
-                        color = if (index == 0) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(160.dp).height(26.dp)
-                    )
-                    Text(
-                        text = formatOneDecimal(player.roundAverage()),
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        modifier = Modifier.width(64.dp).padding(start = 12.dp)
-                    )
+            // Bei kleinem Fenster scrollen die Zeilen in der Karte, statt abgeschnitten zu werden
+            Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                ranked.forEachIndexed { index, player ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onManagePlayersClick)
+                            .padding(vertical = 9.dp, horizontal = 4.dp)
+                    ) {
+                        Text(
+                            text = "${index + 1}",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = if (index == 0) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            modifier = Modifier.width(28.dp)
+                        )
+                        Text(
+                            text = player.name,
+                            style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Sparkline(
+                            values = player.gameHistory.map { it.averageScore },
+                            color = if (index == 0) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.width(160.dp).height(26.dp)
+                        )
+                        Text(
+                            text = formatOneDecimal(player.roundAverage()),
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.width(64.dp).padding(start = 12.dp)
+                        )
+                    }
                 }
             }
         }
@@ -361,8 +719,11 @@ private fun DevicesCard(
                         modifier = Modifier.padding(top = 6.dp)
                     )
                 } else {
-                    hostState.participants.forEach { participant ->
-                        StatusLine(online = true, label = participant.name, detail = participant.platform)
+                    // Viele Geräte scrollen in der Karte, die Links darunter bleiben sichtbar
+                    Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                        hostState.participants.forEach { participant ->
+                            StatusLine(online = true, label = participant.name, detail = participant.platform)
+                        }
                     }
                 }
             }
@@ -401,17 +762,22 @@ private fun HighlightsCard(players: List<SavedPlayer>) {
     val highestRound = players.maxOfOrNull { it.highestRoundScore } ?: 0
     val fewestDarts = players.map { it.bestMatchDarts }.filter { it > 0 }.minOrNull()
 
+    val stats = listOf(
+        "180er" to total180s.toString(),
+        "Bestes Checkout" to if (bestCheckout > 0) bestCheckout.toString() else "–",
+        "Höchste Aufnahme" to if (highestRound > 0) highestRound.toString() else "–",
+        "Kürzestes Leg" to (fewestDarts?.let { "$it Darts" } ?: "–")
+    )
     DashboardCard(title = "Bestwerte aller Spieler", modifier = Modifier.fillMaxWidth()) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatTile("180er", total180s.toString(), Modifier.weight(1f))
-            StatTile("Bestes Checkout", if (bestCheckout > 0) bestCheckout.toString() else "–", Modifier.weight(1f))
-            StatTile("Höchste Aufnahme", if (highestRound > 0) highestRound.toString() else "–", Modifier.weight(1f))
-            StatTile("Kürzestes Leg", fewestDarts?.let { "$it Darts" } ?: "–", Modifier.weight(1f))
+            stats.forEach { (label, value) -> StatTile(label, value, Modifier.weight(1f)) }
         }
     }
 }
 
 // --- Hilfsfunktionen ---
+
+private fun cardPadding(compact: Boolean) = if (compact) 16.dp else 24.dp
 
 private fun SavedPlayer.roundAverage(): Float =
     if (totalRounds > 0) totalPoints.toFloat() / totalRounds else 0f

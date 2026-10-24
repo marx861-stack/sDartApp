@@ -11,6 +11,8 @@
     <string name="main_desc_tournament_running">%1$s läuft</string>
     <string name="main_title_players">Spieler</string>
     <string name="main_desc_players">Profile &amp; Statistiken</string>
+    <string name="nav_overview">Übersicht</string>
+    <string name="nav_devices">Geräte</string>
     <string name="main_title_connect">Geräte verbinden</string>
     <string name="main_desc_connect">Kamera, Anzeige &amp; Host</string>
 

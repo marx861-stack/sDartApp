@@ -11,6 +11,8 @@
     <string name="main_desc_tournament_running">%1$s in progress</string>
     <string name="main_title_players">Players</string>
     <string name="main_desc_players">Profiles &amp; statistics</string>
+    <string name="nav_overview">Overview</string>
+    <string name="nav_devices">Devices</string>
     <string name="main_title_connect">Connect Devices</string>
     <string name="main_desc_connect">Camera, display &amp; host</string>
 

@@ -8,9 +8,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.sdart.app.ui.components.MaxPlayers
+
+data class SetupPlayer(val name: String, val isLoaded: Boolean = false)
 
 /**
- * Zustand und Start-Logik des Spiel-Setups, geteilt vom mobilen Game Setup und vom Desktop-Screen "Neues Spiel".
+ * Zustand und Start-Logik des Spiel-Setups auf der Seite "Neues Spiel".
  * Bleibt beim Wechsel des Spielmodus erhalten, damit eingetragene Spieler nicht verloren gehen.
  */
 @Stable
@@ -36,14 +39,14 @@ class PlayerSetupState(initialPlayers: List<SetupPlayer>) {
 
     fun errorMessage(mode: GameMode): String = when {
         playerNames.isEmpty() -> "Mindestens 1 Spieler erforderlich"
-        playerNames.size > 8 -> "Maximal 8 Spieler erlaubt"
+        playerNames.size > MaxPlayers -> "Maximal $MaxPlayers Spieler erlaubt"
         mode == GameMode.ALL_FIVES && targetScore == null -> "Bitte wählen Sie eine Ziel-Punktzahl aus"
         mode == GameMode.ALL_FIVES && playerNames.size != playerNames.distinct().size -> "Spielernamen müssen eindeutig sein"
         else -> "Fehler beim Starten des Spiels. Bitte versuchen Sie es erneut."
     }
 
     fun addPlayer() {
-        if (playerNames.size < 8) playerNames = playerNames + SetupPlayer("", false)
+        if (playerNames.size < MaxPlayers) playerNames = playerNames + SetupPlayer("", false)
     }
 
     fun renamePlayer(index: Int, name: String) {
@@ -57,7 +60,7 @@ class PlayerSetupState(initialPlayers: List<SetupPlayer>) {
     fun addLoadedPlayers(names: List<String>) {
         val newNames = playerNames.toMutableList()
         names.forEach { selectedName ->
-            if (newNames.size < 8 && !newNames.any { it.name == selectedName }) {
+            if (newNames.size < MaxPlayers && !newNames.any { it.name == selectedName }) {
                 newNames.add(SetupPlayer(selectedName, true))
             }
         }
@@ -77,7 +80,7 @@ class PlayerSetupState(initialPlayers: List<SetupPlayer>) {
             }.filter { it.name.isNotBlank() }
             val names = validPlayers.map { it.name }
 
-            if (names.isEmpty() || names.size > 8) {
+            if (names.isEmpty() || names.size > MaxPlayers) {
                 showError = true
                 return
             }

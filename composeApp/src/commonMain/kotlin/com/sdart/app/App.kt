@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,9 +27,11 @@ import com.sdart.app.connect.ui.HostOverviewDialog
 import com.sdart.app.tournament.ui.TournamentSetupScreen
 import com.sdart.app.tournament.ui.TournamentViewScreen
 import com.sdart.app.ui.AdaptiveContainer
+import com.sdart.app.ui.LocalCompactLayout
 import com.sdart.app.ui.ProvideAdaptiveScale
 import com.sdart.app.ui.components.DesktopDestination
 import com.sdart.app.ui.components.DesktopScaffold
+import com.sdart.app.ui.components.MobileScaffold
 import com.sdart.app.ui.screens.*
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.MyApplicationTheme
@@ -179,32 +182,11 @@ fun App() {
     val screenContent: @Composable (Screen) -> Unit = { screen ->
                 when (screen) {
                 Screen.Start -> startScreen()
-                Screen.GameModes -> AdaptiveContainer { windowInfo ->
-                    if (windowInfo.isExpanded) {
-                        DesktopGamesScreen(
-                            initialMode = navManager.selectedGameMode,
-                            repository = repository,
-                            onModeSelected = { mode -> navManager.setGameMode(mode) },
-                            onStartGame = startFromSetup
-                        )
-                    } else {
-                        GameModesScreen(
-                            onGameModeSelected = { mode ->
-                                navManager.setGameMode(mode)
-                                navManager.navigateTo(Screen.PlayerSetup)
-                            },
-                            onBack = { navManager.goBack() }
-                        )
-                    }
-                }
-                Screen.PlayerSetup -> PlayerSetupScreen(
-                    selectedGameMode = navManager.selectedGameMode ?: GameMode.X501,
+                Screen.GameModes -> DesktopGamesScreen(
+                    initialMode = navManager.selectedGameMode,
                     repository = repository,
-                    onBack = { navManager.goBack() },
-                    onStartGame = startFromSetup,
-                    onNavigateToManagement = {
-                        navManager.navigateTo(Screen.PlayerManagement)
-                    }
+                    onModeSelected = { mode -> navManager.setGameMode(mode) },
+                    onStartGame = startFromSetup
                 )
                 Screen.Settings -> SettingsScreen(
                     vm = vm,
@@ -266,10 +248,8 @@ fun App() {
                 )
                 Screen.PcIntegration -> CompanionConnectionScreen(
                     participantManager = participantManager,
-                    onBack = { navManager.goBack() },
-                    onOpenHostOverview = { showHostOverviewFromStart = true },
-                    vm = vm,
-                    sessionManager = sessionManager
+                    sessionManager = sessionManager,
+                    vm = vm
                 )
                 else -> startScreen()
             }
@@ -288,54 +268,60 @@ fun App() {
         ) {
             AdaptiveContainer(modifier = Modifier.fillMaxSize()) { windowInfo ->
                 val currentScreen = navManager.currentScreen
-                // Auf großen Fenstern liegen alle Bereiche der Navigationsleiste in einer festen Hülle;
+                // Alle Bereiche der Menüleiste liegen in einer festen Hülle (Desktop: Leiste links, Handy: unten);
                 // der äußere Übergang sieht sie als einen Zustand, nur der Inhalt darin wechselt weich.
-                val inDesktopShell = windowInfo.isExpanded && currentScreen.desktopDestination() != null
-                AnimatedContent(
-                    targetState = if (inDesktopShell) DesktopShellKey else currentScreen,
-                    transitionSpec = {
-                        val isBackward = navManager.navigationDirection == NavigationDirection.Backward ||
-                                targetState == Screen.Start || targetState === DesktopShellKey
-                        val slideOffset: (Int) -> Int = { fullWidth -> (fullWidth * 0.15f).toInt() }
-                        if (isBackward) {
-                            (slideInHorizontally(
-                                animationSpec = tween(260, easing = FastOutSlowInEasing),
-                                initialOffsetX = { -slideOffset(it) }
-                            ) + fadeIn(tween(220))) togetherWith
-                                    (slideOutHorizontally(
-                                        animationSpec = tween(240, easing = FastOutSlowInEasing),
-                                        targetOffsetX = { slideOffset(it) }
-                                    ) + fadeOut(tween(180)))
+                val expanded = windowInfo.isExpanded
+                val inShell = currentScreen.shellDestination(expanded) != null
+                CompositionLocalProvider(LocalCompactLayout provides !expanded) {
+                    AnimatedContent(
+                        targetState = if (inShell) DesktopShellKey else currentScreen,
+                        transitionSpec = {
+                            val isBackward = navManager.navigationDirection == NavigationDirection.Backward ||
+                                    targetState == Screen.Start || targetState === DesktopShellKey
+                            val slideOffset: (Int) -> Int = { fullWidth -> (fullWidth * 0.15f).toInt() }
+                            if (isBackward) {
+                                (slideInHorizontally(
+                                    animationSpec = tween(260, easing = FastOutSlowInEasing),
+                                    initialOffsetX = { -slideOffset(it) }
+                                ) + fadeIn(tween(220))) togetherWith
+                                        (slideOutHorizontally(
+                                            animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                            targetOffsetX = { slideOffset(it) }
+                                        ) + fadeOut(tween(180)))
+                            } else {
+                                (slideInHorizontally(
+                                    animationSpec = tween(260, easing = FastOutSlowInEasing),
+                                    initialOffsetX = { slideOffset(it) }
+                                ) + fadeIn(tween(220))) togetherWith
+                                        (slideOutHorizontally(
+                                            animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                            targetOffsetX = { -slideOffset(it) }
+                                        ) + fadeOut(tween(180)))
+                            }
+                        }
+                    ) { key ->
+                        if (key === DesktopShellKey) {
+                            // Beim Verlassen der Hülle (z. B. nach Einstellungen) bleibt zuletzt gezeigte Seite stehen
+                            val shownScreen = navManager.currentScreen
+                                .takeIf { it.shellDestination(expanded) != null } ?: lastShellScreen.screen
+                            lastShellScreen.screen = shownScreen
+                            val selected = shownScreen.shellDestination(expanded) ?: DesktopDestination.OVERVIEW
+                            val pages: @Composable () -> Unit = {
+                                AnimatedContent(
+                                    targetState = shownScreen,
+                                    transitionSpec = {
+                                        fadeIn(tween(160, delayMillis = 90)) togetherWith fadeOut(tween(90))
+                                    }
+                                ) { screen -> screenContent(screen) }
+                            }
+                            if (expanded) {
+                                DesktopScaffold(selected = selected, onNavigate = navigateTopLevel, content = pages)
+                            } else {
+                                MobileScaffold(selected = selected, onNavigate = navigateTopLevel, content = pages)
+                            }
                         } else {
-                            (slideInHorizontally(
-                                animationSpec = tween(260, easing = FastOutSlowInEasing),
-                                initialOffsetX = { slideOffset(it) }
-                            ) + fadeIn(tween(220))) togetherWith
-                                    (slideOutHorizontally(
-                                        animationSpec = tween(240, easing = FastOutSlowInEasing),
-                                        targetOffsetX = { -slideOffset(it) }
-                                    ) + fadeOut(tween(180)))
+                            screenContent(key as Screen)
                         }
-                    }
-                ) { key ->
-                    if (key === DesktopShellKey) {
-                        // Beim Verlassen der Hülle (z. B. nach Einstellungen) bleibt zuletzt gezeigte Seite stehen
-                        val shownScreen = navManager.currentScreen
-                            .takeIf { it.desktopDestination() != null } ?: lastShellScreen.screen
-                        lastShellScreen.screen = shownScreen
-                        DesktopScaffold(
-                            selected = shownScreen.desktopDestination() ?: DesktopDestination.OVERVIEW,
-                            onNavigate = navigateTopLevel
-                        ) {
-                            AnimatedContent(
-                                targetState = shownScreen,
-                                transitionSpec = {
-                                    fadeIn(tween(160, delayMillis = 90)) togetherWith fadeOut(tween(90))
-                                }
-                            ) { screen -> screenContent(screen) }
-                        }
-                    } else {
-                        screenContent(key as Screen)
                     }
                 }
             }
@@ -391,7 +377,7 @@ fun App() {
     }
 }
 
-/** Zustand für alle Screens, die auf großen Fenstern in der Desktop-Hülle liegen. */
+/** Zustand für alle Screens, die in der Hülle mit Menüleiste liegen. */
 private data object DesktopShellKey
 
 /** Merkt sich die zuletzt gezeigte Seite der Desktop-Hülle, damit sie beim Ausblenden stehen bleibt. */
@@ -409,3 +395,7 @@ private fun Screen.desktopDestination(): DesktopDestination? = when (this) {
     Screen.Settings -> DesktopDestination.SETTINGS
     else -> null
 }
+
+/** Bereich der Menüleiste auf dieser Fenstergröße; auf dem Handy liegen die Einstellungen außerhalb der Leiste. */
+private fun Screen.shellDestination(expanded: Boolean): DesktopDestination? =
+    desktopDestination()?.takeIf { expanded || it != DesktopDestination.SETTINGS }

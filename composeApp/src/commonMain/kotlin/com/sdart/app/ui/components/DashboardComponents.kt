@@ -1,5 +1,6 @@
 package com.sdart.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -7,10 +8,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,11 +30,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import sdartapp.composeapp.generated.resources.Res
+import sdartapp.composeapp.generated.resources.ic_info
 
 /**
  * Gemeinsame Bausteine im Dashboard-Stil für die Desktop-Screens:
@@ -50,6 +60,7 @@ fun DashboardCard(
     highlighted: Boolean = false,
     onClick: (() -> Unit)? = null,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    contentPadding: Dp = 24.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
@@ -63,7 +74,7 @@ fun DashboardCard(
                 shape = DashboardCardShape
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(24.dp)
+            .padding(contentPadding)
     ) {
         if (title != null) {
             CardTitle(title)
@@ -137,12 +148,12 @@ fun ModeChip(icon: DrawableResource, label: String, onClick: () -> Unit) {
 }
 
 @Composable
-fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
+fun StatTile(label: String, value: String, modifier: Modifier = Modifier, compact: Boolean = false) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
             .background(GlassCardBg)
-            .padding(horizontal = 18.dp, vertical = 16.dp)
+            .padding(horizontal = if (compact) 12.dp else 18.dp, vertical = if (compact) 9.dp else 16.dp)
     ) {
         Text(
             text = label,
@@ -151,7 +162,7 @@ fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.headlineMedium.copy(
+            style = (if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium).copy(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             ),
@@ -384,5 +395,51 @@ private fun StepperTileButton(label: String, enabled: Boolean, onClick: () -> Un
                 color = if (enabled) PrimaryOrange else GlassControlBorder
             )
         )
+    }
+}
+
+/**
+ * Kleines, blasses Info-Symbol für die Ecke einer Auswahlkarte (Spielmodus, Turnier-Modus).
+ * Antippen öffnet die Regeln als Fenster in den Farben der übrigen App-Dialoge.
+ */
+@Composable
+fun RulesInfoButton(title: String, rules: List<String>, modifier: Modifier = Modifier) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        IconButton(onClick = { expanded = true }, modifier = Modifier.size(28.dp)) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_info),
+                contentDescription = "Regeln $title",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+                modifier = Modifier.size(13.dp)
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = Color(0xFF262626),
+            tonalElevation = 0.dp,
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, GlassControlBorder)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.widthIn(max = 300.dp).padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "$title · Regeln",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                rules.forEach { paragraph ->
+                    Text(
+                        text = paragraph,
+                        style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+                }
+            }
+        }
     }
 }

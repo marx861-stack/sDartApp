@@ -6,7 +6,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,6 +32,7 @@ import com.sdart.app.domain.player.PlayerStatistics
 import com.sdart.app.DartThrow
 import com.sdart.app.format
 import com.sdart.app.domain.CHECKOUT_PATHS
+import com.sdart.app.ui.LocalCompactLayout
 import com.sdart.app.ui.theme.GlassBorder
 import com.sdart.app.ui.theme.PrimaryOrange
 
@@ -270,12 +273,15 @@ fun DesktopPlayerScoreboardTable(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Zeilen für alle Spieler untereinander
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+            // Zeilen für alle Spieler untereinander; bei vielen Spielern scrollt die Liste in begrenzter
+            // Höhe und folgt dem Spieler am Zug
+            val listState = rememberFollowingListState(currentPlayerIndex)
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                game.players.forEachIndexed { index, player ->
+                itemsIndexed(game.players) { index, player ->
                     val isCurrentPlayer = index == currentPlayerIndex
                     val isWinner = when (game.mode) {
                         GameMode.AROUND_THE_CLOCK -> player.atcCurrentTarget == 0
@@ -603,6 +609,9 @@ fun DesktopCurrentTurnPanel(
     }
 }
 
+/** Höhe einer Spielerzeile in der Cricket-Tabelle. */
+private val CricketRowHeight = 44.dp
+
 @Composable
 fun CricketScoreTable(
     players: List<Player>,
@@ -637,7 +646,7 @@ fun CricketScoreTable(
                 modifier = Modifier.weight(2f)
             )
             Text(
-                text = "Score",
+                text = "P.", // Punkte
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
@@ -688,111 +697,122 @@ fun CricketScoreTable(
             thickness = 1.dp
         )
         
-        players.forEachIndexed { index, player ->
-            val isCurrentPlayer = index == currentPlayerIndex
-            val textColor = if (isDarkTheme) Color.White else Color(0xFF212529)
-            
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
-                    .then(
-                        if (isCurrentPlayer) {
-                            Modifier.border(2.dp, highlightColor, RoundedCornerShape(10.dp))
-                        } else Modifier
-                    )
-                    .background(rowBgNormal, RoundedCornerShape(10.dp))
-                    .padding(vertical = 12.dp, horizontal = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = player.name,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 16.sp,
-                        fontWeight = if (isCurrentPlayer) FontWeight.ExtraBold else FontWeight.Medium,
-                        color = textColor
-                    ),
-                    modifier = Modifier.weight(2f)
-                )
-                Text(
-                    text = player.currentScore.toString(),
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 16.sp,
-                        fontWeight = if (isCurrentPlayer) FontWeight.Bold else FontWeight.Normal,
-                        color = textColor
-                    ),
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
-                )
-                if (totalLegs > 1) {
+        // Bei vielen Spielern scrollt die Liste in begrenzter Höhe und folgt dem Spieler am Zug
+        val listState = rememberFollowingListState(currentPlayerIndex)
+        // Feste Zeilenhöhe, damit genau 4 (Handy) bzw. 8 Spieler (Desktop) sichtbar sind
+        val visibleRows = if (LocalCompactLayout.current) 4 else 8
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = CricketRowHeight * visibleRows + 2.dp)
+        ) {
+            itemsIndexed(players) { index, player ->
+                val isCurrentPlayer = index == currentPlayerIndex
+                val textColor = if (isDarkTheme) Color.White else Color(0xFF212529)
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(CricketRowHeight)
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                        .then(
+                            if (isCurrentPlayer) {
+                                Modifier.border(2.dp, highlightColor, RoundedCornerShape(10.dp))
+                            } else Modifier
+                        )
+                        .background(rowBgNormal, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = player.wonLegs.toString(),
+                        text = player.name,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 13.sp,
-                            fontWeight = if (player.wonLegs > 0) FontWeight.Bold else FontWeight.Normal,
-                            color = if (player.wonLegs > 0) Color(0xFF28a745) else textColor
+                            fontSize = 16.sp,
+                            fontWeight = if (isCurrentPlayer) FontWeight.ExtraBold else FontWeight.Medium,
+                            color = textColor
                         ),
-                        modifier = Modifier.weight(0.8f),
+                        modifier = Modifier.weight(2f)
+                    )
+                    Text(
+                        text = player.currentScore.toString(),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 16.sp,
+                            fontWeight = if (isCurrentPlayer) FontWeight.Bold else FontWeight.Normal,
+                            color = textColor
+                        ),
+                        modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                }
-                cricketSegments.forEach { segment ->
-                    val marks = player.cricketMarks.getOrDefault(segment, 0)
-                    val isGloballyClosed = players.all { it.cricketMarks.getOrDefault(segment, 0) >= 3 }
-                    val displayText = when {
-                        isGloballyClosed -> "●"
-                        marks >= 3 -> "⊗"
-                        marks == 2 -> "X"
-                        marks == 1 -> "/"
+                    if (totalLegs > 1) {
+                        Text(
+                            text = player.wonLegs.toString(),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 13.sp,
+                                fontWeight = if (player.wonLegs > 0) FontWeight.Bold else FontWeight.Normal,
+                                color = if (player.wonLegs > 0) Color(0xFF28a745) else textColor
+                            ),
+                            modifier = Modifier.weight(0.8f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    cricketSegments.forEach { segment ->
+                        val marks = player.cricketMarks.getOrDefault(segment, 0)
+                        val isGloballyClosed = players.all { it.cricketMarks.getOrDefault(segment, 0) >= 3 }
+                        val displayText = when {
+                            isGloballyClosed -> "●"
+                            marks >= 3 -> "⊗"
+                            marks == 2 -> "X"
+                            marks == 1 -> "/"
+                            else -> ""
+                        }
+                        val displayColor = when {
+                            isGloballyClosed || marks >= 2 -> Color.White
+                            else -> textColor
+                        }
+                        val fontWeight = if (isGloballyClosed) FontWeight.Bold else FontWeight.Normal
+                        val fontSize = if (isGloballyClosed || marks >= 3) 24.sp else 13.sp
+                        Text(
+                            text = displayText,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = fontSize,
+                                fontWeight = fontWeight,
+                                color = displayColor
+                            ),
+                            modifier = Modifier.weight(0.8f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    val bullMarks = player.cricketMarks.getOrDefault(25, 0)
+                    val isBullGloballyClosed = players.all { it.cricketMarks.getOrDefault(25, 0) >= 3 }
+                    val bullDisplayText = when {
+                        isBullGloballyClosed -> "●"
+                        bullMarks >= 3 -> "⊗"
+                        bullMarks == 2 -> "X"
+                        bullMarks == 1 -> "/"
                         else -> ""
                     }
-                    val displayColor = when {
-                        isGloballyClosed || marks >= 2 -> Color.White
-                        else -> textColor
-                    }
-                    val fontWeight = if (isGloballyClosed) FontWeight.Bold else FontWeight.Normal
-                    val fontSize = if (isGloballyClosed || marks >= 3) 24.sp else 13.sp
+                    val bullDisplayColor = if (isBullGloballyClosed || bullMarks >= 2) Color.White else textColor
+                    val bullFontWeight = if (isBullGloballyClosed) FontWeight.Bold else FontWeight.Normal
+                    val bullFontSize = if (isBullGloballyClosed || bullMarks >= 3) 24.sp else 13.sp
                     Text(
-                        text = displayText,
+                        text = bullDisplayText,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = fontSize,
-                            fontWeight = fontWeight,
-                            color = displayColor
+                            fontSize = bullFontSize,
+                            fontWeight = bullFontWeight,
+                            color = bullDisplayColor
                         ),
                         modifier = Modifier.weight(0.8f),
                         textAlign = TextAlign.Center
                     )
                 }
-                val bullMarks = player.cricketMarks.getOrDefault(25, 0)
-                val isBullGloballyClosed = players.all { it.cricketMarks.getOrDefault(25, 0) >= 3 }
-                val bullDisplayText = when {
-                    isBullGloballyClosed -> "●"
-                    bullMarks >= 3 -> "⊗"
-                    bullMarks == 2 -> "X"
-                    bullMarks == 1 -> "/"
-                    else -> ""
+                if (index < players.size - 1) {
+                    HorizontalDivider(
+                        color = dividerColor,
+                        thickness = 0.5.dp
+                    )
                 }
-                val bullDisplayColor = if (isBullGloballyClosed || bullMarks >= 2) Color.White else textColor
-                val bullFontWeight = if (isBullGloballyClosed) FontWeight.Bold else FontWeight.Normal
-                val bullFontSize = if (isBullGloballyClosed || bullMarks >= 3) 24.sp else 13.sp
-                Text(
-                    text = bullDisplayText,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = bullFontSize,
-                        fontWeight = bullFontWeight,
-                        color = bullDisplayColor
-                    ),
-                    modifier = Modifier.weight(0.8f),
-                    textAlign = TextAlign.Center
-                )
-            }
-            if (index < players.size - 1) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 2.dp),
-                    color = dividerColor,
-                    thickness = 0.5.dp
-                )
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -860,3 +880,20 @@ fun AllFivesScoreTable(
     }
 }
 
+/**
+ * Listenzustand für Spielertabellen: scrollt zum Spieler am Zug, sobald er nicht vollständig sichtbar ist.
+ */
+@Composable
+private fun rememberFollowingListState(currentPlayerIndex: Int): LazyListState {
+    val listState = rememberLazyListState()
+    LaunchedEffect(currentPlayerIndex) {
+        val info = listState.layoutInfo
+        val item = info.visibleItemsInfo.firstOrNull { it.index == currentPlayerIndex }
+        val fullyVisible = item != null && item.offset >= info.viewportStartOffset &&
+            item.offset + item.size <= info.viewportEndOffset
+        if (!fullyVisible && currentPlayerIndex >= 0) {
+            listState.animateScrollToItem(currentPlayerIndex)
+        }
+    }
+    return listState
+}

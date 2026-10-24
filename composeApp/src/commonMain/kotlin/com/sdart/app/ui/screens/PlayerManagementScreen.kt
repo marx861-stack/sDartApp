@@ -26,8 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.sdart.app.ui.AdaptiveContainer
-import com.sdart.app.ui.ScreenHeader
+import com.sdart.app.ui.LocalCompactLayout
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -43,7 +42,7 @@ import sdartapp.composeapp.generated.resources.*
 import kotlinx.coroutines.launch
 
 /**
- * Verwaltungsseite fÃ¼r Spieler
+ * Verwaltungsseite für Spieler
  */
 @Composable
 fun PlayerManagementScreen(
@@ -106,7 +105,7 @@ fun PlayerManagementScreen(
                         containerColor = com.sdart.app.ui.theme.PrimaryOrange
                     )
                 ) {
-                    Text("ZurÃ¼ck", color = Color.White)
+                    Text("Zurück", color = Color.White)
                 }
             }
         }
@@ -131,150 +130,14 @@ fun PlayerManagementScreen(
         }
     }
     
-    val backgroundModifier = Modifier.fillMaxSize().ditheredBackground()
-
-    AdaptiveContainer { windowInfo ->
-    if (windowInfo.isExpanded) {
-        DesktopPlayerList(
-            players = players,
-            isLoading = isLoading,
-            errorMessage = errorMessage,
-            onCreate = { showCreateDialog = true },
-            onDelete = { playerToDelete = it }
-        )
-    } else Box(
-        modifier = backgroundModifier
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-        // Einheitlicher Screen-Header
-        ScreenHeader(
-            title = "Spieler",
-            onBack = onBack
-        )
-
-        // Inhalt auf dieselbe Maximalbreite begrenzt wie die Einstellungen
-        LazyColumn(
-            modifier = Modifier
-                .widthIn(max = 640.dp)
-                .fillMaxWidth()
-                .weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Neuer Spieler Button
-            item {
-                Button(
-                    onClick = { showCreateDialog = true },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = com.sdart.app.ui.theme.PrimaryOrange
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text("Neuer Spieler", color = Color.White)
-                }
-            }
-            
-            // Fehlermeldung anzeigen
-            if (errorMessage != null) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isDark) Color(0xFF5c191e) else Color(0xFFf8d7da)
-                        ),
-                        border = if (isDark) BorderStroke(1.dp, Color(0xFFff6b6b).copy(alpha = 0.5f)) else null
-                    ) {
-                        Text(
-                            text = errorMessage ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (isDark) Color(0xFFffb3b3) else Color(0xFF721c24),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                }
-            }
-            
-            // Spieler-Liste
-            if (isLoading) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(24.dp),
-                            color = if (isDark) com.sdart.app.ui.theme.PrimaryOrange else MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            } else if (players.isEmpty()) {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isDark) com.sdart.app.ui.theme.GlassWhite else Color(0xFFf8f9fa)
-                        ),
-                        border = if (isDark) BorderStroke(1.dp, com.sdart.app.ui.theme.GlassBorder) else null
-                    ) {
-                        Text(
-                            text = "Keine Spieler vorhanden.\nErstellen Sie einen neuen Spieler.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (isDark) com.sdart.app.ui.theme.DarkTextSecondary else Color(0xFF6c757d),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(24.dp)
-                        )
-                    }
-                }
-            } else {
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(15.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isDark) com.sdart.app.ui.theme.GlassWhite else Color(0xFFf8f9fa)
-                        ),
-                        border = if (isDark) BorderStroke(1.dp, com.sdart.app.ui.theme.GlassBorder) else null
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            players.forEachIndexed { index, player ->
-                                PlayerItem(
-                                    player = player,
-                                    isDark = isDark,
-                                    onClick = {
-                                        onPlayerClick(player)
-                                    },
-                                    onDelete = {
-                                        playerToDelete = player
-                                    }
-                                )
-                                if (index < players.size - 1) {
-                                    HorizontalDivider(color = if (isDark) com.sdart.app.ui.theme.GlassBorder else Color(0xFFdee2e6))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        }
-    }
-    }
+    PlayerList(
+        players = players,
+        isLoading = isLoading,
+        errorMessage = errorMessage,
+        onCreate = { showCreateDialog = true },
+        onDelete = { playerToDelete = it },
+        onPlayerClick = onPlayerClick
+    )
 
     // Create Dialog
     if (showCreateDialog && repository != null) {
@@ -303,10 +166,10 @@ fun PlayerManagementScreen(
         if (repository != null) {
             AlertDialog(
                 onDismissRequest = { playerToDelete = null },
-                title = { Text("Spieler lÃ¶schen", color = if (isDark) Color.White else Color.Unspecified) },
+                title = { Text("Spieler löschen", color = if (isDark) Color.White else Color.Unspecified) },
                 text = {
                     Text(
-                        text = "MÃ¶chten Sie '${player.name}' wirklich lÃ¶schen? Alle Statistiken gehen verloren.",
+                        text = "Möchten Sie '${player.name}' wirklich löschen? Alle Statistiken gehen verloren.",
                         color = if (isDark) com.sdart.app.ui.theme.DarkTextSecondary else Color.Unspecified
                     )
                 },
@@ -321,7 +184,7 @@ fun PlayerManagementScreen(
                                 } catch (e: Exception) {
                                     println("Error deleting player: ${e.message}")
                                     e.printStackTrace()
-                                    errorMessage = "Fehler beim LÃ¶schen des Spielers: ${e.message}"
+                                    errorMessage = "Fehler beim Löschen des Spielers: ${e.message}"
                                 }
                             }
                         },
@@ -329,7 +192,7 @@ fun PlayerManagementScreen(
                             containerColor = Color(0xFFdc3545)
                         )
                     ) {
-                        Text("LÃ¶schen", color = Color.White)
+                        Text("Löschen", color = Color.White)
                     }
                 },
                 dismissButton = {
@@ -346,72 +209,6 @@ fun PlayerManagementScreen(
                 titleContentColor = if (isDark) Color.White else Color.Unspecified,
                 textContentColor = if (isDark) com.sdart.app.ui.theme.DarkTextSecondary else Color.Unspecified
             )
-        }
-    }
-}
-
-@Composable
-private fun PlayerItem(
-    player: SavedPlayer,
-    isDark: Boolean,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDark) Color(0x15FFFFFF) else Color.White
-        ),
-        border = if (isDark) BorderStroke(1.dp, com.sdart.app.ui.theme.GlassBorder) else null,
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = player.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isDark) Color.White else Color(0xFF212529)
-                )
-                
-                if (player.totalGames > 0) {
-                    Text(
-                        text = "${player.totalGames} Spiele  â€¢  Ã˜ ${player.bestAverageScorePerRound}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isDark) com.sdart.app.ui.theme.DarkTextSecondary else Color(0xFF6c757d)
-                    )
-                } else {
-                    Text(
-                        text = "Noch keine Spiele gespielt",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isDark) com.sdart.app.ui.theme.DarkTextSecondary else Color(0xFF6c757d)
-                    )
-                }
-            }
-            
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "LÃ¶schen",
-                    tint = if (isDark) Color(0xFFff6b6b) else Color(0xFFdc3545),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
     }
 }
@@ -502,17 +299,52 @@ private fun CreatePlayerDialog(
 
 
 /**
- * Spieler für breite Fenster, aufgebaut wie "Neues Spiel": Spielerkarten links, rechts die Statistik
- * des gewählten Spielers.
+ * Spielerliste. Breite Fenster sind aufgebaut wie "Neues Spiel": Spielerkarten links, rechts die Statistik
+ * des gewählten Spielers. Schmale Fenster zeigen nur die Karten; ein Tipp öffnet das Spieler-Detail.
  */
 @Composable
-private fun DesktopPlayerList(
+private fun PlayerList(
     players: List<SavedPlayer>,
     isLoading: Boolean,
     errorMessage: String?,
     onCreate: () -> Unit,
-    onDelete: (SavedPlayer) -> Unit
+    onDelete: (SavedPlayer) -> Unit,
+    onPlayerClick: (SavedPlayer) -> Unit
 ) {
+    if (LocalCompactLayout.current) {
+        DesktopPage(title = "Spieler") {
+            CardLink(
+                text = "Neuer Spieler",
+                onClick = onCreate,
+                icon = Res.drawable.ic_plus,
+                modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+            )
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.error)
+                )
+            }
+            when {
+                isLoading -> CircularProgressIndicator(color = PrimaryOrange)
+                players.isEmpty() -> Text(
+                    text = "Noch keine Spieler. Lege oben einen neuen Spieler an.",
+                    style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                )
+                else -> players.forEach { player ->
+                    PlayerCard(
+                        player = player,
+                        selected = false,
+                        onClick = { onPlayerClick(player) },
+                        onDelete = { onDelete(player) },
+                        compact = true
+                    )
+                }
+            }
+        }
+        return
+    }
+
     var selectedName by remember { mutableStateOf<String?>(null) }
     // Nach dem Löschen oder beim ersten Laden springt die Auswahl auf den ersten Spieler
     val selected = players.firstOrNull { it.name == selectedName } ?: players.firstOrNull()
@@ -572,12 +404,19 @@ private fun DesktopPlayerList(
 }
 
 @Composable
-private fun PlayerCard(player: SavedPlayer, selected: Boolean, onClick: () -> Unit, onDelete: () -> Unit) {
+private fun PlayerCard(
+    player: SavedPlayer,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onDelete: () -> Unit,
+    compact: Boolean = false
+) {
     DashboardCard(
         title = null,
         highlighted = selected,
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = if (compact) 14.dp else 24.dp
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(

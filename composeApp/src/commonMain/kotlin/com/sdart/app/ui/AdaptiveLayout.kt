@@ -72,6 +72,12 @@ fun calculateWindowSizeInfo(maxWidth: Dp, maxHeight: Dp): WindowSizeInfo {
 }
 
 /**
+ * true auf schmalen Fenstern (Handy, Tablet hochkant): Seiten stapeln ihre Karten dann untereinander
+ * statt sie nebeneinander zu legen. Wird in App.kt aus der Fensterbreite gesetzt.
+ */
+val LocalCompactLayout = staticCompositionLocalOf { false }
+
+/**
  * Aktiver UI-Skalierungsfaktor aus [ProvideAdaptiveScale] (1.0 = keine Skalierung).
  */
 val LocalUiScale = staticCompositionLocalOf { 1.0f }

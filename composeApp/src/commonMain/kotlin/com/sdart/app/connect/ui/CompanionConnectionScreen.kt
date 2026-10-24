@@ -46,7 +46,7 @@ import com.sdart.app.ui.components.DesktopPage
 import com.sdart.app.ui.game.InteractiveDartboard
 import com.sdart.app.ui.game.MagnifierOverlay
 import com.sdart.app.connect.*
-import com.sdart.app.ui.AdaptiveContainer
+import com.sdart.app.ui.LocalCompactLayout
 import com.sdart.app.ui.ScreenHeader
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.GlassBorder
@@ -64,11 +64,8 @@ import sdartapp.composeapp.generated.resources.*
 @Composable
 fun CompanionConnectionScreen(
     participantManager: ParticipantSessionManager,
-    onBack: () -> Unit,
-    onOpenHostOverview: () -> Unit,
-    vm: DartViewModel = remember { DartViewModel() },
-    // Für die Desktop-Ansicht, die die Host-Verwaltung direkt einbettet
-    sessionManager: SessionManager? = null
+    sessionManager: SessionManager,
+    vm: DartViewModel = remember { DartViewModel() }
 ) {
     val state by participantManager.state.collectAsState()
     val discoveredHosts by participantManager.discovery.hosts.collectAsState()
@@ -99,308 +96,14 @@ fun CompanionConnectionScreen(
         is ParticipantState.Disconnected -> "Verbindung getrennt"
     }
 
-    val handleHeaderBack: () -> Unit = {
-        if (state !is ParticipantState.Idle) {
-            participantManager.disconnect()
-        } else {
-            onBack()
-        }
-    }
-
-    AdaptiveContainer(modifier = Modifier.fillMaxSize()) { windowInfo ->
-        if (windowInfo.isExpanded && sessionManager != null) {
-            DesktopDeviceConnection(
-                state = state,
-                discoveredHosts = discoveredHosts,
-                participantManager = participantManager,
-                sessionManager = sessionManager,
-                vm = vm
-            )
-            return@AdaptiveContainer
-        }
-
-        Box(
-            modifier = Modifier.fillMaxSize().ditheredBackground(),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .safeDrawingPadding()
-                    .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Einheitlicher Screen-Header
-                ScreenHeader(
-                    title = headerTitle,
-                    onBack = handleHeaderBack
-                )
-
-                // Hauptinhalt je nach Teilnehmer-Zustand
-                Box(
-                    modifier = Modifier
-                        .widthIn(max = 640.dp)
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    AnimatedContent(
-                        targetState = state,
-                        transitionSpec = {
-                            fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(180))
-                        },
-                        label = "ConnectionStateTransition"
-                    ) { currentState ->
-                        when (currentState) {
-                            is ParticipantState.Idle -> {
-                                IdleRoleSelection(
-                                    onSelectRole = { role -> participantManager.selectRole(role) },
-                                    onOpenHostOverview = onOpenHostOverview,
-                                    isWidescreen = windowInfo.isWidescreen
-                                )
-                            }
-
-                            is ParticipantState.Searching -> {
-                                SearchingView(
-                                    role = currentState.role,
-                                    hosts = discoveredHosts,
-                                    onConnectToHost = { host -> participantManager.connectToHost(host, currentState.role) },
-                                    onCancel = { participantManager.disconnect() }
-                                )
-                            }
-
-                            is ParticipantState.Connecting -> {
-                                ConnectingView(
-                                    host = currentState.host,
-                                    role = currentState.role,
-                                    onCancel = { participantManager.disconnect() }
-                                )
-                            }
-
-                            is ParticipantState.Connected -> {
-                                ConnectedView(
-                                    state = currentState,
-                                    participantManager = participantManager,
-                                    onDisconnect = { participantManager.disconnect() },
-                                    vm = vm
-                                )
-                            }
-
-                            is ParticipantState.Rejected -> {
-                                RejectedView(
-                                    state = currentState,
-                                    onRetry = { participantManager.selectRole(currentState.role) },
-                                    onCancel = { participantManager.disconnect() }
-                                )
-                            }
-
-                            is ParticipantState.Disconnected -> {
-                                DisconnectedView(
-                                    state = currentState,
-                                    onRetry = { participantManager.selectRole(currentState.role) },
-                                    onCancel = { participantManager.disconnect() }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Rollenauswahl, wenn noch keine Rolle aktiv ist (übersichtlich & kompakt).
- */
-@Composable
-private fun IdleRoleSelection(
-    onSelectRole: (DeviceRole) -> Unit,
-    onOpenHostOverview: () -> Unit,
-    isWidescreen: Boolean
-) {
-    CenteredScrollColumn(
-        modifier = Modifier.fillMaxSize(),
-        spacing = 10.dp,
-        horizontalAlignment = Alignment.Start
-    ) {
-        Text(
-            text = "Geräterolle wählen:",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White.copy(alpha = 0.85f),
-                fontSize = 15.sp
-            ),
-            modifier = Modifier.padding(bottom = 2.dp)
-        )
-
-        // 1. Kamera (Hervorgehoben für Smart-Companion Nutzung)
-        CompactRoleCard(
-            iconRes = Res.drawable.ic_role_camera,
-            title = "Kamera & Erkennung",
-            badge = null,
-            description = "Automatische Treffer-Erkennung per Kamera",
-            isPrimary = true,
-            onClick = { onSelectRole(DeviceRole.CAMERA) }
-        )
-
-        // 2. Anzeige (Tablet/Zweitbildschirm)
-        CompactRoleCard(
-            iconRes = Res.drawable.ic_role_display,
-            title = "Live Scoreboard",
-            badge = null,
-            description = "Großes Display für Spielstände & Checkout",
-            isPrimary = false,
-            onClick = { onSelectRole(DeviceRole.DISPLAY) }
-        )
-
-        // 3. Eingabe (Controller)
-        CompactRoleCard(
-            iconRes = Res.drawable.ic_role_input,
-            title = "Touch-Eingabe",
-            badge = null,
-            description = "Drahtlose Punkteingabe & Spielsteuerung",
-            isPrimary = false,
-            onClick = { onSelectRole(DeviceRole.INPUT) }
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // 4. Host-Verwaltung (PC als Host steuern)
-        CompactRoleCard(
-            iconRes = Res.drawable.ic_role_host,
-            title = "Host-Verwaltung",
-            badge = null,
-            description = "Diesen PC als Host im Netzwerk bereitstellen",
-            isPrimary = false,
-            actionLabel = "Öffnen",
-            onClick = onOpenHostOverview
-        )
-    }
-}
-
-@Composable
-private fun CompactRoleCard(
-    iconRes: DrawableResource,
-    title: String,
-    badge: String? = null,
-    description: String,
-    isPrimary: Boolean = false,
-    actionLabel: String? = null,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isPrimary) Color(0xFF2C2520) else Color(0xFF242424)
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            if (isPrimary) 1.5.dp else 1.dp,
-            if (isPrimary) PrimaryOrange.copy(alpha = 0.65f) else GlassBorder
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(
-                        if (isPrimary) PrimaryOrange.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.08f),
-                        CircleShape
-                    )
-                    .border(
-                        1.dp,
-                        if (isPrimary) PrimaryOrange.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.15f),
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = if (isPrimary) PrimaryOrange else Color.White
-                )
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            fontSize = 16.sp
-                        )
-                    )
-
-                    if (badge != null) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = PrimaryOrange.copy(alpha = 0.22f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryOrange.copy(alpha = 0.45f))
-                        ) {
-                            Text(
-                                text = badge,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = PrimaryOrange,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp
-                                )
-                            )
-                        }
-                    }
-                }
-
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 13.sp
-                    ),
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-            }
-
-            if (actionLabel != null) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = PrimaryOrange.copy(alpha = 0.18f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryOrange.copy(alpha = 0.4f))
-                ) {
-                    Text(
-                        text = actionLabel,
-                        color = PrimaryOrange,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
-                }
-            } else {
-                Text(
-                    text = "→",
-                    color = if (isPrimary) PrimaryOrange else Color.White.copy(alpha = 0.4f),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
+    DeviceConnection(
+        state = state,
+        headerTitle = headerTitle,
+        discoveredHosts = discoveredHosts,
+        participantManager = participantManager,
+        sessionManager = sessionManager,
+        vm = vm
+    )
 }
 
 /**
@@ -1327,12 +1030,14 @@ private val ParticipantState.activeRole: DeviceRole?
     }
 
 /**
- * "Geräte verbinden" für breite Fenster: Oben gleichwertig nebeneinander "selbst Host sein" und
- * "mit einem anderen Host verbinden", darunter die verbundenen Geräte, Kamera-Quelle und gemerkte Geräte.
+ * "Geräte verbinden": "selbst Host sein" und "mit einem anderen Host verbinden" als gleichwertige Wege,
+ * dazu die verbundenen Geräte, Kamera-Quelle und gemerkte Geräte. Breite Fenster legen die Karten
+ * nebeneinander, schmale stapeln sie (dort zuerst "verbinden", die häufigste Aufgabe eines Handys).
  */
 @Composable
-private fun DesktopDeviceConnection(
+private fun DeviceConnection(
     state: ParticipantState,
+    headerTitle: String,
     discoveredHosts: List<DiscoveredHost>,
     participantManager: ParticipantSessionManager,
     sessionManager: SessionManager,
@@ -1346,13 +1051,22 @@ private fun DesktopDeviceConnection(
         vm.refreshWebcams()
     }
 
+    val compact = LocalCompactLayout.current
+    val cardPadding = if (compact) 16.dp else 24.dp
+
     // Läuft eine Suche oder Verbindung als Teilnehmer, gehört die ganze Seite diesem Ablauf
     val participantRole = state.activeRole
     if (participantRole != null) {
-        DesktopPage(title = "Geräte verbinden") {
+        // Auf dem Handy führt der Zurück-Pfeil aus dem Ablauf heraus; die Ansichten füllen die Höhe selbst
+        DesktopPage(
+            title = if (compact) headerTitle else "Geräte verbinden",
+            onBack = { participantManager.disconnect() },
+            compactScroll = false
+        ) {
             DashboardCard(
-                title = "Dieser PC als ${roleLabel(participantRole)}",
-                modifier = Modifier.fillMaxWidth().weight(1f)
+                title = "${thisDeviceLabel(compact)} als ${roleLabel(participantRole)}",
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = cardPadding
             ) {
                 ParticipantStateContent(
                     state = state,
@@ -1367,22 +1081,116 @@ private fun DesktopDeviceConnection(
 
     val activeHost = hostState as? HostState.Active
 
+    val hostCard: @Composable (Modifier) -> Unit = { m ->
+        HostStatusCard(
+            hostState = hostState,
+            onStart = { sessionManager.startHost("sDart Host", preferredPort = 0) },
+            onStop = { sessionManager.stopHost() },
+            modifier = m
+        )
+    }
+    val joinCard: @Composable (Modifier) -> Unit = { m ->
+        JoinOtherHostCard(onSelectRole = { role -> participantManager.selectRole(role) }, modifier = m)
+    }
+    val connectedCard: @Composable (Modifier) -> Unit = { m ->
+        DashboardCard(
+            title = "Verbundene Geräte" + (activeHost?.let { " · ${it.participants.size}" } ?: ""),
+            modifier = m,
+            contentPadding = cardPadding
+        ) {
+            when {
+                activeHost == null -> EmptyDevicesHint(
+                    title = "Host ist aus",
+                    text = "Starte den Host, damit sich andere Geräte mit diesem PC verbinden können."
+                )
+                activeHost.participants.isEmpty() -> EmptyDevicesHint(
+                    title = "Warte auf Geräte",
+                    text = if (compact) {
+                        "Auf dem anderen Gerät \"Geräte verbinden\" öffnen."
+                    } else {
+                        "1. S'Dart auf dem anderen Gerät öffnen\n" +
+                            "2. \"Geräte verbinden\" wählen\n" +
+                            "3. Rolle antippen – dieser PC wird im WLAN automatisch gefunden"
+                    }
+                )
+                // Auf dem Handy scrollt die ganze Seite, dort reicht eine einfache Spalte
+                compact -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    activeHost.participants.forEach { participant ->
+                        ParticipantRow(
+                            participant = participant,
+                            onDisconnect = { sessionManager.disconnectParticipant(participant.connectionId) }
+                        )
+                    }
+                }
+                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(activeHost.participants, key = { it.connectionId }) { participant ->
+                        ParticipantRow(
+                            participant = participant,
+                            onDisconnect = { sessionManager.disconnectParticipant(participant.connectionId) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+    val cameraCard: @Composable () -> Unit = {
+        DashboardCard(title = null, modifier = Modifier.fillMaxWidth(), contentPadding = cardPadding) {
+            CameraSourceSection(vm = vm, sessionManager = sessionManager, hostState = hostState)
+        }
+    }
+    val trustedCard: @Composable (Modifier) -> Unit = { m ->
+        DashboardCard(
+            title = "Gemerkte Geräte · ${trustedDevices.size}",
+            modifier = m,
+            contentPadding = cardPadding
+        ) {
+            if (trustedDevices.isEmpty()) {
+                Text(
+                    text = "Geräte, die du zulässt, verbinden sich beim nächsten Mal ohne Nachfrage.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                )
+            } else {
+                Column(
+                    modifier = if (compact) Modifier else Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    trustedDevices.forEach { device ->
+                        TrustedDeviceRow(device = device, onRemove = { sessionManager.revokeTrust(device.deviceId) })
+                    }
+                }
+                CardLink(
+                    text = "Alle entfernen",
+                    onClick = { sessionManager.clearAllTrustedDevices() },
+                    primary = false,
+                    icon = Res.drawable.ic_trash,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+            }
+        }
+    }
+
     DesktopPage(title = "Geräte verbinden") {
+        // Auf dem Handy nur das, was gerade zählt: verbundene Geräte erst bei laufendem Host,
+        // gemerkte Geräte erst, wenn es welche gibt
+        if (compact) {
+            joinCard(Modifier.fillMaxWidth())
+            hostCard(Modifier.fillMaxWidth())
+            pendingAuth?.let { pending ->
+                PendingAuthorizationCard(pending = pending, sessionManager = sessionManager)
+            }
+            if (activeHost != null) connectedCard(Modifier.fillMaxWidth())
+            cameraCard()
+            if (trustedDevices.isNotEmpty()) trustedCard(Modifier.fillMaxWidth())
+            return@DesktopPage
+        }
+
         // Die beiden Wege gleichwertig nebeneinander: selbst Host sein oder sich mit einem Host verbinden
         Row(
             modifier = Modifier.fillMaxWidth().weight(1f),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            HostStatusCard(
-                hostState = hostState,
-                onStart = { sessionManager.startHost("sDart Host", preferredPort = 0) },
-                onStop = { sessionManager.stopHost() },
-                modifier = Modifier.weight(1f).fillMaxHeight()
-            )
-            JoinOtherHostCard(
-                onSelectRole = { role -> participantManager.selectRole(role) },
-                modifier = Modifier.weight(1.4f).fillMaxHeight()
-            )
+            hostCard(Modifier.weight(1f).fillMaxHeight())
+            joinCard(Modifier.weight(1.4f).fillMaxHeight())
         }
 
         pendingAuth?.let { pending ->
@@ -1393,70 +1201,20 @@ private fun DesktopDeviceConnection(
             modifier = Modifier.fillMaxWidth().weight(1.3f),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            DashboardCard(
-                title = "Verbundene Geräte" + (activeHost?.let { " · ${it.participants.size}" } ?: ""),
-                modifier = Modifier.weight(2f).fillMaxHeight()
-            ) {
-                when {
-                    activeHost == null -> EmptyDevicesHint(
-                        title = "Host ist aus",
-                        text = "Starte den Host, damit sich Handys und Tablets mit diesem PC verbinden können."
-                    )
-                    activeHost.participants.isEmpty() -> EmptyDevicesHint(
-                        title = "Warte auf Geräte",
-                        text = "1. S'Dart auf dem Handy oder Tablet öffnen\n" +
-                            "2. \"Geräte verbinden\" wählen\n" +
-                            "3. Rolle antippen – dieser PC wird im WLAN automatisch gefunden"
-                    )
-                    else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(activeHost.participants, key = { it.connectionId }) { participant ->
-                            ParticipantRow(
-                                participant = participant,
-                                onDisconnect = { sessionManager.disconnectParticipant(participant.connectionId) }
-                            )
-                        }
-                    }
-                }
-            }
-
+            connectedCard(Modifier.weight(2f).fillMaxHeight())
             Column(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                DashboardCard(title = null, modifier = Modifier.fillMaxWidth()) {
-                    CameraSourceSection(vm = vm, sessionManager = sessionManager, hostState = hostState)
-                }
-                DashboardCard(
-                    title = "Gemerkte Geräte · ${trustedDevices.size}",
-                    modifier = Modifier.fillMaxWidth().weight(1f)
-                ) {
-                    if (trustedDevices.isEmpty()) {
-                        Text(
-                            text = "Geräte, die du zulässt, verbinden sich beim nächsten Mal ohne Nachfrage.",
-                            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        )
-                    } else {
-                        Column(
-                            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            trustedDevices.forEach { device ->
-                                TrustedDeviceRow(device = device, onRemove = { sessionManager.revokeTrust(device.deviceId) })
-                            }
-                        }
-                        CardLink(
-                            text = "Alle entfernen",
-                            onClick = { sessionManager.clearAllTrustedDevices() },
-                            primary = false,
-                            icon = Res.drawable.ic_trash,
-                            modifier = Modifier.padding(top = 12.dp)
-                        )
-                    }
-                }
+                cameraCard()
+                trustedCard(Modifier.fillMaxWidth().weight(1f))
             }
         }
     }
 }
+
+/** "Dieser PC" am Desktop, "Dieses Gerät" auf Handy und Tablet. */
+private fun thisDeviceLabel(compact: Boolean): String = if (compact) "Dieses Gerät" else "Dieser PC"
 
 /** Host-Status: aktiv mit Port und Gerätezahl, sonst mit Start-Button. */
 @Composable
@@ -1467,11 +1225,17 @@ private fun HostStatusCard(
     modifier: Modifier = Modifier
 ) {
     val active = hostState as? HostState.Active
-    DashboardCard(title = null, highlighted = active != null, modifier = modifier) {
+    val compact = LocalCompactLayout.current
+    DashboardCard(
+        title = null,
+        highlighted = active != null,
+        modifier = modifier,
+        contentPadding = if (compact) 16.dp else 24.dp
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(if (compact) 44.dp else 52.dp)
                     .background(ActiveGlassBg, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -1485,7 +1249,7 @@ private fun HostStatusCard(
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(
-                    text = "Dieser PC als Host",
+                    text = "${thisDeviceLabel(compact)} als Host",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1511,13 +1275,16 @@ private fun HostStatusCard(
             }
         }
 
-        Text(
-            text = "Handys und Tablets verbinden sich mit diesem PC als Kamera, Scoreboard oder Eingabe.",
-            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-            modifier = Modifier.padding(top = 14.dp)
-        )
+        if (!compact) {
+            Text(
+                text = "Andere Geräte verbinden sich mit diesem PC als Kamera, Scoreboard oder Eingabe.",
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                modifier = Modifier.padding(top = 14.dp)
+            )
+        }
 
-        Spacer(Modifier.weight(1f).heightIn(min = 16.dp))
+        // In der scrollbaren Handy-Spalte gibt es keine Resthöhe zu verteilen
+        Spacer(if (compact) Modifier.height(16.dp) else Modifier.weight(1f).heightIn(min = 16.dp))
 
         if (active != null) {
             OutlinedButton(
@@ -1545,8 +1312,9 @@ private fun HostStatusCard(
 
 @Composable
 private fun ColumnScope.EmptyDevicesHint(title: String, text: String) {
+    val compact = LocalCompactLayout.current
     Column(
-        modifier = Modifier.fillMaxWidth().weight(1f),
+        modifier = Modifier.fillMaxWidth().then(if (compact) Modifier.padding(vertical = 8.dp) else Modifier.weight(1f)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -1581,16 +1349,24 @@ private fun ColumnScope.EmptyDevicesHint(title: String, text: String) {
  */
 @Composable
 private fun JoinOtherHostCard(onSelectRole: (DeviceRole) -> Unit, modifier: Modifier = Modifier) {
-    DashboardCard(title = "Mit einem anderen Host verbinden", modifier = modifier) {
-        Text(
-            text = "Läuft S'Dart schon auf einem anderen Gerät? Wähle, was dieser PC dort übernimmt – " +
-                "der Host wird im WLAN automatisch gesucht.",
-            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+    val compact = LocalCompactLayout.current
+    DashboardCard(
+        title = if (compact) "Mit Host verbinden als" else "Mit einem anderen Host verbinden",
+        modifier = modifier,
+        contentPadding = if (compact) 16.dp else 24.dp
+    ) {
+        // Auf dem Handy erklären die Kacheln sich selbst
+        if (!compact) {
+            Text(
+                text = "Läuft S'Dart schon auf einem anderen Gerät? Wähle, was dieser PC dort übernimmt – " +
+                    "der Host wird im WLAN automatisch gesucht.",
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
         Row(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth().then(if (compact) Modifier else Modifier.weight(1f)),
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)
         ) {
             listOf(
                 Triple(DeviceRole.CAMERA, "Kamera", "Treffer erkennen"),
@@ -1618,43 +1394,49 @@ private fun JoinRoleTile(
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(12.dp)
+    val compact = LocalCompactLayout.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = modifier
-            .heightIn(min = 120.dp)
+            .heightIn(min = if (compact) 84.dp else 120.dp)
             .clip(shape)
             .background(GlassCardBg)
             .border(1.dp, GlassControlBorder, shape)
             .clickable(onClick = onClick)
-            .padding(12.dp)
+            .padding(if (compact) 8.dp else 12.dp)
     ) {
         Icon(
             painter = painterResource(roleIconRes(role)),
             contentDescription = null,
             tint = PrimaryOrange,
-            modifier = Modifier.size(34.dp)
+            modifier = Modifier.size(if (compact) 28.dp else 34.dp)
         )
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium.copy(
+            style = (if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium).copy(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             ),
             maxLines = 1,
             modifier = Modifier.padding(top = 10.dp)
         )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-        Text(
-            text = "Host suchen →",
-            style = MaterialTheme.typography.labelLarge.copy(color = PrimaryOrange, fontWeight = FontWeight.SemiBold),
-            modifier = Modifier.padding(top = 10.dp)
-        )
+        if (!compact) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        }
+        // Auf dem Handy ist die ganze Kachel der Knopf, der Link würde die schmalen Kacheln sprengen
+        if (!compact) {
+            Text(
+                text = "Host suchen →",
+                style = MaterialTheme.typography.labelLarge.copy(color = PrimaryOrange, fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.padding(top = 10.dp)
+            )
+        }
     }
 }
 
