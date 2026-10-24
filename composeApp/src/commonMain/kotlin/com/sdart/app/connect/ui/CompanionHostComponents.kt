@@ -197,83 +197,7 @@ private fun HostMainPage(
 
         // Inline-Verbindungsanfrage (falls ein unbekanntes Gerät anklopft - KEIN Pop-up-Fenster!)
         pendingAuth?.let { pending ->
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = PrimaryOrange.copy(alpha = 0.12f),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, PrimaryOrange),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .background(PrimaryOrange.copy(alpha = 0.25f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(roleIconRes(pending.hello.role)),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                                tint = PrimaryOrange
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Neue Verbindungsanfrage",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = PrimaryOrange
-                                )
-                            )
-                            Text(
-                                text = "\"${pending.hello.deviceName}\" (${pending.hello.platform.uppercase()}) möchte sich als ${roleLabel(pending.hello.role)} verbinden.",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color.White.copy(alpha = 0.9f)
-                                )
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { sessionManager.rejectPendingAuthorization() },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
-                        ) {
-                            Text("Ablehnen")
-                        }
-
-                        Button(
-                            onClick = { sessionManager.approvePendingAuthorization(remember = true) },
-                            modifier = Modifier.weight(1.5f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = PrimaryOrange,
-                                contentColor = Color.White
-                            )
-                        ) {
-                            Text("Zulassen & Merken", fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
+            PendingAuthorizationCard(pending = pending, sessionManager = sessionManager)
         }
 
         // Liste verbundener Teilnehmer (wird nur angezeigt, wenn Host aktiv ist)
@@ -376,6 +300,92 @@ private fun HostMainPage(
     }
 }
 
+/** Anfrage eines unbekannten Geräts mit Ablehnen und Zulassen, direkt im Inhalt statt als Pop-up. */
+@Composable
+internal fun PendingAuthorizationCard(
+    pending: PendingAuthorization,
+    sessionManager: SessionManager,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = PrimaryOrange.copy(alpha = 0.12f),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, PrimaryOrange),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(PrimaryOrange.copy(alpha = 0.25f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(roleIconRes(pending.hello.role)),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = PrimaryOrange
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Neue Verbindungsanfrage",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryOrange
+                        )
+                    )
+                    Text(
+                        text = "\"${pending.hello.deviceName}\" (${pending.hello.platform.uppercase()}) möchte sich als ${roleLabel(pending.hello.role)} verbinden.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { sessionManager.rejectPendingAuthorization() },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
+                ) {
+                    Text("Ablehnen")
+                }
+
+                Button(
+                    onClick = { sessionManager.approvePendingAuthorization(remember = true) },
+                    modifier = Modifier.weight(1.5f),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryOrange,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("Zulassen & Merken", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
 private data class CameraSourceEntry(
     val id: String,
     val title: String,
@@ -390,7 +400,7 @@ private data class CameraSourceEntry(
  * Beinhaltet alle verfügbaren lokalen Kameras sowie alle über den Host verbundenen Begleit-Kameras.
  */
 @Composable
-private fun CameraSourceSection(
+internal fun CameraSourceSection(
     vm: DartViewModel,
     sessionManager: SessionManager,
     hostState: HostState
@@ -748,7 +758,7 @@ private fun TrustedDevicesPage(
 }
 
 @Composable
-private fun TrustedDeviceRow(
+internal fun TrustedDeviceRow(
     device: TrustedDevice,
     onRemove: () -> Unit
 ) {
@@ -793,7 +803,7 @@ private fun TrustedDeviceRow(
 }
 
 @Composable
-private fun ParticipantRow(
+internal fun ParticipantRow(
     participant: ConnectedParticipant,
     onDisconnect: () -> Unit
 ) {

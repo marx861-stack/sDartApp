@@ -268,7 +268,8 @@ fun App() {
                     participantManager = participantManager,
                     onBack = { navManager.goBack() },
                     onOpenHostOverview = { showHostOverviewFromStart = true },
-                    vm = vm
+                    vm = vm,
+                    sessionManager = sessionManager
                 )
                 else -> startScreen()
             }
