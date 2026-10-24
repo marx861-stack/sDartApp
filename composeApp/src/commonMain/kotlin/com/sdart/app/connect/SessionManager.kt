@@ -68,7 +68,9 @@ sealed interface HostState {
  */
 class SessionManager(
     private val hostServer: HostServer = createHostServer(),
-    private val discovery: ServiceDiscovery = createServiceDiscovery()
+    private val discovery: ServiceDiscovery = createServiceDiscovery(),
+    // false: gemerkte Geräte und Host-ID nur im Speicher, z. B. für Tests
+    private val persistent: Boolean = true
 ) : HostServerListener {
 
     private val _hostState = MutableStateFlow<HostState>(HostState.Inactive)
@@ -360,6 +362,7 @@ class SessionManager(
     }
 
     private fun loadTrustedDevices(): List<TrustedDevice> {
+        if (!persistent) return emptyList()
         val jsonStr = loadAppPreference(PREFS_TRUSTED_DEVICES_V2_KEY)
         if (!jsonStr.isNullOrBlank()) {
             try {
@@ -376,6 +379,7 @@ class SessionManager(
     }
 
     private fun saveTrustedDevices(list: List<TrustedDevice>) {
+        if (!persistent) return
         try {
             val jsonStr = Json.encodeToString(list)
             saveAppPreference(PREFS_TRUSTED_DEVICES_V2_KEY, jsonStr)
@@ -386,6 +390,7 @@ class SessionManager(
     }
 
     private fun getOrCreateHostId(): String {
+        if (!persistent) return "host-${currentTimeMillis()}"
         val existing = loadAppPreference(PREFS_HOST_ID_KEY)
         if (!existing.isNullOrBlank()) return existing
         val newId = "host-${currentTimeMillis()}"

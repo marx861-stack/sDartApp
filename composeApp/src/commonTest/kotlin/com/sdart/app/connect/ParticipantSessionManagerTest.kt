@@ -23,7 +23,7 @@ class ParticipantSessionManagerTest {
     fun setup() {
         fakeClient = FakeWebSocketClient()
         fakeDiscovery = FakeServiceDiscovery()
-        manager = ParticipantSessionManager(fakeClient, fakeDiscovery, testScope)
+        manager = ParticipantSessionManager(fakeClient, fakeDiscovery, testScope, persistent = false)
     }
 
     private fun sampleHost(name: String = "Desktop-Marc", port: Int = 8085) = DiscoveredHost(

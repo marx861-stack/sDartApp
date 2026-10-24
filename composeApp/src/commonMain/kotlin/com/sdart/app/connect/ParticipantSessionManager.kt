@@ -46,7 +46,9 @@ sealed interface ParticipantState {
 class ParticipantSessionManager(
     private val client: CompanionWebSocketClient = createWebSocketClient(),
     val discovery: ServiceDiscovery = createServiceDiscovery(),
-    private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    // false: Geräte-ID nur im Speicher, z. B. für Tests
+    private val persistent: Boolean = true
 ) : WebSocketClientListener {
 
     private val _state = MutableStateFlow<ParticipantState>(ParticipantState.Idle)
@@ -242,6 +244,7 @@ class ParticipantSessionManager(
     }
 
     private fun getOrCreateDeviceId(): String {
+        if (!persistent) return "dev-${currentTimeMillis()}"
         val existing = loadAppPreference(PREFS_DEVICE_ID_KEY)
         if (!existing.isNullOrBlank()) return existing
         val newId = "dev-${currentTimeMillis()}"

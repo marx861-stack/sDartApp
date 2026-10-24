@@ -18,7 +18,7 @@ class SessionManagerTest {
     fun setup() {
         fakeServer = FakeHostServer()
         fakeDiscovery = FakeServiceDiscovery()
-        sessionManager = SessionManager(fakeServer, fakeDiscovery)
+        sessionManager = SessionManager(fakeServer, fakeDiscovery, persistent = false)
         sessionManager.clearAllTrustedDevices()
     }
 
