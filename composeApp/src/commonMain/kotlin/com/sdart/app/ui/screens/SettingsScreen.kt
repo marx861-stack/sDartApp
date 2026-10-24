@@ -32,7 +32,17 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sdart.app.ui.AdaptiveContainer
 import com.sdart.app.ui.ScreenHeader
+import com.sdart.app.ui.components.ActiveGlassBg
+import com.sdart.app.ui.components.CardLink
+import com.sdart.app.ui.components.DashboardCard
+import com.sdart.app.ui.components.DesktopPage
+import com.sdart.app.ui.components.GlassCardBg
+import com.sdart.app.ui.components.GlassCardBorder
+import com.sdart.app.ui.components.GlassControlBorder
+import com.sdart.app.ui.theme.PrimaryOrange
+import androidx.compose.foundation.shape.CircleShape
 import com.sdart.app.ui.theme.DarkTextSecondary
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.entity.Library
@@ -53,7 +63,21 @@ fun SettingsScreen(
     var versionClickCount by remember { mutableStateOf(0) }
     var showLicensesDialog by remember { mutableStateOf(false) }
 
-    Box(
+    val onVersionClick: () -> Unit = {
+        versionClickCount++
+        if (versionClickCount >= 10) {
+            vm.isDevModeUnlocked = true
+        }
+    }
+
+    AdaptiveContainer { windowInfo ->
+    if (windowInfo.isExpanded) {
+        DesktopSettings(
+            vm = vm,
+            onVersionClick = onVersionClick,
+            onShowLicenses = { showLicensesDialog = true }
+        )
+    } else Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
@@ -117,12 +141,7 @@ fun SettingsScreen(
                         iconRes = Res.drawable.ic_info,
                         versionName = "1.0.0 (KMP Multiplatform)",
                         clickCount = versionClickCount,
-                        onVersionClick = {
-                            versionClickCount++
-                            if (versionClickCount >= 10) {
-                                vm.isDevModeUnlocked = true
-                            }
-                        },
+                        onVersionClick = onVersionClick,
                         isDark = isDark
                     )
                     SettingsActionItem(
@@ -169,9 +188,245 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+    }
 
-        if (showLicensesDialog) {
-            LicensesDialog(onDismiss = { showLicensesDialog = false })
+    if (showLicensesDialog) {
+        LicensesDialog(onDismiss = { showLicensesDialog = false })
+    }
+}
+
+/**
+ * Einstellungen für breite Fenster: links große Schalter (Audio & Feedback, ggf. Entwickler-Optionen),
+ * rechts "Über S'Dart" mit Version, Lizenzhinweis, Lizenzen und Quellcode.
+ */
+@Composable
+private fun DesktopSettings(
+    vm: DartViewModel,
+    onVersionClick: () -> Unit,
+    onShowLicenses: () -> Unit
+) {
+    // Wenig Inhalt: Seite genau fensterhoch, damit die Buttons unten in "Über S'Dart" ohne Scrollen sichtbar sind
+    DesktopPage(title = "Einstellungen", minHeight = 0.dp) {
+        Row(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1.5f).fillMaxHeight().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                DashboardCard(title = "Audio & Feedback", modifier = Modifier.fillMaxWidth()) {
+                    DesktopToggleRow(
+                        icon = Res.drawable.ic_sound,
+                        title = "Soundeffekte",
+                        description = "Töne bei Treffern und Events abspielen",
+                        checked = vm.isSoundEnabled,
+                        onCheckedChange = { vm.isSoundEnabled = it }
+                    )
+                    HorizontalDivider(color = GlassCardBorder)
+                    DesktopToggleRow(
+                        icon = Res.drawable.ic_voice,
+                        title = "Voice Caller",
+                        description = "Sprachausgabe für Punkte und Ansagen",
+                        checked = vm.isVoiceCallerEnabled,
+                        onCheckedChange = { vm.isVoiceCallerEnabled = it }
+                    )
+                    HorizontalDivider(color = GlassCardBorder)
+                    DesktopToggleRow(
+                        icon = Res.drawable.ic_vibration,
+                        title = "Vibration",
+                        description = "Haptisches Feedback bei Treffern (Tablets und Handys)",
+                        checked = vm.isVibrationEnabled,
+                        onCheckedChange = { vm.isVibrationEnabled = it }
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = vm.isDevModeUnlocked,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    DashboardCard(title = "Entwickler-Optionen", modifier = Modifier.fillMaxWidth()) {
+                        DesktopToggleRow(
+                            icon = Res.drawable.ic_developer,
+                            title = "Detection Overlay",
+                            description = "Bounding Boxes der Erkennung anzeigen",
+                            checked = vm.showCameraDetectionOverlay,
+                            onCheckedChange = { vm.showCameraDetectionOverlay = it }
+                        )
+                        HorizontalDivider(color = GlassCardBorder)
+                        DesktopToggleRow(
+                            icon = Res.drawable.ic_developer,
+                            title = "Dartboard Overlay",
+                            description = "Kalibriertes Dartboard-Gitter anzeigen",
+                            checked = vm.showDartboardOverlay,
+                            onCheckedChange = { vm.showDartboardOverlay = it }
+                        )
+                        HorizontalDivider(color = GlassCardBorder)
+                        DesktopToggleRow(
+                            icon = Res.drawable.ic_developer,
+                            title = "Debug HUD",
+                            description = "Inferenzzeit, FPS und Hardware-Status anzeigen",
+                            checked = vm.showCameraDebugHud,
+                            onCheckedChange = { vm.showCameraDebugHud = it }
+                        )
+                    }
+                }
+            }
+
+            AboutCard(
+                devModeUnlocked = vm.isDevModeUnlocked,
+                onVersionClick = onVersionClick,
+                onShowLicenses = onShowLicenses,
+                modifier = Modifier.weight(1f).fillMaxHeight()
+            )
+        }
+    }
+}
+
+@Composable
+private fun DesktopToggleRow(
+    icon: DrawableResource,
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 14.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .background(if (checked) ActiveGlassBg else GlassCardBg, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = if (checked) PrimaryOrange else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = PrimaryOrange,
+                uncheckedTrackColor = Color.Transparent,
+                uncheckedBorderColor = GlassControlBorder
+            )
+        )
+    }
+}
+
+/** App-Infos: Logo, Version (zehnmal klicken schaltet die Entwickler-Optionen frei), Lizenz und Quellcode. */
+@Composable
+private fun AboutCard(
+    devModeUnlocked: Boolean,
+    onVersionClick: () -> Unit,
+    onShowLicenses: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val uriHandler = LocalUriHandler.current
+    DashboardCard(title = "Über S'Dart", modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_main_logo),
+                contentDescription = null,
+                tint = PrimaryOrange,
+                modifier = Modifier.size(56.dp)
+            )
+            Spacer(Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = "S'Dart App",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+                Text(
+                    text = "Version 1.0.0 (KMP Multiplatform)",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null,
+                        onClick = onVersionClick
+                    )
+                )
+            }
+        }
+
+        if (devModeUnlocked) {
+            Text(
+                text = "Entwickler-Modus aktiv",
+                style = MaterialTheme.typography.labelMedium.copy(color = PrimaryOrange, fontWeight = FontWeight.SemiBold),
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .background(ActiveGlassBg, RoundedCornerShape(50))
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            )
+        }
+
+        HorizontalDivider(color = GlassCardBorder, modifier = Modifier.padding(vertical = 20.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Copyright (C) 2026 marx861-stack",
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "GPL v3",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold, color = PrimaryOrange),
+                modifier = Modifier
+                    .background(ActiveGlassBg, RoundedCornerShape(50))
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            )
+        }
+        Text(
+            text = "Dieses Programm kommt ohne jegliche Gewährleistung. Es ist freie Software und darf " +
+                "unter den Bedingungen der GNU General Public License v3 weitergegeben werden.",
+            style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        Spacer(Modifier.weight(1f).heightIn(min = 20.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(
+                onClick = onShowLicenses,
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, GlassControlBorder),
+                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)
+            ) {
+                Text("Lizenzen anzeigen", color = MaterialTheme.colorScheme.onSurface)
+            }
+            CardLink(
+                text = "Quellcode auf GitHub",
+                onClick = { uriHandler.openUri(APP_SOURCE_URL) }
+            )
         }
     }
 }
