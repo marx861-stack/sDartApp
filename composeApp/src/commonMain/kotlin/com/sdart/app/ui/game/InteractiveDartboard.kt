@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
@@ -38,7 +39,9 @@ fun InteractiveDartboard(
     thrownDarts: List<Offset>,
     onDartThrown: (score: Int, multiplier: Int, position: Offset) -> Unit,
     onMagnifierUpdate: (Offset?, Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Hervorzuhebende Zahlen (25 = Bull); ist die Menge nicht leer, werden alle anderen Felder abgedunkelt
+    highlightedSegments: Set<Int> = emptySet()
 ) {
     val textMeasurer = rememberTextMeasurer()
     val scores = STANDARD_DARTBOARD_SEGMENTS
@@ -102,7 +105,7 @@ fun InteractiveDartboard(
             }
         }
     ) {
-        drawBoardContent(scores, textMeasurer)
+        drawBoardContent(scores, textMeasurer, highlightedSegments)
 
         val center = this.center
         val radius = (min(size.width, size.height) / 2f) / 1.25f
@@ -123,7 +126,11 @@ fun InteractiveDartboard(
     }
 }
 
-private fun DrawScope.drawBoardContent(scores: List<Int>, textMeasurer: androidx.compose.ui.text.TextMeasurer) {
+private fun DrawScope.drawBoardContent(
+    scores: List<Int>,
+    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    highlightedSegments: Set<Int> = emptySet()
+) {
     val center = this.center
     val radius = (min(size.width, size.height) / 2f) / 1.25f
 
@@ -172,18 +179,93 @@ private fun DrawScope.drawBoardContent(scores: List<Int>, textMeasurer: androidx
     drawCircle(color = dartboardGreen, radius = outerBullRadius, center = center)
     drawCircle(color = dartboardRed, radius = bullseyeRadius, center = center)
 
+    val highlighting = highlightedSegments.isNotEmpty()
+    if (highlighting) {
+        drawSegmentHighlights(scores, highlightedSegments, center, radius, outerBullRadius)
+    }
+
     val numberRadius = radius * 1.125f
     scores.forEachIndexed { index, score ->
         val angle = (segmentAngle * index) - 90f
         val angleRad = toRadians(angle.toDouble())
         val text = score.toString()
-        val textLayoutResult = textMeasurer.measure(text, style = TextStyle(color = Color.White, fontSize = (radius * 0.18f).toSp()))
+        val numberColor = when {
+            !highlighting -> Color.White
+            score in highlightedSegments -> HighlightColor
+            else -> Color.White.copy(alpha = 0.3f)
+        }
+        val textLayoutResult = textMeasurer.measure(
+            text,
+            style = TextStyle(
+                color = numberColor,
+                fontSize = (radius * 0.18f).toSp(),
+                fontWeight = if (highlighting && score in highlightedSegments) FontWeight.Bold else FontWeight.Normal
+            )
+        )
         val textWidth = textLayoutResult.size.width
         val textHeight = textLayoutResult.size.height
 
         val x = (center.x + numberRadius * cos(angleRad)).toFloat() - textWidth / 2
         val y = (center.y + numberRadius * sin(angleRad)).toFloat() - textHeight / 2
         drawText(textLayoutResult = textLayoutResult, topLeft = Offset(x, y))
+    }
+}
+
+private val HighlightColor = Color(0xFFFF8800)
+private const val OutlineWidth = 5f
+
+
+/**
+ * Dunkelt alle Felder ab, die nicht in [highlighted] stehen, und umrandet die offenen Segmente
+ * (und das Bull, falls 25 enthalten ist) orange.
+ */
+private fun DrawScope.drawSegmentHighlights(
+    scores: List<Int>,
+    highlighted: Set<Int>,
+    center: Offset,
+    radius: Float,
+    outerBullRadius: Float
+) {
+    val segmentAngle = 18f
+    val boardTopLeft = Offset(center.x - radius, center.y - radius)
+    val boardSize = Size(radius * 2, radius * 2)
+    val dim = Color.Black.copy(alpha = 0.6f)
+
+    // Nicht hervorgehobene Segmente abdunkeln (deckt auch das Bull ab, das unten bei Bedarf neu gezeichnet wird)
+    scores.forEachIndexed { i, score ->
+        if (score !in highlighted) {
+            drawArc(
+                color = dim,
+                startAngle = (segmentAngle * (i - 0.5f)) - 90f,
+                sweepAngle = segmentAngle,
+                useCenter = true,
+                topLeft = boardTopLeft,
+                size = boardSize
+            )
+        }
+    }
+
+    if (25 in highlighted) {
+        drawCircle(color = dartboardGreen, radius = outerBullRadius, center = center)
+        drawCircle(color = dartboardRed, radius = outerBullRadius * (0.037f / 0.093f), center = center)
+        drawCircle(color = HighlightColor, radius = outerBullRadius, center = center, style = Stroke(width = OutlineWidth))
+    } else {
+        drawCircle(color = dim, radius = outerBullRadius, center = center)
+    }
+
+    // Orangefarbene Umrandung der offenen Segmente vom Bull bis zum Double-Ring
+    val innerTopLeft = Offset(center.x - outerBullRadius, center.y - outerBullRadius)
+    val innerSize = Size(outerBullRadius * 2, outerBullRadius * 2)
+    scores.forEachIndexed { i, score ->
+        if (score in highlighted) {
+            val start = (segmentAngle * (i - 0.5f)) - 90f
+            val outline = Path().apply {
+                arcTo(Rect(boardTopLeft, boardSize), start, segmentAngle, forceMoveTo = true)
+                arcTo(Rect(innerTopLeft, innerSize), start + segmentAngle, -segmentAngle, forceMoveTo = false)
+                close()
+            }
+            drawPath(outline, color = HighlightColor, style = Stroke(width = OutlineWidth))
+        }
     }
 }
 

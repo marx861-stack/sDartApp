@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.sdart.app.DartViewModel
 import com.sdart.app.Game
+import com.sdart.app.GameMode
 
 @Composable
 fun ScoreInputSection(
@@ -35,6 +36,13 @@ fun ScoreInputSection(
     var parentCoords by remember { mutableStateOf<androidx.compose.ui.layout.LayoutCoordinates?>(null) }
     
     var currentRoundDartPositions by remember { mutableStateOf<List<Offset>>(emptyList()) }
+
+    // Cricket: die Zahlen hervorheben, die der Spieler am Zug noch nicht geschlossen hat
+    val openCricketSegments: Set<Int> = if (game.mode == GameMode.CRICKET) {
+        game.players.getOrNull(game.currentPlayerIndex)
+            ?.cricketMarks?.filterValues { it < 3 }?.keys?.toSet()
+            ?: emptySet()
+    } else emptySet()
     
     LaunchedEffect(game.throwHistory.size, game.currentPlayerIndex, game.throwsInRound) {
         currentRoundDartPositions = vm.getCurrentRoundDartPositions()
@@ -89,7 +97,8 @@ fun ScoreInputSection(
                                     magnifierCenter = center
                                     isDragging = dragging
                                 },
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
+                                highlightedSegments = openCricketSegments
                             )
                         }
                     }
