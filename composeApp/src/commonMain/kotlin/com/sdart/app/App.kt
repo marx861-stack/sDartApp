@@ -20,10 +20,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.sdart.app.connect.SessionManager
-import com.sdart.app.connect.ParticipantSessionManager
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sdart.app.connect.ui.CompanionConnectionScreen
 import com.sdart.app.connect.ui.HostOverviewDialog
 import com.sdart.app.tournament.ui.TournamentSetupScreen
@@ -41,14 +41,15 @@ import com.sdart.app.ui.theme.ditheredBackground
 
 @Composable
 fun App() {
-    val vm = remember { DartViewModel() }
-    val navManager = remember { NavigationManager() }
-    val repository = remember { createPersistentPlayerRepository() }
+    // viewModel() statt remember: überlebt Neuerstellung der Activity (z. B. Drehung auf Tablets)
+    val vm = viewModel { DartViewModel() }
+    val navManager = viewModel { NavigationManager() }
+    val appSession = viewModel { AppSessionHolder() }
+    val repository = appSession.repository
     val audioPlayer = rememberAudioPlayer()
-    val sessionManager = remember { SessionManager() }
-    val participantManager = remember { ParticipantSessionManager() }
-    var showHostOverviewFromStart by remember { mutableStateOf(false) }
-    var showSplashScreen by remember { mutableStateOf(true) }
+    val sessionManager = appSession.sessionManager
+    val participantManager = appSession.participantManager
+    var showHostOverviewFromStart by rememberSaveable { mutableStateOf(false) }
 
     DisposableEffect(audioPlayer, vm) {
         vm.onPlaySound = { text, excitement ->
@@ -374,9 +375,9 @@ fun App() {
                 )
             }
 
-            if (showSplashScreen) {
+            if (appSession.showSplashScreen) {
                 SplashScreen(
-                    onTimeout = { showSplashScreen = false }
+                    onTimeout = { appSession.showSplashScreen = false }
                 )
             }
         }

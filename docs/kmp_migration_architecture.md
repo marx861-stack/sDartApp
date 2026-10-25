@@ -297,3 +297,11 @@ Alle fertigen Installations- und Release-Dateien werden zentral im gemeinsamen S
       - Vollständige Umstellung von `StartScreen.kt` und `GameModesScreen.kt` auf `stringResource(Res.string.<id>)`.
       - Automatische Sprachanpassung basierend auf der Betriebssystem-Sprache (Android, Windows Desktop, iOS).
     * **Build-Status:** `compileKotlinDesktop` und `compileDebugKotlinAndroid` erfolgreich verifiziert.
+
+
+## 5. Zustandserhalt & Bildschirmdrehung (Android)
+
+- **Handy vs. Tablet:** `MainActivity.applyOrientationPolicy()` sperrt Geräte mit `smallestScreenWidthDp < 600` auf Hochformat; Tablets (≥ 600 dp, Grenze der Window-Size-Classes) drehen frei (`FULL_USER`, respektiert die System-Drehsperre). Bei Foldables wird die Regel in `onConfigurationChanged` neu bewertet.
+- **Keine Neuerstellung bei Größen-/Drehänderung:** Das Manifest deklariert `configChanges` (orientation, screenSize, smallestScreenSize, screenLayout, keyboardHidden, uiMode, density). Compose rendert die neue Konfiguration selbst neu; Kamera- und Netzwerk-Sessions laufen ohne Unterbrechung weiter.
+- **Zustand außerhalb der Composition:** `DartViewModel`, `NavigationManager` und `AppSessionHolder` (Repository, Host-/Participant-Session, Splash-Status) werden per `viewModel { }` statt `remember { }` erzeugt. Damit überleben sie auch die verbleibenden Neuerstellungen (z. B. Sprach- oder Schriftgrößenwechsel). Kleiner UI-Zustand nutzt `rememberSaveable`.
+- **Nicht abgedeckt:** Prozess-Tod im Hintergrund (System beendet die App) – laufende Spiele gehen dann weiterhin verloren. Lösung wäre eine Persistenz des Spielstands (z. B. JSON im `filesDir`).
