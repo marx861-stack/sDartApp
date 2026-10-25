@@ -43,7 +43,12 @@ $JarFile = Join-Path $DistDir "sDartApp-windows-x64-$AppVersion.jar"
 Write-Host "Baue aktuelle Desktop Standalone JAR via Gradle..."
 $env:JAVA_HOME = $JbrDir
 $gradlew = Join-Path $RootDir "gradlew.bat"
-& $gradlew :composeApp:packageUberJarForCurrentOS
+# --no-daemon: ein Hintergrund-Daemon hielte die Konsolenausgabe offen und das Skript würde nie enden
+& $gradlew :composeApp:packageUberJarForCurrentOS --no-daemon
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Gradle-Build fehlgeschlagen (Exit-Code $LASTEXITCODE)!"
+    exit 1
+}
 if (-not (Test-Path $JarFile)) {
     Write-Error "Erstellung von '$JarFile' fehlgeschlagen!"
     exit 1
@@ -164,6 +169,10 @@ Set-Content -Path $IssFile -Value $issContent -Encoding UTF8
 
 Write-Host "Baue Windows Setup Installer (.exe) mit Inno Setup..."
 & $IsccExe "$IssFile"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Inno Setup fehlgeschlagen (Exit-Code $LASTEXITCODE)!"
+    exit 1
+}
 
 $SetupExe = Join-Path $DistDir "sDartApp-windows-x64-$AppVersion-Setup.exe"
 if (-not (Test-Path $SetupExe)) {
