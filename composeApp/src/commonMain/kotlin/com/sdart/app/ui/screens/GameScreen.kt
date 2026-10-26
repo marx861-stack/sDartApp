@@ -730,7 +730,7 @@ fun GameScreen(
         }
         val isZoomActive = kotlin.math.abs(currentDisplayZoom - 1.0f) > 0.05f
 
-        if (showCamera && !isAnyDialogOpen) {
+        if (showCamera && !isAnyDialogOpen && isZoomActive) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -740,89 +740,24 @@ fun GameScreen(
                     .zIndex(20000f),
                 contentAlignment = Alignment.BottomCenter
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color.Black.copy(alpha = 0.8f),
-                    border = BorderStroke(
-                        1.5.dp,
-                        if (isZoomActive) PrimaryOrange.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.25f)
-                    ),
-                    shadowElevation = 6.dp
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                        .border(1.5.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+                        .clickable {
+                            vm.resetZoom()
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
-                    ) {
-                        // Zoom Out (-) Button
-                        IconButton(
-                            onClick = {
-                                val currentScale = currentDisplayZoom
-                                val newScale = (currentScale - 0.2f).coerceIn(1.0f, 4.0f)
-                                if (vm.onPinchZoom != null) {
-                                    val factor = newScale / currentScale
-                                    vm.onPinchZoom?.invoke(factor)
-                                } else {
-                                    vm.cameraZoomRatio = newScale
-                                    vm.cameraZoomLevel = (newScale - 1f) / 3f
-                                }
-                            },
-                            enabled = currentDisplayZoom > 1.01f,
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_minus),
-                                contentDescription = "Zoom verkleinern",
-                                tint = if (currentDisplayZoom > 1.01f) Color.White else Color.White.copy(alpha = 0.3f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-
-                        // Zoom-Wert Pill (Klick setzt auf 1.0x zurück)
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isZoomActive) PrimaryOrange.copy(alpha = 0.2f) else Color.Transparent)
-                                .clickable {
-                                    vm.resetZoom()
-                                }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "${currentDisplayZoom.format(1)}x",
-                                color = if (isZoomActive) PrimaryOrange else Color.White.copy(alpha = 0.9f),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp
-                                )
-                            )
-                        }
-
-                        // Zoom In (+) Button
-                        IconButton(
-                            onClick = {
-                                val currentScale = currentDisplayZoom
-                                val newScale = (currentScale + 0.2f).coerceIn(1.0f, 4.0f)
-                                if (vm.onPinchZoom != null) {
-                                    val factor = newScale / currentScale
-                                    vm.onPinchZoom?.invoke(factor)
-                                } else {
-                                    vm.cameraZoomRatio = newScale
-                                    vm.cameraZoomLevel = (newScale - 1f) / 3f
-                                }
-                            },
-                            enabled = currentDisplayZoom < 3.99f,
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_plus),
-                                contentDescription = "Zoom vergrößern",
-                                tint = if (currentDisplayZoom < 3.99f) Color.White else Color.White.copy(alpha = 0.3f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
+                    Text(
+                        text = "${currentDisplayZoom.format(1)}x",
+                        color = PrimaryOrange,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    )
                 }
             }
         }

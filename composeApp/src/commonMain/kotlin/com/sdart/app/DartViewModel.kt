@@ -51,7 +51,9 @@ class DartViewModel : ViewModel() {
             val oldGame = _game
             _game = value
             if (value != null && oldGame != null) {
-                if (value.throwHistory.size > oldGame.throwHistory.size) {
+                val throwAdded = value.throwHistory.size > oldGame.throwHistory.size ||
+                    value.currentLeg > oldGame.currentLeg
+                if (throwAdded) {
                     triggerVibration()
                 }
             }

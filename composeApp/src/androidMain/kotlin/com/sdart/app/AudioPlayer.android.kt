@@ -140,7 +140,9 @@ class AndroidAudioPlayer(private val context: Context) : AudioPlayer {
         try {
             if (vibrator != null && vibrator.hasVibrator()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val timings = longArrayOf(0, 15, 10, 20)
+                    // Dart-Einschlag simulieren: Harter, kurzer Aufprall (12ms, max Amplitude)
+                    // gefolgt von kurzem, schwächerem Nachschwingen des Boards (25ms, reduzierte Amplitude)
+                    val timings = longArrayOf(12, 25)
                     val amplitudes = intArrayOf(255, 80)
                     vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
                 } else {

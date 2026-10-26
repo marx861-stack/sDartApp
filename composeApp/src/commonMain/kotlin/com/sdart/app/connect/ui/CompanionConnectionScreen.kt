@@ -600,31 +600,29 @@ private fun CompanionCameraStreamingView(
             } else {
                 1.0f
             }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .safeDrawingPadding()
-                    .padding(bottom = 40.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.75f), CircleShape)
-                    .border(
-                        1.5.dp,
-                        if (isZoomActive) PrimaryOrange.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.25f),
-                        CircleShape
+            if (isZoomActive) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .safeDrawingPadding()
+                        .padding(bottom = 40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+                        .border(1.5.dp, Color.White.copy(alpha = 0.2f), CircleShape)
+                        .clickable {
+                            vm.resetZoom()
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "${currentDisplayZoom.format(1)}x",
+                        color = PrimaryOrange,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
                     )
-                    .clickable {
-                        vm.resetZoom()
-                    }
-                    .padding(horizontal = 14.dp, vertical = 7.dp)
-            ) {
-                Text(
-                    text = "${currentDisplayZoom.format(1)}x",
-                    color = if (isZoomActive) PrimaryOrange else Color.White.copy(alpha = 0.85f),
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                )
+                }
             }
         }
     }

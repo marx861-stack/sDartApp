@@ -160,9 +160,9 @@ fun ActionButtonsSection(
             icon = if (showCamera) Res.drawable.ic_target else Res.drawable.ic_camera_placeholder,
             onClick = onCameraClick,
             enabled = enabled,
-            background = if (showCamera) PrimaryOrange else PrimaryOrange.copy(alpha = 0.14f),
-            borderColor = if (showCamera) PrimaryOrange else PrimaryOrange.copy(alpha = 0.6f),
-            contentColor = if (showCamera) Color(0xFF1A1A1A) else PrimaryOrange,
+            background = PrimaryOrange.copy(alpha = 0.14f),
+            borderColor = PrimaryOrange.copy(alpha = 0.6f),
+            contentColor = PrimaryOrange,
             modifier = Modifier.weight(1f)
         )
     }
@@ -187,6 +187,7 @@ private fun ActionTile(
             .height(52.dp)
             .alpha(if (enabled) 1f else 0.4f)
             .clip(shape)
+            .background(Color(0xFF262626))
             .background(background)
             .border(1.dp, borderColor, shape)
             .clickable(enabled = enabled, onClick = onClick)
