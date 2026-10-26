@@ -2,7 +2,8 @@
 
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin_Multiplatform-v2.0+-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org/docs/multiplatform.html)
 [![Compose Multiplatform](https://img.shields.io/badge/Compose_Multiplatform-v1.7+-4285F4.svg?logo=jetpackcompose&logoColor=white)](https://www.jetbrains.com/lp/compose-multiplatform/)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/Code_License-GPLv3-blue.svg)](LICENSE)
+[![Model Weights: CC BY-NC 4.0](https://img.shields.io/badge/Model_Weights-CC_BY--NC_4.0-orange.svg)](LICENSE-MODEL)
 [![Platform](https://img.shields.io/badge/Platform-Desktop_%7C_Android_%7C_iOS-lightgrey.svg)](#-supported-platforms)
 
 **s'Dart App** is a modern, cross-platform dart scoring and tracking application built with **Kotlin Multiplatform (KMP)** and **Compose Multiplatform**.
@@ -137,6 +138,12 @@ Contributions to s'Dart App are always welcome! Please check out our [Contributi
 
 ## 📄 License
 
-This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)** – see the [LICENSE](LICENSE) file for details.
+This project utilizes a clear separation of licenses for application code, machine learning weights, and audio assets:
+
+- **Application & Source Code:** Licensed under the **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)**.
+- **Dartboard Detection Weights (`rtmdet_tiny.onnx` & `rtmdet_tiny.bin`):** Licensed under **[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](LICENSE-MODEL)**.
+  - ✅ **Free** for personal, hobby, educational, and non-commercial research use.
+  - ❌ **Commercial use, redistribution in commercial software, or integration into commercial hardware systems is strictly prohibited** without prior written permission.
+  - *Base Model Attribution:* Based on [RTMDet (OpenMMLab)](https://github.com/open-mmlab/mmdetection), licensed under Apache 2.0.
 
 - **Voice Caller Audio Assets:** Generated offline using [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (`bm_lewis`), licensed under the **Apache License 2.0**.

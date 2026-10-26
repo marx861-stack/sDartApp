@@ -1,0 +1,31 @@
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+
+==============================================================================
+MODEL WEIGHTS LICENSE: s'Dart App Dartboard Detection Model
+Files:
+- composeApp/src/desktopMain/resources/rtmdet_tiny.onnx
+- composeApp/src/androidMain/assets/rtmdet_tiny.bin
+==============================================================================
+
+The custom fine-tuned weights for dartboard keypoint and segment detection 
+contained in this repository are licensed under the Creative Commons 
+Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+You are free to:
+- Share — copy and redistribute the model weights in any medium or format
+- Adapt — remix, transform, and build upon the material for non-commercial purposes
+
+Under the following terms:
+- Attribution — You must give appropriate credit, provide a link to the license,
+  and indicate if changes were made.
+- NonCommercial — You may NOT use the material for commercial purposes, including 
+  commercial hardware, paid software, or subscription-based services.
+
+Full license text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+==============================================================================
+UPSTREAM ATTRIBUTION
+==============================================================================
+The model architecture and initial pre-trained parameters are based on RTMDet, 
+developed by OpenMMLab (https://github.com/open-mmlab/mmdetection), licensed 
+under the Apache License, Version 2.0.
