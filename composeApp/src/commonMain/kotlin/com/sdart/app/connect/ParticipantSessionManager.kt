@@ -57,6 +57,9 @@ class ParticipantSessionManager(
     private val _latestGameState = MutableStateFlow<String?>(null)
     val latestGameState: StateFlow<String?> = _latestGameState.asStateFlow()
 
+    private val _gameSnapshot = MutableStateFlow<GameSnapshot?>(null)
+    val gameSnapshot: StateFlow<GameSnapshot?> = _gameSnapshot.asStateFlow()
+
     private var activeRole: DeviceRole = DeviceRole.CAMERA
     private var activeDeviceName: String = "Mein Gerät"
     private var activePlatform: String = "android"
@@ -124,6 +127,7 @@ class ParticipantSessionManager(
         client.disconnect()
         targetHost = null
         _latestGameState.value = null
+        _gameSnapshot.value = null
         _state.value = ParticipantState.Idle
     }
 
@@ -149,6 +153,11 @@ class ParticipantSessionManager(
     fun sendUndo(): Boolean {
         if (_state.value !is ParticipantState.Connected) return false
         return client.send(ConnectProtocol.encode(ConnectMessage.Undo))
+    }
+
+    fun sendFinishTurn(): Boolean {
+        if (_state.value !is ParticipantState.Connected) return false
+        return client.send(ConnectProtocol.encode(ConnectMessage.FinishTurn))
     }
 
     fun sendPreviewFrame(jpegBytes: ByteArray): Boolean {
@@ -214,6 +223,7 @@ class ParticipantSessionManager(
             }
             is ConnectMessage.GameStateUpdate -> {
                 _latestGameState.value = message.snapshotJson
+                _gameSnapshot.value = GameSnapshotProtocol.decode(message.snapshotJson)
             }
             is ConnectMessage.Ping -> {
                 client.send(ConnectProtocol.encode(ConnectMessage.Pong(currentTimeMillis())))

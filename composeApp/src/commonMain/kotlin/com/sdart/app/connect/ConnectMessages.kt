@@ -71,7 +71,12 @@ sealed interface ConnectMessage {
     @SerialName("undo")
     data object Undo : ConnectMessage
 
-    /** Host → Anzeige/Eingabe: Aktueller Spielstand als JSON-Snapshot (Format folgt mit der Anzeige-Rolle). */
+    /** Eingabe → Host: Aufnahme vorzeitig beenden (verbleibende Würfe als Miss gewertet). */
+    @Serializable
+    @SerialName("finish_turn")
+    data object FinishTurn : ConnectMessage
+
+    /** Host → Anzeige/Eingabe: Aktueller Spielstand als JSON-Snapshot. */
     @Serializable
     @SerialName("game_state")
     data class GameStateUpdate(val snapshotJson: String) : ConnectMessage

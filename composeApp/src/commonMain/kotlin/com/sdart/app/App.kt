@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import com.sdart.app.connect.GameSnapshotProtocol
+import com.sdart.app.connect.toSnapshot
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,11 +88,33 @@ fun App() {
         sessionManager.onUndo = {
             vm.undo()
         }
+        sessionManager.onFinishTurn = {
+            val g = vm.game
+            if (g != null && !g.isFinished) {
+                val remaining = (3 - g.throwsInRound).coerceIn(1, 3)
+                repeat(remaining) {
+                    vm.enterScore(0, null, 0)
+                }
+            }
+        }
         onDispose {
             sessionManager.onDartHit = null
             sessionManager.onScoreInput = null
             sessionManager.onUndo = null
+            sessionManager.onFinishTurn = null
         }
+    }
+
+    LaunchedEffect(
+        vm.game,
+        vm.game?.throwHistory?.size,
+        vm.game?.throwsInRound,
+        vm.game?.currentPlayerIndex,
+        vm.game?.isFinished
+    ) {
+        val snapshot = vm.game.toSnapshot()
+        val json = GameSnapshotProtocol.encode(snapshot)
+        sessionManager.broadcastGameState(json)
     }
 
     val isPcIntegrationSubstate = navManager.currentScreen is Screen.PcIntegration &&

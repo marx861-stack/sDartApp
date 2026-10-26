@@ -8,6 +8,8 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -117,11 +119,57 @@ class ParticipantSessionManagerTest {
     }
 
     @Test
-    fun disconnectResetsToIdle() {
+    fun receivingGameStateUpdateUpdatesGameSnapshot() = testScope.runTest {
+        manager.selectRole(DeviceRole.INPUT)
+        runCurrent()
+        fakeDiscovery.simulateHostFound(sampleHost())
+        runCurrent()
+        fakeClient.simulateIncomingMessage(
+            ConnectProtocol.encode(ConnectMessage.Welcome("sess-1", "Host"))
+        )
+
+        val snapshot = GameSnapshot(
+            isGameActive = true,
+            gameMode = "501",
+            currentPlayerName = "Marc",
+            currentPlayerScore = 501
+        )
+        val json = GameSnapshotProtocol.encode(snapshot)
+
+        fakeClient.simulateIncomingMessage(
+            ConnectProtocol.encode(ConnectMessage.GameStateUpdate(json))
+        )
+
+        assertEquals(json, manager.latestGameState.value)
+        assertNotNull(manager.gameSnapshot.value)
+        assertEquals("Marc", manager.gameSnapshot.value?.currentPlayerName)
+        assertEquals(501, manager.gameSnapshot.value?.currentPlayerScore)
+    }
+
+    @Test
+    fun sendScoreInputAndFinishTurnWhenConnected() = testScope.runTest {
+        manager.selectRole(DeviceRole.INPUT)
+        runCurrent()
+        fakeDiscovery.simulateHostFound(sampleHost())
+        runCurrent()
+        fakeClient.simulateIncomingMessage(
+            ConnectProtocol.encode(ConnectMessage.Welcome("sess-1", "Host"))
+        )
+
+        assertTrue(manager.sendScoreInput(60, 3, 0.1f, 0.2f))
+        assertTrue(manager.sendFinishTurn())
+
+        val finishMsg = ConnectProtocol.decode(fakeClient.sentMessages.last())
+        assertTrue(finishMsg is ConnectMessage.FinishTurn)
+    }
+
+    @Test
+    fun disconnectResetsToIdleAndClearsSnapshot() {
         manager.selectRole(DeviceRole.CAMERA)
         manager.disconnect()
 
         assertTrue(manager.state.value is ParticipantState.Idle)
         assertTrue(!fakeDiscovery.isBrowsing)
+        assertNull(manager.gameSnapshot.value)
     }
 }

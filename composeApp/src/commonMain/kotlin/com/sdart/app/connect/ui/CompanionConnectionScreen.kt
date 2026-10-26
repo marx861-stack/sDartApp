@@ -630,6 +630,7 @@ private fun CompanionCameraStreamingView(
 
 /**
  * Drahtloses Touch-Dartboard für das Companion-Gerät (Rolle INPUT).
+ * Voll synchronisiert mit dem Host über GameSnapshot.
  */
 @Composable
 private fun CompanionInputView(
@@ -637,22 +638,345 @@ private fun CompanionInputView(
     participantManager: ParticipantSessionManager,
     onDisconnect: () -> Unit
 ) {
-    var thrownDarts by remember { mutableStateOf(listOf<Offset>()) }
-    var throwLabels by remember { mutableStateOf(listOf<String>()) }
+    val gameSnapshot by participantManager.gameSnapshot.collectAsState()
+    val snapshot = gameSnapshot
+
+    if (snapshot == null || !snapshot.isGameActive) {
+        CompanionInputWaitingView(
+            hostName = hostName,
+            onDisconnect = onDisconnect
+        )
+        return
+    }
+
     var magnifierCenter by remember { mutableStateOf<Offset?>(null) }
     var isDragging by remember { mutableStateOf(false) }
     var dartboardBounds by remember { mutableStateOf<Rect?>(null) }
     var parentCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
+    val dartPositions = remember(snapshot.currentRoundDarts) {
+        snapshot.currentRoundDarts.mapNotNull { dart ->
+            if (dart.x != null && dart.y != null) Offset(dart.x, dart.y) else null
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Obere kompakte Statusleiste
+        // 1. Obere Statusleiste: Host-Verbindung & Spielmodus
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(Color(0xFF4CAF50), CircleShape)
+                )
+                Column {
+                    Text(
+                        text = snapshot.gameMode.ifBlank { "Eingabe aktiv" },
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    )
+                    Text(
+                        text = "Verbunden: $hostName" + if (snapshot.totalLegs > 1) " • Leg ${snapshot.currentLeg}/${snapshot.totalLegs}" else "",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.65f),
+                            fontSize = 11.sp
+                        )
+                    )
+                }
+            }
+
+            OutlinedButton(
+                onClick = onDisconnect,
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+            ) {
+                Text("Trennen", color = Color.White, fontSize = 12.sp)
+            }
+        }
+
+        // 2. Aktiver Spieler & Punktestand
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF222222)
+            ),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (snapshot.isFinished) Color(0xFF4CAF50) else if (snapshot.isBust) Color(0xFFFF5252) else GlassBorder
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = if (snapshot.isFinished) "🏆 Sieger" else "Am Zug:",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White.copy(alpha = 0.6f)
+                            )
+                        )
+                        Text(
+                            text = snapshot.currentPlayerName,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
+                            ),
+                            maxLines = 1
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    val statusText = when {
+                        snapshot.isFinished -> "Spiel beendet!"
+                        snapshot.isBust -> "💥 Überworfen (Bust)!"
+                        snapshot.checkoutSuggestion != null -> "🎯 Checkout: ${snapshot.checkoutSuggestion}"
+                        else -> "Runde: ${snapshot.currentRoundTotal} Pkt."
+                    }
+                    val statusColor = when {
+                        snapshot.isFinished -> Color(0xFF4CAF50)
+                        snapshot.isBust -> Color(0xFFFF5252)
+                        snapshot.checkoutSuggestion != null -> Color(0xFF448AFF)
+                        else -> Color.White.copy(alpha = 0.7f)
+                    }
+
+                    Text(
+                        text = statusText,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = statusColor
+                        )
+                    )
+                }
+
+                // Großer Rest-Score
+                Text(
+                    text = "${snapshot.currentPlayerScore}",
+                    style = MaterialTheme.typography.displayMedium.copy(
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (snapshot.isFinished) Color(0xFF4CAF50) else PrimaryOrange
+                    )
+                )
+            }
+        }
+
+        // 3. Anzeige der aktuellen 3 Würfe (automatische Runden-Aktualisierung)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            for (i in 0 until 3) {
+                val dart = snapshot.currentRoundDarts.getOrNull(i)
+                val isNext = i == snapshot.throwsInRound && !snapshot.isFinished && !snapshot.isBust
+
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = when {
+                            dart?.isBust == true -> Color(0xFFFF5252).copy(alpha = 0.25f)
+                            dart != null -> PrimaryOrange.copy(alpha = 0.2f)
+                            isNext -> Color(0xFF2E2E2E)
+                            else -> Color(0xFF1E1E1E)
+                        }
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        when {
+                            dart?.isBust == true -> Color(0xFFFF5252)
+                            dart != null -> PrimaryOrange
+                            isNext -> Color.White.copy(alpha = 0.45f)
+                            else -> GlassBorder
+                        }
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp, horizontal = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Pfeil ${i + 1}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White.copy(alpha = 0.6f),
+                                fontSize = 10.sp
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = dart?.label ?: if (isNext) "bereit" else "-",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = when {
+                                    dart != null -> Color.White
+                                    isNext -> PrimaryOrange
+                                    else -> Color.Gray
+                                },
+                                fontSize = 13.sp
+                            ),
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
+
+        // 4. Dartboard Bereich mit Lupe
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .onGloballyPositioned { parentCoords = it },
+            contentAlignment = Alignment.Center
+        ) {
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                val boardSize = minOf(maxWidth, maxHeight)
+
+                Box(
+                    modifier = Modifier
+                        .size(boardSize)
+                        .onGloballyPositioned { coords ->
+                            parentCoords?.let { parent ->
+                                dartboardBounds = parent.localBoundingBoxOf(coords, clipBounds = false)
+                            }
+                        }
+                ) {
+                    InteractiveDartboard(
+                        thrownDarts = dartPositions,
+                        onDartThrown = { score, multiplier, position ->
+                            if (snapshot.isFinished) return@InteractiveDartboard
+
+                            val finalScore = if (score == 25 && multiplier == 2) 50 else score * multiplier
+                            val actualMultiplier = if (finalScore == 50 && score == 25) 2 else multiplier
+
+                            // Sendet Treffer an Host. Bei 3 Darts beendet der Host die Runde automatisch.
+                            participantManager.sendScoreInput(finalScore, actualMultiplier, position.x, position.y)
+                        },
+                        onMagnifierUpdate = { center, dragging ->
+                            magnifierCenter = center
+                            isDragging = dragging
+                        },
+                        highlightedSegments = snapshot.highlightedSegments,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
+            if (isDragging && magnifierCenter != null && dartboardBounds != null) {
+                MagnifierOverlay(
+                    localMagnifierCenter = magnifierCenter!!,
+                    dartboardBounds = dartboardBounds!!,
+                    modifier = Modifier.matchParentSize()
+                )
+            }
+        }
+
+        // 5. Aktionsleiste unten: Undo, Fehlwurf (Miss), Optional: Weiter
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Undo-Button
+            Button(
+                onClick = { participantManager.sendUndo() },
+                modifier = Modifier.weight(1.2f).height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF383838))
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_undo),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.White
+                    )
+                    Text(
+                        text = "Undo",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+
+            // Fehlwurf (Miss / 0 Punkte) - zählt für genau 1 Dart
+            Button(
+                onClick = {
+                    if (!snapshot.isFinished) {
+                        participantManager.sendScoreInput(0, 0, null, null)
+                    }
+                },
+                enabled = !snapshot.isFinished,
+                modifier = Modifier.weight(1.2f).height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF383838),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "Miss (0)",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Ansprechender Wartezustand für das Companion-Gerät, wenn am Host noch kein Spiel aktiv ist.
+ */
+@Composable
+private fun CompanionInputWaitingView(
+    hostName: String,
+    onDisconnect: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Obere Statusleiste
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -667,7 +991,7 @@ private fun CompanionInputView(
                 )
                 Column {
                     Text(
-                        text = "Eingabe aktiv",
+                        text = "Eingabe verbunden",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -692,166 +1016,60 @@ private fun CompanionInputView(
             }
         }
 
-        // Anzeige der aktuellen 3 Würfe
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            for (i in 0 until 3) {
-                val label = throwLabels.getOrNull(i)
-                Card(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (label != null) PrimaryOrange.copy(alpha = 0.2f) else Color(0xFF242424)
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        if (label != null) PrimaryOrange else GlassBorder
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 10.dp, horizontal = 4.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Pfeil ${i + 1}",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White.copy(alpha = 0.6f)
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = label ?: "-",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = if (label != null) Color.White else Color.Gray
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        // Dartboard Bereich mit Lupe
+        // Warte-Karte zentriert
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .onGloballyPositioned { parentCoords = it },
+                .weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            BoxWithConstraints(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF222222)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder)
             ) {
-                val boardSize = minOf(maxWidth, maxHeight)
-
-                Box(
+                Column(
                     modifier = Modifier
-                        .size(boardSize)
-                        .onGloballyPositioned { coords ->
-                            parentCoords?.let { parent ->
-                                dartboardBounds = parent.localBoundingBoxOf(coords, clipBounds = false)
-                            }
-                        }
+                        .fillMaxWidth()
+                        .padding(28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    InteractiveDartboard(
-                        thrownDarts = thrownDarts,
-                        onDartThrown = { score, multiplier, position ->
-                            val finalScore = if (score == 25 && multiplier == 2) 50 else score * multiplier
-                            val actualMultiplier = if (finalScore == 50 && score == 25) 2 else multiplier
-
-                            val throwName = when {
-                                finalScore == 50 -> "Bull (50)"
-                                finalScore == 25 -> "Bull (25)"
-                                finalScore == 0 -> "Miss (0)"
-                                actualMultiplier == 3 -> "T$score ($finalScore)"
-                                actualMultiplier == 2 -> "D$score ($finalScore)"
-                                else -> "S$score ($finalScore)"
-                            }
-
-                            if (thrownDarts.size >= 3) {
-                                thrownDarts = listOf(position)
-                                throwLabels = listOf(throwName)
-                            } else {
-                                thrownDarts = thrownDarts + position
-                                throwLabels = throwLabels + throwName
-                            }
-
-                            participantManager.sendScoreInput(finalScore, actualMultiplier, position.x, position.y)
-                        },
-                        onMagnifierUpdate = { center, dragging ->
-                            magnifierCenter = center
-                            isDragging = dragging
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
-
-            if (isDragging && magnifierCenter != null && dartboardBounds != null) {
-                MagnifierOverlay(
-                    localMagnifierCenter = magnifierCenter!!,
-                    dartboardBounds = dartboardBounds!!,
-                    modifier = Modifier.matchParentSize()
-                )
-            }
-        }
-
-        // Undo & Steuerung unten
-        Spacer(modifier = Modifier.height(10.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Button(
-                onClick = {
-                    participantManager.sendUndo()
-                    if (thrownDarts.isNotEmpty()) {
-                        thrownDarts = thrownDarts.dropLast(1)
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .background(PrimaryOrange.copy(alpha = 0.15f), CircleShape)
+                            .border(2.dp, PrimaryOrange.copy(alpha = 0.6f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_target),
+                            contentDescription = null,
+                            modifier = Modifier.size(38.dp),
+                            tint = PrimaryOrange
+                        )
                     }
-                    if (throwLabels.isNotEmpty()) {
-                        throwLabels = throwLabels.dropLast(1)
-                    }
-                },
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF383838))
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_undo),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = Color.White
-                    )
+
                     Text(
-                        text = "Wurf Rückgängig (Undo)",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        text = "Warten auf Spielstart",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        ),
+                        textAlign = TextAlign.Center
                     )
-                }
-            }
 
-            if (thrownDarts.isNotEmpty()) {
-                OutlinedButton(
-                    onClick = {
-                        thrownDarts = emptyList()
-                        throwLabels = emptyList()
-                    },
-                    modifier = Modifier.height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
-                ) {
-                    Text("Neu", color = Color.White)
+                    Text(
+                        text = "Auf dem Host ($hostName) ist aktuell kein Spiel aktiv.\n\nSobald am Host ein Spiel gestartet wird, erscheint das Eingabe-Dartboard automatisch auf diesem Gerät.",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = Color.White.copy(alpha = 0.7f),
+                            lineHeight = 20.sp
+                        ),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }

@@ -90,6 +90,9 @@ class SessionManager(
 
     var activeCameraConnectionId: String? = null
 
+    // Letzter gesendeter Spielstand-Snapshot (für sofortigen Sync bei neu verbundenen Geräten)
+    private var lastBroadcastedGameState: String? = null
+
     // Temporäre Speicherung von Verbindungsadressen vor dem Hello
     private val connectionAddresses = mutableMapOf<String, String>()
 
@@ -98,6 +101,7 @@ class SessionManager(
     var onBoardCleared: (() -> Unit)? = null
     var onScoreInput: ((ConnectMessage.ScoreInput) -> Unit)? = null
     var onUndo: (() -> Unit)? = null
+    var onFinishTurn: (() -> Unit)? = null
 
     init {
         hostServer.setListener(this)
@@ -153,6 +157,7 @@ class SessionManager(
         connectionAddresses.clear()
         _pendingAuth.value = null
         _latestPreviewFrame.value = null
+        lastBroadcastedGameState = null
         _hostState.value = HostState.Inactive
     }
 
@@ -195,9 +200,10 @@ class SessionManager(
     }
 
     /**
-     * Sendet den aktuellen Spielstand an alle Anzeige- und Eingabe-Geräte.
+     * Sendet den aktuellen Spielstand an alle Anzeige- und Eingabe-Geräte und merkt sich den Zustand.
      */
     fun broadcastGameState(snapshotJson: String) {
+        lastBroadcastedGameState = snapshotJson
         val current = _hostState.value as? HostState.Active ?: return
         val messageText = ConnectProtocol.encode(ConnectMessage.GameStateUpdate(snapshotJson))
         current.participants
@@ -238,6 +244,7 @@ class SessionManager(
             is ConnectMessage.BoardCleared -> onBoardCleared?.invoke()
             is ConnectMessage.ScoreInput -> onScoreInput?.invoke(message)
             is ConnectMessage.Undo -> onUndo?.invoke()
+            is ConnectMessage.FinishTurn -> onFinishTurn?.invoke()
             is ConnectMessage.Ping -> {
                 hostServer.send(connectionId, ConnectProtocol.encode(ConnectMessage.Pong(currentTimeMillis())))
             }
@@ -305,6 +312,13 @@ class SessionManager(
             )
         )
         hostServer.send(connectionId, welcomeMsg)
+
+        // Sofort aktuellen Spielstand senden, falls bereits vorhanden
+        if (hello.role == DeviceRole.DISPLAY || hello.role == DeviceRole.INPUT) {
+            lastBroadcastedGameState?.let { json ->
+                hostServer.send(connectionId, ConnectProtocol.encode(ConnectMessage.GameStateUpdate(json)))
+            }
+        }
 
         _hostState.update { state ->
             if (state is HostState.Active) {

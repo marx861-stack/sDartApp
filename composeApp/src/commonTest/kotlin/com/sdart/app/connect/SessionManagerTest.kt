@@ -58,37 +58,39 @@ class SessionManagerTest {
         // Nicht sofort akzeptiert, sondern pendingAuthorization
         val state = sessionManager.hostState.value as HostState.Active
         assertTrue(state.participants.isEmpty())
+
         val pending = sessionManager.pendingAuthorization.value
         assertNotNull(pending)
-        assertEquals("conn-1", pending.connectionId)
         assertEquals("dev-phone-1", pending.hello.deviceId)
+        assertEquals("192.168.1.50", pending.remoteAddress)
 
-        // Nutzer genehmigt & merkt
+        // Bestätigen mit "Merken"
         sessionManager.approvePendingAuthorization(remember = true)
         assertNull(sessionManager.pendingAuthorization.value)
         assertTrue(sessionManager.isDeviceTrusted("dev-phone-1"))
         assertEquals(1, sessionManager.trustedDevices.value.size)
         assertEquals("Phone 1", sessionManager.trustedDevices.value.first().name)
 
-        // Nun als Teilnehmer registriert
+        // Jetzt Teilnehmer aktiv
         val updatedState = sessionManager.hostState.value as HostState.Active
         assertEquals(1, updatedState.participants.size)
+        assertEquals("dev-phone-1", updatedState.participants.first().deviceId)
 
-        // Trust-Entfernung testen
+        // Widerrufen
         sessionManager.revokeTrust("dev-phone-1")
         assertFalse(sessionManager.isDeviceTrusted("dev-phone-1"))
         assertTrue(sessionManager.trustedDevices.value.isEmpty())
     }
 
     @Test
-    fun trustedDeviceConnectsImmediatelyWithoutAuthorization() {
+    fun alreadyTrustedDeviceConnectsImmediatelyWithoutDialog() {
         sessionManager.trustDevice("known-phone", "Known Phone", "android")
         sessionManager.startHost("TestHost", 8085)
 
-        fakeServer.simulateConnect("conn-known")
-        fakeServer.simulateMessage("conn-known", ConnectProtocol.encode(sampleHello("known-phone")))
+        fakeServer.simulateConnect("conn-2")
+        fakeServer.simulateMessage("conn-2", ConnectProtocol.encode(sampleHello("known-phone", "Known Phone")))
 
-        // Direkt als Teilnehmer registriert - kein pending
+        // Sofort akzeptiert
         assertNull(sessionManager.pendingAuthorization.value)
         val state = sessionManager.hostState.value as HostState.Active
         assertEquals(1, state.participants.size)
@@ -96,11 +98,12 @@ class SessionManagerTest {
     }
 
     @Test
-    fun rejectingPendingAuthSendsRejectedAndDisconnects() {
+    fun rejectPendingAuthorizationDisconnectsClient() {
         sessionManager.startHost("TestHost", 8085)
 
-        fakeServer.simulateConnect("conn-reject")
-        fakeServer.simulateMessage("conn-reject", ConnectProtocol.encode(sampleHello("reject-phone")))
+        fakeServer.simulateConnect("conn-x")
+        fakeServer.simulateMessage("conn-x", ConnectProtocol.encode(sampleHello("unknown-x")))
+
         assertNotNull(sessionManager.pendingAuthorization.value)
 
         sessionManager.rejectPendingAuthorization()
@@ -108,32 +111,31 @@ class SessionManagerTest {
 
         val state = sessionManager.hostState.value as HostState.Active
         assertTrue(state.participants.isEmpty())
-        assertTrue(fakeServer.disconnectedClients.contains("conn-reject"))
+        assertTrue(fakeServer.disconnectedClients.contains("conn-x"))
     }
 
     @Test
-    fun protocolMismatchRejectsConnection() {
+    fun protocolVersionMismatchIsRejectedDirectly() {
         sessionManager.startHost("TestHost", 8085)
 
-        fakeServer.simulateConnect("conn-2")
-        val outdatedHello = sampleHello("outdated-dev").copy(protocolVersion = 999)
-        fakeServer.simulateMessage("conn-2", ConnectProtocol.encode(outdatedHello))
+        fakeServer.simulateConnect("conn-old")
+        val oldHello = sampleHello("old-dev").copy(protocolVersion = 999)
+        fakeServer.simulateMessage("conn-old", ConnectProtocol.encode(oldHello))
 
+        assertNull(sessionManager.pendingAuthorization.value)
         val state = sessionManager.hostState.value as HostState.Active
         assertTrue(state.participants.isEmpty())
-        assertTrue(fakeServer.disconnectedClients.contains("conn-2"))
 
-        val rejectedSent = fakeServer.sentMessages.any { (conn, msg) ->
-            conn == "conn-2" && msg.contains("\"type\":\"rejected\"")
+        val rejectedMsg = fakeServer.sentMessages.any { (conn, msg) ->
+            conn == "conn-old" && msg.contains("PROTOCOL_MISMATCH")
         }
-        assertTrue(rejectedSent)
+        assertTrue(rejectedMsg)
     }
 
     @Test
-    fun disconnectParticipantRemovesDeviceAndSendsBye() {
+    fun disconnectParticipantRemovesClientAndSendsBye() {
         sessionManager.trustDevice("phone-3")
         sessionManager.startHost("TestHost", 8085)
-
         fakeServer.simulateConnect("conn-3")
         fakeServer.simulateMessage("conn-3", ConnectProtocol.encode(sampleHello("phone-3")))
 
@@ -168,6 +170,68 @@ class SessionManagerTest {
         assertEquals(20, receivedHit?.segment)
         assertEquals(3, receivedHit?.multiplier)
         assertTrue(undoCalled)
+    }
+
+    @Test
+    fun scoreInputAndFinishTurnAreRoutedToCallbacks() {
+        sessionManager.trustDevice("input-1")
+        sessionManager.startHost("TestHost", 8085)
+        fakeServer.simulateConnect("conn-input")
+        fakeServer.simulateMessage(
+            "conn-input",
+            ConnectProtocol.encode(sampleHello("input-1", "Input Pad", DeviceRole.INPUT))
+        )
+
+        var receivedScoreInput: ConnectMessage.ScoreInput? = null
+        var finishTurnCalled = false
+        sessionManager.onScoreInput = { receivedScoreInput = it }
+        sessionManager.onFinishTurn = { finishTurnCalled = true }
+
+        fakeServer.simulateMessage(
+            "conn-input",
+            ConnectProtocol.encode(ConnectMessage.ScoreInput(60, 3, 0.2f, 0.1f))
+        )
+        fakeServer.simulateMessage(
+            "conn-input",
+            ConnectProtocol.encode(ConnectMessage.FinishTurn)
+        )
+
+        assertNotNull(receivedScoreInput)
+        assertEquals(60, receivedScoreInput?.segment)
+        assertEquals(3, receivedScoreInput?.multiplier)
+        assertTrue(finishTurnCalled)
+    }
+
+    @Test
+    fun broadcastGameStateSendsToInputAndDisplayParticipantsAndCaches() {
+        sessionManager.trustDevice("disp-1")
+        sessionManager.startHost("TestHost", 8085)
+        fakeServer.simulateConnect("conn-disp")
+        fakeServer.simulateMessage(
+            "conn-disp",
+            ConnectProtocol.encode(sampleHello("disp-1", "Display", DeviceRole.DISPLAY))
+        )
+
+        val snapshotJson = "{\"isGameActive\":true,\"gameMode\":\"501\"}"
+        sessionManager.broadcastGameState(snapshotJson)
+
+        val stateMsg = fakeServer.sentMessages.any { (conn, msg) ->
+            conn == "conn-disp" && msg.contains("game_state") && msg.contains("501")
+        }
+        assertTrue(stateMsg)
+
+        // Neuer Teilnehmer mit Rolle INPUT verbindet sich und erhält sofort den gecachten Snapshot
+        sessionManager.trustDevice("input-new")
+        fakeServer.simulateConnect("conn-input-new")
+        fakeServer.simulateMessage(
+            "conn-input-new",
+            ConnectProtocol.encode(sampleHello("input-new", "Input New", DeviceRole.INPUT))
+        )
+
+        val cachedStateMsgSent = fakeServer.sentMessages.any { (conn, msg) ->
+            conn == "conn-input-new" && msg.contains("game_state") && msg.contains("501")
+        }
+        assertTrue(cachedStateMsgSent)
     }
 
     @Test
