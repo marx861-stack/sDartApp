@@ -509,6 +509,14 @@ private fun CompanionCameraStreamingView(
         isDimmed = true
     }
 
+    // Hardware-Helligkeit steuern: bei isDimmed auf Minimalstufe (0.01f) runterregeln und Display wachhalten
+    com.sdart.app.PlatformScreenBrightness(isDimmed = isDimmed, keepScreenOn = true)
+
+    // Hardware-/System-Zuruecktaste beendet das Streaming sauber
+    com.sdart.app.PlatformBackHandler {
+        onDisconnect()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
