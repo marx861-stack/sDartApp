@@ -23,7 +23,7 @@ data class DartSnapshot(
 )
 
 /**
- * Snapshot eines Spielers für die Übersicht auf Zweitgeräten.
+ * Snapshot eines Spielers für die Übersicht auf Zweitgeräten (Scoreboard & Eingabe).
  */
 @Serializable
 data class PlayerSnapshot(
@@ -31,7 +31,10 @@ data class PlayerSnapshot(
     val name: String,
     val score: Int,
     val legsWon: Int = 0,
-    val isCurrent: Boolean = false
+    val isCurrent: Boolean = false,
+    val cricketMarks: Map<Int, Int> = emptyMap(),
+    val atcTarget: Int? = null,
+    val lastRoundSum: Int? = null
 )
 
 /**
@@ -175,7 +178,10 @@ fun Game?.toSnapshot(): GameSnapshot {
             name = p.name,
             score = p.currentScore,
             legsWon = p.wonLegs,
-            isCurrent = idx == currentPlayerIndex
+            isCurrent = idx == currentPlayerIndex,
+            cricketMarks = if (mode == GameMode.CRICKET) p.cricketMarks.toMap() else emptyMap(),
+            atcTarget = if (mode == GameMode.AROUND_THE_CLOCK) p.atcCurrentTarget else null,
+            lastRoundSum = p.scores.lastOrNull()
         )
     }
 

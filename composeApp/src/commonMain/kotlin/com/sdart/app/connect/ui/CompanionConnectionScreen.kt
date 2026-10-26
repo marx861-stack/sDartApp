@@ -355,6 +355,15 @@ private fun ConnectedView(
         return
     }
 
+    if (state.role == DeviceRole.DISPLAY) {
+        CompanionScoreboardView(
+            hostName = state.hostName,
+            participantManager = participantManager,
+            onDisconnect = onDisconnect
+        )
+        return
+    }
+
     if (state.role == DeviceRole.CAMERA) {
         CompanionCameraStreamingView(
             hostName = state.hostName,
