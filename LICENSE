@@ -1,3 +1,23 @@
+s'Dart App
+Copyright (C) 2026 marx861-stack
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License below for more details.
+
+Scope: This license covers the application source code only. The
+dartboard detection model weights (rtmdet_tiny.onnx, rtmdet_tiny.bin,
+rtmdet_tiny.param) are NOT covered by the GPL. They are separate data
+files licensed under CC BY-NC 4.0, see LICENSE-MODEL.
+
+==============================================================================
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 

@@ -138,12 +138,17 @@ Contributions to s'Dart App are always welcome! Please check out our [Contributi
 
 ## 📄 License
 
+Copyright (C) 2026 marx861-stack
+
 This project utilizes a clear separation of licenses for application code, machine learning weights, and audio assets:
 
-- **Application & Source Code:** Licensed under the **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)**.
-- **Dartboard Detection Weights (`rtmdet_tiny.onnx` & `rtmdet_tiny.bin`):** Licensed under **[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](LICENSE-MODEL)**.
+- **Application & Source Code:** Licensed under the **[GNU General Public License v3.0 or later (GPL-3.0-or-later)](LICENSE)**.
+- **Dartboard Detection Weights (`rtmdet_tiny.onnx`, `rtmdet_tiny.bin` & `rtmdet_tiny.param`):** Licensed under **[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](LICENSE-MODEL)**.
+  - The weights are separate data files and are **not** covered by the GPL. The GPL applies to the source code only.
+  - Prebuilt app packages (APK, JAR, MSI, DEB) bundle the weights and may therefore only be redistributed for non-commercial purposes.
   - ✅ **Free** for personal, hobby, educational, and non-commercial research use.
   - ❌ **Commercial use, redistribution in commercial software, or integration into commercial hardware systems is strictly prohibited** without prior written permission.
   - *Base Model Attribution:* Based on [RTMDet (OpenMMLab)](https://github.com/open-mmlab/mmdetection), licensed under Apache 2.0.
+  - *Training Data Attribution:* Fine-tuned on public Roboflow Universe datasets: [Dart Pose v6](https://universe.roboflow.com/test-rgjac/dart-pose-v6), [Dart Scoring](https://universe.roboflow.com/dart-qhrs1/dart-scoring-5lanc), [Dart board detection](https://universe.roboflow.com/marcowich/dart-board-detection), [dart-counter](https://universe.roboflow.com/mitrevs-workspace/dart-counter-auuqi) (all CC BY 4.0) and [Dart](https://universe.roboflow.com/object-detection/dart-datnn) (MIT). See [LICENSE-MODEL](LICENSE-MODEL) for details.
 
 - **Voice Caller Audio Assets:** Generated offline using [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (`bm_lewis`), licensed under the **Apache License 2.0**.

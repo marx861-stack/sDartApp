@@ -1,10 +1,14 @@
 Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
 
+s'Dart App Dartboard Detection Model
+Copyright (C) 2026 marx861-stack
+
 ==============================================================================
 MODEL WEIGHTS LICENSE: s'Dart App Dartboard Detection Model
 Files:
 - composeApp/src/desktopMain/resources/rtmdet_tiny.onnx
 - composeApp/src/androidMain/assets/rtmdet_tiny.bin
+- composeApp/src/androidMain/assets/rtmdet_tiny.param
 ==============================================================================
 
 The custom fine-tuned weights for dartboard keypoint and segment detection 
@@ -23,9 +27,58 @@ Under the following terms:
 
 Full license text: https://creativecommons.org/licenses/by-nc/4.0/legalcode
 
+Attribution: "s'Dart App Dartboard Detection Model" by marx861-stack
+(https://github.com/marx861-stack/sDartApp), licensed under CC BY-NC 4.0.
+
+==============================================================================
+RELATIONSHIP TO THE GPL-LICENSED APPLICATION CODE
+==============================================================================
+The model weights are separate data files. They are NOT part of the
+application source code and are NOT licensed under the GNU General Public
+License v3.0 (see LICENSE). The application code loads the weights at
+runtime as input data; this does not place the weights under the GPL.
+
+Consequences:
+- The GPL-licensed source code may be used, modified and redistributed
+  under the GPL, including commercially, as long as the model weights are
+  not included or are replaced by other weights.
+- Builds of the app that bundle these weights (e.g. APK, JAR, MSI, DEB)
+  contain both the GPL code and the CC BY-NC weights. Such builds may only
+  be redistributed for non-commercial purposes, with attribution as above.
+- Commercial use of the weights requires prior written permission from
+  the copyright holder.
+
 ==============================================================================
 UPSTREAM ATTRIBUTION
 ==============================================================================
-The model architecture and initial pre-trained parameters are based on RTMDet, 
-developed by OpenMMLab (https://github.com/open-mmlab/mmdetection), licensed 
+The model architecture and initial pre-trained parameters are based on RTMDet,
+developed by OpenMMLab (https://github.com/open-mmlab/mmdetection), licensed
 under the Apache License, Version 2.0.
+
+==============================================================================
+TRAINING DATA ATTRIBUTION
+==============================================================================
+The weights were fine-tuned on the following public datasets from Roboflow
+Universe. The datasets themselves are not included in this repository; only
+the trained weights are distributed. The images and annotations were
+converted, merged and augmented for training.
+
+- "Dart Pose v6" by test-rgjac
+  https://universe.roboflow.com/test-rgjac/dart-pose-v6
+  License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+- "Dart Scoring" by dart-qhrs1
+  https://universe.roboflow.com/dart-qhrs1/dart-scoring-5lanc
+  License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+- "Dart board detection" by marcowich
+  https://universe.roboflow.com/marcowich/dart-board-detection
+  License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+- "dart-counter" by mitrevs-workspace
+  https://universe.roboflow.com/mitrevs-workspace/dart-counter-auuqi
+  License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+- "Dart" by Roboflow
+  https://universe.roboflow.com/object-detection/dart-datnn
+  License: MIT (https://choosealicense.com/licenses/mit/)
