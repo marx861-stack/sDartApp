@@ -23,7 +23,7 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
 
 ## 📸 Screenshots
 
-<details open>
+<details>
 <summary><b>Desktop</b></summary>
 
 | | |
@@ -36,7 +36,7 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
 
 </details>
 
-<details open>
+<details>
 <summary><b>Mobile</b></summary>
 
 <p>
