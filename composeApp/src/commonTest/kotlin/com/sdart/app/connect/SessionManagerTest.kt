@@ -173,6 +173,27 @@ class SessionManagerTest {
     }
 
     @Test
+    fun undoFromInputRoleTriggersOnUndoCallback() {
+        sessionManager.trustDevice("input-undo-1")
+        sessionManager.startHost("TestHost", 8085)
+        fakeServer.simulateConnect("conn-input-undo")
+        fakeServer.simulateMessage(
+            "conn-input-undo",
+            ConnectProtocol.encode(sampleHello("input-undo-1", "Input Pad", DeviceRole.INPUT))
+        )
+
+        var undoTriggered = false
+        sessionManager.onUndo = { undoTriggered = true }
+
+        fakeServer.simulateMessage(
+            "conn-input-undo",
+            ConnectProtocol.encode(ConnectMessage.Undo)
+        )
+
+        assertTrue(undoTriggered)
+    }
+
+    @Test
     fun scoreInputAndFinishTurnAreRoutedToCallbacks() {
         sessionManager.trustDevice("input-1")
         sessionManager.startHost("TestHost", 8085)

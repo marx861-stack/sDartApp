@@ -158,9 +158,10 @@ class ParticipantSessionManagerTest {
 
         assertTrue(manager.sendScoreInput(60, 3, 0.1f, 0.2f))
         assertTrue(manager.sendFinishTurn())
+        assertTrue(manager.sendUndo())
 
-        val finishMsg = ConnectProtocol.decode(fakeClient.sentMessages.last())
-        assertTrue(finishMsg is ConnectMessage.FinishTurn)
+        val undoMsg = ConnectProtocol.decode(fakeClient.sentMessages.last())
+        assertTrue(undoMsg is ConnectMessage.Undo)
     }
 
     @Test
