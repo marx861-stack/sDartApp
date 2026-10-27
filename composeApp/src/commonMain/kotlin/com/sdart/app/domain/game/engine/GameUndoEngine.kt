@@ -119,10 +119,14 @@ object GameUndoEngine {
                     }
                 }
                 GameMode.AROUND_THE_CLOCK -> {
-                    // ATC: Punkte sind immer 0, aber Target muss ggf. dekrementiert werden
-                    // (Dies erfordert eine PrÃ¼fung ob der entfernte Wurf ein gÃ¼ltiger Hit war)
-                    // TODO: Target-Reversion implementieren
-                    println("DEBUG ATC Undo: Target-Reversion noch nicht implementiert")
+                    // ATC: Ziel und Shanghai-Treffer aus den verbleibenden Würfen des Spielers neu berechnen
+                    val config = currentGame.atcConfig ?: ATCGameState()
+                    var progress = ATCProgress(ATCGameEngine.startTarget(config))
+                    updatedThrowHistory.filter { it.playerIndex == playerIndex }.forEach { throwData ->
+                        progress = ATCGameEngine.advance(progress, throwData.score, throwData.multiplier, config).first
+                    }
+                    targetPlayer.atcCurrentTarget = progress.target
+                    targetPlayer.atcShanghaiHits = progress.shanghaiHits
                 }
                 else -> {
                     if (lastThrow.isBust) {

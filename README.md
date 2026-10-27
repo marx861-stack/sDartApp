@@ -24,20 +24,19 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
 ## ✨ Features
 
 - **🎯 Diverse Dart Game Modes:**
-  - **X01:** 301, 501, 701, Custom – configurable with Single/Double/Master Out, Sets & Legs
-  - **Cricket:** Standard & Cut-Throat modes
-  - **Around the Clock:** 5 variants (Standard, Double, Triple, Quickly, Shanghai)
+  - **X01:** 301, 501, 701 and custom start scores – configurable with Double In / Double Out and multiple legs
+  - **Cricket:** Standard & Cut-Throat modes; open numbers of the active player are highlighted on the dartboard
+  - **Around the Clock:** 5 variants (Standard, Double, Triple, Quickly, Shanghai), optionally in reverse order (20 → 1) and with the bull as an extra target
   - **All Fives:** Round- and leg-based point game
-  - **Tournament Engine:** Knockout systems & group stages, interactive tournament brackets, and integrated local web server with QR code for sharing live tournament standings across the local network
-  - **Statistics & History:** 180s/140s/100s tracking, First 9 Average, checkout percentage, and graphical dart heatmaps
+  - **Tournament Engine:** Single elimination, double elimination, round robin and group stage + knockout, interactive tournament brackets, and an integrated local web server with QR code for sharing live tournament standings across the local network
+  - **Statistics & History:** 180s/140s/100s tracking, First 9 Average, checkout percentage, best checkout, and graphical dart heatmaps
 
 - **📷 Computer Vision & Camera Tracking:**
-  - **Hardware-Accelerated Detection:** ONNX Runtime with RTMDet (`rtmdet_tiny.onnx`) on Desktop and NCNN Vulkan on Android
-  - **Automatic Dartboard Calibration:** Detects all segment intersections on the spider wire grid as well as the 20-point marker for automatic homography calculation
-  - **Manual Adjustment:** Optional 4-point calibration (D20, D6, D3, D11) with sight brackets and crosshairs
+  - **On-Device Detection:** RTMDet model via ONNX Runtime on Desktop (CPU) and NCNN with Vulkan GPU acceleration on Android
+  - **Fully Automatic Dartboard Calibration:** No manual setup – the model detects the spider wire intersections and the 20-segment marker, fits the board ellipse, determines the board rotation and computes the perspective homography from four control points (D20, D6, D3, D11)
   - **Platform-Independent Homography:** Pure Kotlin projective math for perspective correction without external OpenCV dependencies
   - **Distance Feedback:** Visual guidance for suboptimal camera distance (*"TOO CLOSE"* / *"TOO FAR"*)
-  - **Camera Integration:** Live camera feed and sight overlay are embedded directly onto the dartboard surface (widescreen layout: dartboard on the left, scoreboard & stats on the right)
+  - **Camera Integration:** Live camera feed and calibrated segment overlay are embedded directly onto the dartboard surface (widescreen layout: dartboard on the left, scoreboard & stats on the right)
 
 - **📱 Companion Mode (Multi-Device over Local Wi-Fi):**
   - **Device roles:** One device hosts the game; smartphones and tablets join as **Camera**, **Input** or **Display**
@@ -49,8 +48,8 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
   - **Pairing:** Automatic mDNS/UDP discovery on the local network; trusted devices are remembered and can be revoked
 
 - **🔊 British Mastercaller Voice & Audio Engine:**
-  - Pre-generated 24 kHz / 320 kbps voice caller announcements powered by **[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)** (`bm_lewis` British male voice, **Apache 2.0** licensed)
-  - Supports individual dart calls, turn totals, Cricket status announcements, and dramatic `180` calls (`tools/generate_kokoro_audio.py`)
+  - Pre-generated voice caller announcements (24 kHz MP3, bundled offline) powered by **[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)** (`bm_lewis` British male voice, **Apache 2.0** licensed)
+  - Supports individual dart calls, turn totals, bust and game shot calls, Cricket open/closed announcements, and dramatic `180` calls (`tools/generate_kokoro_audio.py`)
 
 - **🎨 100% Compose Multiplatform:**
   - Shared UI, canvas rendering, scoring, and data models in `commonMain`
@@ -86,8 +85,12 @@ Prebuilt packages are published on the [Releases](https://github.com/marx861-sta
 ### Prerequisites
 
 - **Java Development Kit (JDK):** Version 17 or 21
-- **Android Studio** or **IntelliJ IDEA** (with the *Kotlin Multiplatform* plugin installed)
-- For Android development: Android SDK (API Level 24+)
+- **Android SDK (required for all builds, including Desktop):** The Android Gradle plugin is part of the shared module, so Gradle needs an SDK location even for Desktop builds. Install it via Android Studio (or the command-line tools) and either set the `ANDROID_HOME` environment variable or create a `local.properties` file in the project root:
+  ```properties
+  sdk.dir=/path/to/Android/Sdk
+  ```
+- **For Android builds additionally:** Android SDK Platform 35, **NDK `27.0.12077973`** and **CMake `3.22.1`** (install via Android Studio → *SDK Manager* → *SDK Tools*, or `sdkmanager "ndk;27.0.12077973" "cmake;3.22.1"`)
+- **Android Studio** or **IntelliJ IDEA** (with the *Kotlin Multiplatform* plugin installed) – optional, but recommended
 
 ### Clone Repository
 

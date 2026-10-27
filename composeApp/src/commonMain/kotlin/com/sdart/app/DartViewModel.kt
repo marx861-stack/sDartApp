@@ -329,8 +329,8 @@ class DartViewModel : ViewModel() {
             }
 
             var players = playerNames.map { name ->
-                val atcStartTarget = if (mode == GameMode.AROUND_THE_CLOCK && atcConfig?.reverse == true) {
-                    if (atcConfig.withBulls) 25 else 20
+                val atcStartTarget = if (mode == GameMode.AROUND_THE_CLOCK && atcConfig != null) {
+                    ATCGameEngine.startTarget(atcConfig)
                 } else 1
 
                 Player(
