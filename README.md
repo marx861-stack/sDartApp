@@ -6,9 +6,18 @@
 [![Model Weights: CC BY-NC 4.0](https://img.shields.io/badge/Model_Weights-CC_BY--NC_4.0-orange.svg)](LICENSE-MODEL)
 [![Platform](https://img.shields.io/badge/Platform-Desktop_%7C_Android_%7C_iOS-lightgrey.svg)](#-supported-platforms)
 
-**s'Dart App** is a modern, cross-platform dart scoring and tracking application built with **Kotlin Multiplatform (KMP)** and **Compose Multiplatform**.
+**s'Dart App** is a cross-platform dart scoring app with camera-based automatic scoring – and **everything runs locally on your own devices**.
 
-The app combines classic scorekeeping (X01, Cricket, tournament modes) with camera-based dartboard detection, automatic calibration, and companion camera support.
+No cloud, no account, no subscription, no tracking. Dart detection runs on-device, game data stays on your device, and companion devices talk to each other directly over your local Wi-Fi. The app works fully offline.
+
+### 🔒 100% Local Processing
+
+- **On-device AI:** Dartboard and dart detection run directly on your PC or smartphone (ONNX Runtime / NCNN). Camera images never leave your network.
+- **No cloud services:** No servers, no user accounts, no analytics, no ads. The app makes no connections to the internet.
+- **Local network only:** Companion devices, live scoreboards and tournament sharing communicate exclusively within your own Wi-Fi.
+- **Your data stays yours:** Players, statistics and game history are stored locally on the device.
+
+The app combines classic scorekeeping (X01, Cricket, tournament modes) with camera-based dartboard detection, automatic calibration and multi-device companion support. Built with **Kotlin Multiplatform (KMP)** and **Compose Multiplatform**.
 
 ---
 
@@ -30,9 +39,14 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
   - **Distance Feedback:** Visual guidance for suboptimal camera distance (*"TOO CLOSE"* / *"TOO FAR"*)
   - **Camera Integration:** Live camera feed and sight overlay are embedded directly onto the dartboard surface (widescreen layout: dartboard on the left, scoreboard & stats on the right)
 
-- **📱 Companion Mode (Companion Connection):**
-  - Smartphone camera wirelessly streamed as an external video feed to the Desktop via WebSocket (primary workflow)
-  - Automatic mDNS/UDP service discovery on the local Wi-Fi network
+- **📱 Companion Mode (Multi-Device over Local Wi-Fi):**
+  - **Device roles:** One device hosts the game; smartphones and tablets join as **Camera**, **Input** or **Display**
+  - **Camera:** Smartphone detects darts on-device and sends hits plus a live preview to the host via WebSocket
+  - **Input:** Manual score entry from a second device, including undo, a dedicated *Miss (0)* button and automatic player change after 3 darts
+  - **Display (Live Scoreboard):** Any phone or tablet becomes a live scoreboard showing the active player, remaining score, checkout suggestion and darts of the current round
+  - **Real-time sync:** Game state (throws, player changes, bust and winner status) is pushed instantly to all connected devices, including initial sync on join
+  - **Energy saving:** Companion devices can dim their screen to the minimum hardware brightness while staying awake during long sessions
+  - **Pairing:** Automatic mDNS/UDP discovery on the local network; trusted devices are remembered and can be revoked
 
 - **🔊 British Mastercaller Voice & Audio Engine:**
   - Pre-generated 24 kHz / 320 kbps voice caller announcements powered by **[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)** (`bm_lewis` British male voice, **Apache 2.0** licensed)
@@ -48,10 +62,22 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
 
 | Platform | Status | Highlights |
 |---|---|---|
-| **Desktop (Windows)** | ✅ Full | Standalone `.exe` installer, companion camera via Wi-Fi & experimental webcam support |
-| **Desktop (Linux / macOS)** | ✅ Full | Native desktop execution via JVM / Compose Multiplatform |
-| **Android** | ✅ Full | CameraX live stream with real-time canvas overlay |
+| **Desktop (Windows)** | ✅ Full | `.msi` installer or standalone `.jar`, companion camera via Wi-Fi & experimental webcam support |
+| **Desktop (Linux / macOS)** | ✅ Full | `.deb` / `.dmg` packages or standalone `.jar` via JVM / Compose Multiplatform |
+| **Android** | ✅ Full (debug build) | CameraX live stream with real-time canvas overlay; no Play Store release yet |
 | **iOS** | 🔄 In Progress | Framework build via Kotlin/Native / AVFoundation integration |
+
+### 📦 Which file do I need?
+
+Prebuilt packages are published on the [Releases](https://github.com/marx861-stack/sDartApp/releases) page (once available):
+
+| System | File | Notes |
+|---|---|---|
+| Windows | `sDartApp-<version>.msi` | Installer, includes its own Java runtime |
+| Linux (Debian/Ubuntu) | `sdartapp_<version>…_amd64.deb` | Installer, includes its own Java runtime |
+| macOS | `sDartApp-<version>.dmg` | Installer, includes its own Java runtime |
+| Windows / Linux (portable) | `sDartApp-<os>-x64-<version>.jar` | No installation; requires Java 17+ (`java -jar …`) |
+| Android | `sDartApp-android-<version>.apk` | Debug-signed APK for sideloading; allow installation from unknown sources |
 
 ---
 
@@ -89,12 +115,21 @@ On macOS / Linux:
 ```
 The packaged JAR file will be located in `dist/` or `composeApp/build/compose/jars/`.
 
+### Build Desktop Installer
+
+```bash
+./gradlew :composeApp:packageDistributionForCurrentOS
+```
+Creates an `.msi` (Windows), `.deb` (Linux) or `.dmg` (macOS) under `composeApp/build/compose/binaries/`. Installers can only be built on their respective operating system.
+
 ### Build Android App
 
 ```bash
 ./gradlew :composeApp:assembleDebug
 ```
 The generated APK can be found under `composeApp/build/outputs/apk/debug/`.
+
+> **Note:** There is currently no release signing configuration, so only debug-signed APKs are produced. These are fine for sideloading but cannot be published on Google Play.
 
 ---
 
@@ -120,7 +155,7 @@ sDartApp_KMP/
 Detailed architecture and integration concepts can be found in the [`docs/`](docs/) directory:
 - [`docs/kmp_migration_architecture.md`](docs/kmp_migration_architecture.md) – Architecture overview and multiplatform setup
 - [`docs/tournament_architecture.md`](docs/tournament_architecture.md) – Tournament engine specification
-- [`docs/companion_connection_concept.md`](docs/companion_connection_concept.md) – Remote camera pairing
+- [`docs/companion_connection_concept.md`](docs/companion_connection_concept.md) – Companion devices, roles and pairing
 
 ---
 
