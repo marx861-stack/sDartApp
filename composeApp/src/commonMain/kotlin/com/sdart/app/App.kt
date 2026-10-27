@@ -192,10 +192,6 @@ fun App() {
             repository = repository,
             sessionManager = sessionManager,
             onGamesClick = { navManager.navigateTo(Screen.GameModes) },
-            onGameModeClick = { mode ->
-                navManager.setGameMode(mode)
-                navManager.navigateTo(Screen.GameModes)
-            },
             onRematchClick = startNewGame,
             onTournamentClick = { navManager.navigateTo(Screen.TournamentSetup) },
             onResumeTournamentClick = { navManager.navigateTo(Screen.TournamentView) },

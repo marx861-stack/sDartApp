@@ -53,7 +53,6 @@ fun DesktopDashboard(
     repository: PlayerRepository,
     sessionManager: SessionManager,
     onGamesClick: () -> Unit,
-    onGameModeClick: (GameMode) -> Unit,
     onRematchClick: (LastGameSetup) -> Unit,
     onTournamentClick: () -> Unit,
     onResumeTournamentClick: () -> Unit,
@@ -75,7 +74,6 @@ fun DesktopDashboard(
             QuickStartCard(
                 lastGame = lastGame,
                 onRematchClick = onRematchClick,
-                onGameModeClick = onGameModeClick,
                 onGamesClick = onGamesClick,
                 compact = true,
                 modifier = Modifier.fillMaxWidth()
@@ -101,7 +99,6 @@ fun DesktopDashboard(
             QuickStartCard(
                 lastGame = lastGame,
                 onRematchClick = onRematchClick,
-                onGameModeClick = onGameModeClick,
                 onGamesClick = onGamesClick,
                 modifier = Modifier.weight(2f).fillMaxHeight()
             )
@@ -405,7 +402,6 @@ private fun TileDetail(text: String, topPadding: Dp = 2.dp) {
 private fun QuickStartCard(
     lastGame: LastGameSetup?,
     onRematchClick: (LastGameSetup) -> Unit,
-    onGameModeClick: (GameMode) -> Unit,
     onGamesClick: () -> Unit,
     modifier: Modifier = Modifier,
     compact: Boolean = false
@@ -421,30 +417,6 @@ private fun QuickStartCard(
                 QuickStartSummary(lastGame, Modifier.weight(1f))
                 Spacer(Modifier.width(16.dp))
                 QuickStartButton(lastGame, onStart)
-            }
-        }
-
-        // In der scrollbaren Handy-Spalte gibt es keine Resthöhe zu verteilen, daher fester Abstand
-        Spacer(if (compact) Modifier.height(12.dp) else Modifier.weight(1f).heightIn(min = 18.dp))
-
-        val modes = listOf(
-            Triple(Res.drawable.ic_standard, stringResource(Res.string.game_mode_standard), GameMode.X501),
-            Triple(Res.drawable.ic_cricket, stringResource(Res.string.game_mode_cricket), GameMode.CRICKET),
-            Triple(Res.drawable.ic_all_fives, stringResource(Res.string.game_mode_all_fives), GameMode.ALL_FIVES),
-            // Kurzform, der volle Name passt in keine der Kacheln
-            Triple(Res.drawable.ic_atc, "ATC", GameMode.AROUND_THE_CLOCK)
-        )
-        // Auf dem Handy alle vier Modi in einer Reihe, Symbol über dem Namen
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
-            modifier = Modifier.fillMaxWidth().height(if (compact) 72.dp else 58.dp)
-        ) {
-            modes.forEach { (icon, label, mode) ->
-                if (compact) {
-                    CompactModeTile(icon, label, Modifier.weight(1f)) { onGameModeClick(mode) }
-                } else {
-                    ModeTile(icon, label, Modifier.weight(1f)) { onGameModeClick(mode) }
-                }
             }
         }
     }
@@ -479,7 +451,7 @@ private fun QuickStartSummary(lastGame: LastGameSetup?, modifier: Modifier = Mod
                 )
             )
             Text(
-                text = "Wähle unten einen Spielmodus, um loszulegen.",
+                text = "Starte dein erstes Spiel.",
                 style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 modifier = Modifier.padding(top = 4.dp)
             )
@@ -506,55 +478,6 @@ private fun QuickStartButton(
         Text(
             text = if (lastGame != null) "Revanche" else "Spiel starten",
             fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
-private fun ModeTile(icon: DrawableResource, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = modifier
-            .fillMaxHeight()
-            .clip(RoundedCornerShape(12.dp))
-            .background(GlassCardBg)
-            .border(1.dp, GlassCardBorder, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp)
-    ) {
-        Icon(painterResource(icon), null, tint = PrimaryOrange, modifier = Modifier.size(22.dp))
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun CompactModeTile(icon: DrawableResource, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = modifier
-            .fillMaxHeight()
-            .clip(RoundedCornerShape(12.dp))
-            .background(GlassCardBg)
-            .border(1.dp, GlassCardBorder, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 6.dp)
-    ) {
-        Icon(painterResource(icon), null, tint = PrimaryOrange, modifier = Modifier.size(20.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurface),
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
