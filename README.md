@@ -21,6 +21,38 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
 
 ---
 
+## 📸 Screenshots
+
+### Desktop
+
+| | |
+|---|---|
+| ![Overview](docs/screenshots/dashboard.png) | ![New game](docs/screenshots/games.png) |
+| ![Players & statistics](docs/screenshots/players.png) | ![Tournament setup](docs/screenshots/tournament.png) |
+| ![Connect devices](docs/screenshots/connect.png) | ![X01 game](docs/screenshots/game_x01.png) |
+| ![Cricket](docs/screenshots/game_cricket.png) | ![All Fives](docs/screenshots/game_allfives.png) |
+| ![Around the Clock](docs/screenshots/game_atc.png) | ![Game summary](docs/screenshots/game_summary.png) |
+
+### Mobile
+
+<p>
+  <img src="docs/screenshots/m_dashboard.png" width="200" alt="Overview">
+  <img src="docs/screenshots/m_games.png" width="200" alt="New game">
+  <img src="docs/screenshots/m_tournament.png" width="200" alt="Tournament">
+  <img src="docs/screenshots/m_players.png" width="200" alt="Players">
+  <img src="docs/screenshots/m_player_detail.png" width="200" alt="Player details">
+</p>
+
+<p>
+  <img src="docs/screenshots/m_connect.png" width="200" alt="Connect devices">
+  <img src="docs/screenshots/m_game_x01.png" width="200" alt="X01 game">
+  <img src="docs/screenshots/m_game_cricket.png" width="200" alt="Cricket">
+  <img src="docs/screenshots/m_game_allfives.png" width="200" alt="All Fives">
+  <img src="docs/screenshots/m_game_atc.png" width="200" alt="Around the Clock">
+</p>
+
+---
+
 ## ✨ Features
 
 - **🎯 Diverse Dart Game Modes:**
