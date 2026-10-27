@@ -99,22 +99,21 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
 
 | Platform | Status | Highlights |
 |---|---|---|
-| **Desktop (Windows)** | ✅ Full | `.msi` installer or standalone `.jar`, companion camera via Wi-Fi & experimental webcam support |
-| **Desktop (Linux / macOS)** | ✅ Full | `.deb` / `.dmg` packages or standalone `.jar` via JVM / Compose Multiplatform |
-| **Android** | ✅ Full (debug build) | CameraX live stream with real-time canvas overlay; no Play Store release yet |
+| **Desktop (Windows)** | ✅ Full | `.exe` installer or standalone `.jar`, companion camera via Wi-Fi & experimental webcam support |
+| **Desktop (Linux)** | ✅ Full | Standalone `.jar` via JVM / Compose Multiplatform |
+| **Android** | ✅ Full | CameraX live stream with real-time canvas overlay; signed APK for sideloading, no Play Store release yet |
 | **iOS** | 🔄 In Progress | Framework build via Kotlin/Native / AVFoundation integration |
 
 ### 📦 Which file do I need?
 
-Prebuilt packages are published on the [Releases](https://github.com/marx861-stack/sDartApp/releases) page (once available):
+Prebuilt packages are published on the [Releases](https://github.com/marx861-stack/sDartApp/releases/latest) page:
 
 | System | File | Notes |
 |---|---|---|
-| Windows | `sDartApp-<version>.msi` | Installer, includes its own Java runtime |
-| Linux (Debian/Ubuntu) | `sdartapp_<version>…_amd64.deb` | Installer, includes its own Java runtime |
-| macOS | `sDartApp-<version>.dmg` | Installer, includes its own Java runtime |
-| Windows / Linux (portable) | `sDartApp-<os>-x64-<version>.jar` | No installation; requires Java 17+ (`java -jar …`) |
-| Android | `sDartApp-android-<version>.apk` | Debug-signed APK for sideloading; allow installation from unknown sources |
+| Windows | `sDartApp-windows-x64-1.0.0-Setup.exe` | Installer, includes its own Java runtime |
+| Windows (portable) | `sDartApp-windows-x64-1.0.0.jar` | No installation; requires Java 17+ (`java -jar …`) |
+| Linux (portable) | `sDartApp-linux-x64-1.0.0.jar` | No installation; requires Java 17+ (`java -jar …`) |
+| Android | `sDartApp-android-1.0.0.apk` | Signed APK for sideloading; allow installation from unknown sources |
 
 ---
 
@@ -166,11 +165,12 @@ Creates an `.msi` (Windows), `.deb` (Linux) or `.dmg` (macOS) under `composeApp/
 ### Build Android App
 
 ```bash
-./gradlew :composeApp:assembleDebug
+./gradlew :composeApp:assembleDebug     # debug build
+./gradlew :composeApp:assembleRelease   # release build
 ```
-The generated APK can be found under `composeApp/build/outputs/apk/debug/`.
+The generated APKs can be found under `composeApp/build/outputs/apk/debug/` and `…/release/`.
 
-> **Note:** There is currently no release signing configuration, so only debug-signed APKs are produced. These are fine for sideloading but cannot be published on Google Play.
+> **Note:** The release APK is signed only if `local.properties` contains `release.storeFile`, `release.storePassword`, `release.keyAlias` and `release.keyPassword` (never commit these or the keystore). Without them the release APK is left unsigned.
 
 ---
 
@@ -221,7 +221,7 @@ This project utilizes a clear separation of licenses for application code, machi
 - **Application & Source Code:** Licensed under the **[GNU General Public License v3.0 or later (GPL-3.0-or-later)](LICENSE)**.
 - **Dartboard Detection Weights (`rtmdet_tiny.onnx`, `rtmdet_tiny.bin` & `rtmdet_tiny.param`):** Licensed under **[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](LICENSE-MODEL)**.
   - The weights are separate data files and are **not** covered by the GPL. The GPL applies to the source code only.
-  - Prebuilt app packages (APK, JAR, MSI, DEB) bundle the weights and may therefore only be redistributed for non-commercial purposes.
+  - Prebuilt app packages (APK, JAR, EXE) bundle the weights and may therefore only be redistributed for non-commercial purposes.
   - ✅ **Free** for personal, hobby, educational, and non-commercial research use.
   - ❌ **Commercial use, redistribution in commercial software, or integration into commercial hardware systems is strictly prohibited** without prior written permission.
   - *Base Model Attribution:* Based on [RTMDet (OpenMMLab)](https://github.com/open-mmlab/mmdetection), licensed under Apache 2.0.
