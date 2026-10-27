@@ -38,6 +38,7 @@ import com.sdart.app.ui.components.DashboardCard
 import com.sdart.app.ui.components.DesktopPage
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 import kotlinx.coroutines.launch
 
@@ -59,10 +60,14 @@ fun PlayerManagementScreen(
     var showCreateDialog by remember { mutableStateOf(false) }
     var playerToDelete by remember { mutableStateOf<SavedPlayer?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val repoInitFailedText = stringResource(Res.string.players_error_repository_init)
+    val loadErrorFmt = stringResource(Res.string.players_error_load, "%MSG%")
+    val saveErrorFmt = stringResource(Res.string.players_error_save, "%MSG%")
+    val deleteErrorFmt = stringResource(Res.string.players_error_delete, "%MSG%")
     
     LaunchedEffect(Unit) {
         if (repository == null) {
-            errorMessage = "Repository konnte nicht initialisiert werden"
+            errorMessage = repoInitFailedText
             isLoading = false
             return@LaunchedEffect
         }
@@ -74,7 +79,7 @@ fun PlayerManagementScreen(
         } catch (e: Exception) {
             println("Error loading players in PlayerManagementScreen: ${e.message}")
             e.printStackTrace()
-            errorMessage = "Fehler beim Laden der Spieler: ${e.message}"
+            errorMessage = loadErrorFmt.replace("%MSG%", e.message.toString())
             players = emptyList()
         } finally {
             isLoading = false
@@ -94,7 +99,7 @@ fun PlayerManagementScreen(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    "Fehler beim Initialisieren der Spieler-Verwaltung",
+                    stringResource(Res.string.players_error_init_management),
                     color = Color.White,
                     textAlign = TextAlign.Center
                 )
@@ -105,7 +110,7 @@ fun PlayerManagementScreen(
                         containerColor = com.sdart.app.ui.theme.PrimaryOrange
                     )
                 ) {
-                    Text("Zurück", color = Color.White)
+                    Text(stringResource(Res.string.players_back), color = Color.White)
                 }
             }
         }
@@ -122,7 +127,7 @@ fun PlayerManagementScreen(
             } catch (e: Exception) {
                 println("Error reloading players: ${e.message}")
                 e.printStackTrace()
-                errorMessage = "Fehler beim Laden der Spieler: ${e.message}"
+                errorMessage = loadErrorFmt.replace("%MSG%", e.message.toString())
                 players = emptyList()
             } finally {
                 isLoading = false
@@ -154,7 +159,7 @@ fun PlayerManagementScreen(
                     } catch (e: Exception) {
                         println("Error saving player: ${e.message}")
                         e.printStackTrace()
-                        errorMessage = "Fehler beim Speichern des Spielers: ${e.message}"
+                        errorMessage = saveErrorFmt.replace("%MSG%", e.message.toString())
                     }
                 }
             }
@@ -166,10 +171,10 @@ fun PlayerManagementScreen(
         if (repository != null) {
             AlertDialog(
                 onDismissRequest = { playerToDelete = null },
-                title = { Text("Spieler löschen", color = if (isDark) Color.White else Color.Unspecified) },
+                title = { Text(stringResource(Res.string.players_delete_title), color = if (isDark) Color.White else Color.Unspecified) },
                 text = {
                     Text(
-                        text = "Möchten Sie '${player.name}' wirklich löschen? Alle Statistiken gehen verloren.",
+                        text = stringResource(Res.string.players_delete_confirm, player.name),
                         color = if (isDark) com.sdart.app.ui.theme.DarkTextSecondary else Color.Unspecified
                     )
                 },
@@ -184,7 +189,7 @@ fun PlayerManagementScreen(
                                 } catch (e: Exception) {
                                     println("Error deleting player: ${e.message}")
                                     e.printStackTrace()
-                                    errorMessage = "Fehler beim Löschen des Spielers: ${e.message}"
+                                    errorMessage = deleteErrorFmt.replace("%MSG%", e.message.toString())
                                 }
                             }
                         },
@@ -192,7 +197,7 @@ fun PlayerManagementScreen(
                             containerColor = Color(0xFFdc3545)
                         )
                     ) {
-                        Text("Löschen", color = Color.White)
+                        Text(stringResource(Res.string.players_delete), color = Color.White)
                     }
                 },
                 dismissButton = {
@@ -202,7 +207,7 @@ fun PlayerManagementScreen(
                             contentColor = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Unspecified
                         )
                     ) {
-                        Text("Abbrechen")
+                        Text(stringResource(Res.string.players_cancel))
                     }
                 },
                 containerColor = if (isDark) Color(0xFF262626) else MaterialTheme.colorScheme.surface,
@@ -238,7 +243,7 @@ private fun CreatePlayerDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Neuer Spieler",
+                    text = stringResource(Res.string.players_new_player),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = if (isDark) Color.White else Color.Unspecified,
@@ -248,7 +253,7 @@ private fun CreatePlayerDialog(
                 OutlinedTextField(
                     value = playerName,
                     onValueChange = { playerName = it },
-                    label = { Text("Spielername") },
+                    label = { Text(stringResource(Res.string.players_name_label)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
@@ -273,7 +278,7 @@ private fun CreatePlayerDialog(
                             contentColor = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Unspecified
                         )
                     ) {
-                        Text("Abbrechen")
+                        Text(stringResource(Res.string.players_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -288,7 +293,7 @@ private fun CreatePlayerDialog(
                             disabledContainerColor = if (isDark) Color(0xFF444444) else Color(0xFFe0e0e0)
                         )
                     ) {
-                        Text("Erstellen", color = Color.White)
+                        Text(stringResource(Res.string.players_create), color = Color.White)
                     }
                 }
             }
@@ -312,9 +317,9 @@ private fun PlayerList(
     onPlayerClick: (SavedPlayer) -> Unit
 ) {
     if (LocalCompactLayout.current) {
-        DesktopPage(title = "Spieler") {
+        DesktopPage(title = stringResource(Res.string.main_title_players)) {
             CardLink(
-                text = "Neuer Spieler",
+                text = stringResource(Res.string.players_new_player),
                 onClick = onCreate,
                 icon = Res.drawable.ic_plus,
                 modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
@@ -328,7 +333,7 @@ private fun PlayerList(
             when {
                 isLoading -> CircularProgressIndicator(color = PrimaryOrange)
                 players.isEmpty() -> Text(
-                    text = "Noch keine Spieler. Lege oben einen neuen Spieler an.",
+                    text = stringResource(Res.string.players_empty),
                     style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                 )
                 else -> players.forEach { player ->
@@ -350,14 +355,14 @@ private fun PlayerList(
     val selected = players.firstOrNull { it.name == selectedName } ?: players.firstOrNull()
 
     // Seite genau fensterhoch: Spielerliste und Statistik scrollen jeweils für sich
-    DesktopPage(title = "Spieler", minHeight = 0.dp) {
+    DesktopPage(title = stringResource(Res.string.main_title_players), minHeight = 0.dp) {
         Row(
             modifier = Modifier.fillMaxWidth().weight(1f),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
                 CardLink(
-                    text = "Neuer Spieler",
+                    text = stringResource(Res.string.players_new_player),
                     onClick = onCreate,
                     icon = Res.drawable.ic_plus,
                     modifier = Modifier.padding(start = 4.dp, bottom = 14.dp)
@@ -372,7 +377,7 @@ private fun PlayerList(
                 when {
                     isLoading -> CircularProgressIndicator(color = PrimaryOrange)
                     players.isEmpty() -> Text(
-                        text = "Noch keine Spieler. Lege oben einen neuen Spieler an.",
+                        text = stringResource(Res.string.players_empty),
                         style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                     )
                     else -> LazyColumn(
@@ -444,8 +449,11 @@ private fun PlayerCard(
                 )
                 Text(
                     text = if (player.totalGames > 0) {
-                        "${player.totalGames} ${if (player.totalGames == 1) "Spiel" else "Spiele"} · Ø ${player.bestAverageScorePerRound}"
-                    } else "Noch keine Spiele",
+                        if (player.totalGames == 1)
+                            stringResource(Res.string.players_games_summary_one, player.totalGames, player.bestAverageScorePerRound.toString())
+                        else
+                            stringResource(Res.string.players_games_summary_other, player.totalGames, player.bestAverageScorePerRound.toString())
+                    } else stringResource(Res.string.players_no_games_yet),
                     style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -455,7 +463,7 @@ private fun PlayerCard(
             IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_trash),
-                    contentDescription = "Spieler löschen",
+                    contentDescription = stringResource(Res.string.players_delete_title),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )

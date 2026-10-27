@@ -39,6 +39,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.math.max
 import kotlin.math.min
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 /**
  * Geteiltes Multiplattform-Kamera-Overlay & Auto-Scoring-Pipeline in commonMain.
@@ -262,6 +264,9 @@ fun CameraBackground(
         )
 
         // 2. Einheitliches UI-Overlay & Visier
+        val tooFarText = stringResource(Res.string.camera_too_far)
+        val tooCloseText = stringResource(Res.string.camera_too_close)
+        val roiLabelText = stringResource(Res.string.camera_auto_tracking_roi)
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -416,7 +421,7 @@ fun CameraBackground(
                         )
                     )
 
-                    val warningText = if (distanceStatus == BoardDistanceStatus.TOO_FAR) "ZU WEIT WEG" else "ZU NAH"
+                    val warningText = if (distanceStatus == BoardDistanceStatus.TOO_FAR) tooFarText else tooCloseText
                     val textLayoutResult = textMeasurer.measure(
                         text = warningText,
                         style = TextStyle(
@@ -453,7 +458,7 @@ fun CameraBackground(
                     )
                     drawText(
                         textMeasurer = textMeasurer,
-                        text = "Auto-Tracking ROI",
+                        text = roiLabelText,
                         topLeft = Offset(rx1 + 8.dp.toPx(), max(0f, ry1 - 18.dp.toPx())),
                         style = TextStyle(color = roiColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     )
@@ -513,7 +518,7 @@ fun CameraBackground(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Inferenz",
+                        text = stringResource(Res.string.camera_inference),
                         color = Color.White.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.labelSmall
                     )
@@ -536,7 +541,7 @@ fun CameraBackground(
                             .background(Color.White.copy(alpha = 0.2f))
                     )
                     Text(
-                        text = "FPS",
+                        text = stringResource(Res.string.camera_fps),
                         color = Color.White.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.labelSmall
                     )
@@ -555,7 +560,7 @@ fun CameraBackground(
                                 .background(Color.White.copy(alpha = 0.2f))
                         )
                         Text(
-                            text = "Hardware",
+                            text = stringResource(Res.string.camera_hardware),
                             color = Color.White.copy(alpha = 0.7f),
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -582,7 +587,7 @@ fun CameraBackground(
                     .zIndex(20f)
             ) {
                 Text(
-                    text = "WARNUNG: Vulkan GPU konnte nicht aktiviert werden (CPU Fallback)",
+                    text = stringResource(Res.string.camera_gpu_warning),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold

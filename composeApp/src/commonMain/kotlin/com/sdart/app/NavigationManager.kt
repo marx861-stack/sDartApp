@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 /**
  * Navigation-Screens der S'Dart App
@@ -161,9 +163,9 @@ fun GameCompletionDialog(
         text = {
             androidx.compose.material3.Text(
                 text = if (showContinueOption) {
-                    "Möchten Sie weiterspielen, damit die anderen Spieler fertig spielen können, oder die Statistiken ansehen?"
+                    stringResource(Res.string.dash_game_finished_continue_text)
                 } else {
-                    "Das Spiel ist beendet. Alle Spieler haben fertig gespielt. Möchten Sie sich die Statistiken ansehen?"
+                    stringResource(Res.string.dash_game_finished_text)
                 },
                 style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                 color = if (isDark) com.sdart.app.ui.theme.DarkTextSecondary else androidx.compose.ui.graphics.Color(0xFF4a5568),
@@ -178,7 +180,7 @@ fun GameCompletionDialog(
                 ),
                 modifier = androidx.compose.ui.Modifier.fillMaxWidth()
             ) {
-                androidx.compose.material3.Text("Statistiken ansehen", color = androidx.compose.ui.graphics.Color.White)
+                androidx.compose.material3.Text(stringResource(Res.string.dash_view_statistics), color = androidx.compose.ui.graphics.Color.White)
             }
         },
         dismissButton = if (showContinueOption) {
@@ -190,7 +192,7 @@ fun GameCompletionDialog(
                     ),
                     modifier = androidx.compose.ui.Modifier.fillMaxWidth()
                 ) {
-                    androidx.compose.material3.Text("Weiter spielen")
+                    androidx.compose.material3.Text(stringResource(Res.string.dash_continue_playing))
                 }
             }
         } else null,

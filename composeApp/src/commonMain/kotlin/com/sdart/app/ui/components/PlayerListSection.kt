@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.sdart.app.ui.LocalCompactLayout
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 /** Höchstzahl an Spielern für Spiel und Turnier; reine Obergrenze der Eingabe, die Spiellogik kennt keine. */
@@ -46,7 +47,7 @@ fun PlayerListSection(
 ) {
     val compact = LocalCompactLayout.current
     Column(modifier = modifier) {
-        CardTitle("Spieler · ${players.size}")
+        CardTitle(stringResource(Res.string.game_players_title, players.size))
 
         // Aktionen oberhalb der Namensfelder, damit neue Spieler nicht unter der Liste wegrutschen;
         // reicht die Breite nicht, rutscht der Zufalls-Schalter in eine zweite Zeile
@@ -59,21 +60,21 @@ fun PlayerListSection(
             // Kurze Beschriftungen, damit Links und Schalter in eine Zeile passen
             if (players.size < MaxPlayers) {
                 CardLink(
-                    "Hinzufügen",
+                    stringResource(Res.string.game_players_add),
                     onClick = onAdd,
                     icon = Res.drawable.ic_plus,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
             }
             CardLink(
-                "Laden",
+                stringResource(Res.string.game_players_load),
                 onClick = onLoad,
                 primary = false,
                 icon = Res.drawable.ic_folder,
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
             SelectChip(
-                label = "Zufällig",
+                label = stringResource(Res.string.game_players_random),
                 selected = randomize,
                 onClick = { onRandomizeChange(!randomize) },
                 icon = Res.drawable.ic_refresh
@@ -100,7 +101,7 @@ fun PlayerListSection(
                     OutlinedTextField(
                         value = player.name,
                         onValueChange = { onRename(index, it) },
-                        placeholder = { Text("Spieler ${index + 1}") },
+                        placeholder = { Text(stringResource(Res.string.game_players_placeholder, index + 1)) },
                         singleLine = true,
                         shape = RoundedCornerShape(10.dp),
                         textStyle = MaterialTheme.typography.bodyLarge,
@@ -108,7 +109,7 @@ fun PlayerListSection(
                             {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_folder),
-                                    contentDescription = "Gespeicherter Spieler",
+                                    contentDescription = stringResource(Res.string.game_players_saved_player),
                                     tint = PrimaryOrange,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -126,7 +127,7 @@ fun PlayerListSection(
                         IconButton(onClick = { onRemove(index) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_trash),
-                                contentDescription = "Spieler entfernen",
+                                contentDescription = stringResource(Res.string.game_players_remove),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(18.dp)
                             )

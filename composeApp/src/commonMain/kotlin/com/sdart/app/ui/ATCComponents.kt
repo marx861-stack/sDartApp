@@ -22,6 +22,9 @@ import com.sdart.app.Player
 import com.sdart.app.ATCGameState
 import com.sdart.app.ATCVariant
 import androidx.compose.ui.draw.clip
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.Res
+import sdartapp.composeapp.generated.resources.game_atc_done
 
 @Composable
 fun ATCMainDisplay(
@@ -32,7 +35,7 @@ fun ATCMainDisplay(
     if (player.atcCurrentTarget == 0) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
              Text(
-                text = "FERTIG!",
+                text = stringResource(Res.string.game_atc_done),
                 style = MaterialTheme.typography.displayMedium,
                 color = Color.Green
             )
@@ -76,9 +79,10 @@ fun ATCMainDisplay(
     }
 }
 
+@Composable
 fun getTargetText(player: Player, atcConfig: ATCGameState? = null): String {
     val target = player.atcCurrentTarget
-    if (target == 0) return "FERTIG!"
+    if (target == 0) return stringResource(Res.string.game_atc_done)
     
     if (target == 25) {
         return when (atcConfig?.variant) {

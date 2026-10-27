@@ -32,42 +32,35 @@ private data class ModeEntry(
     val icon: DrawableResource,
     val title: StringResource,
     // Spielregeln als kurze Absätze, angezeigt über das Info-Symbol der Karte
-    val rules: List<String>
+    val rules: List<StringResource>
 )
 
 private val modeEntries = listOf(
     ModeEntry(
         GameMode.X501, Res.drawable.ic_standard, Res.string.game_mode_standard, listOf(
-            "Alle starten mit 501 Punkten (oder 101, 301, 701 bzw. eigenen). Pro Aufnahme wirfst du drei Darts, " +
-                "ihre Summe wird abgezogen.",
-            "Wer zuerst genau auf 0 kommt, gewinnt das Leg. Bei Double Out muss der letzte Dart ein Double sein, " +
-                "bei Double In zählt erst ab dem ersten Double.",
-            "Wer unter 0 fällt (bei Double Out auch auf 1), überwirft sich: Die Aufnahme zählt nicht."
+            Res.string.game_setup_rules_standard_1,
+            Res.string.game_setup_rules_standard_2,
+            Res.string.game_setup_rules_standard_3
         )
     ),
     ModeEntry(
         GameMode.CRICKET, Res.drawable.ic_cricket, Res.string.game_mode_cricket, listOf(
-            "Es zählen nur 15 bis 20 und das Bull. Jede Zahl ist nach drei Treffern geschlossen; Double zählt " +
-                "zweifach, Triple dreifach, beim Bull Single einfach und Double zweifach.",
-            "Weitere Treffer auf eine eigene geschlossene Zahl, die ein Gegner noch offen hat, bringen Punkte.",
-            "Das Leg endet, wenn alle alles geschlossen haben. Standard: Die Punkte bekommst du selbst, die meisten " +
-                "gewinnen. Cut Throat: Die Punkte gehen an die Gegner, die wenigsten gewinnen."
+            Res.string.game_setup_rules_cricket_1,
+            Res.string.game_setup_rules_cricket_2,
+            Res.string.game_setup_rules_cricket_3
         )
     ),
     ModeEntry(
         GameMode.ALL_FIVES, Res.drawable.ic_all_fives, Res.string.game_mode_all_fives, listOf(
-            "Eine Aufnahme zählt nur, wenn alle drei Darts treffen und ihre Summe durch 5 teilbar ist. " +
-                "Dann wird die ganze Summe gutgeschrieben.",
-            "Wer zuerst die Ziel-Punktzahl erreicht (50, 75 oder 100), gewinnt das Leg."
+            Res.string.game_setup_rules_all_fives_1,
+            Res.string.game_setup_rules_all_fives_2
         )
     ),
     ModeEntry(
         GameMode.AROUND_THE_CLOCK, Res.drawable.ic_atc, Res.string.game_mode_atc, listOf(
-            "Triff die Zahlen der Reihe nach von 1 bis 20, auf Wunsch rückwärts oder mit dem Bull am Ende. " +
-                "Wer zuerst durch ist, gewinnt.",
-            "Standard: Jedes Feld der Zahl zählt. Doubles bzw. Triples: Nur dieses Feld zählt.",
-            "Quickly: Single, Double und Triple bringen dich 1, 2 oder 3 Zahlen weiter. Shanghai: Auf jeder Zahl " +
-                "nacheinander Single, Double und Triple treffen."
+            Res.string.game_setup_rules_atc_1,
+            Res.string.game_setup_rules_atc_2,
+            Res.string.game_setup_rules_atc_3
         )
     )
 )
@@ -87,7 +80,8 @@ fun DesktopGamesScreen(
     var selectedMode by remember {
         mutableStateOf(modeEntries.firstOrNull { it.mode == initialMode }?.mode ?: GameMode.X501)
     }
-    val setup = rememberPlayerSetupState()
+    val playerWord = stringResource(Res.string.game_setup_player_word)
+    val setup = rememberPlayerSetupState(playerWord)
     var showLoadDialog by remember { mutableStateOf(false) }
     val compact = LocalCompactLayout.current
 
@@ -113,7 +107,7 @@ fun DesktopGamesScreen(
     }
     val startButton: @Composable (Modifier) -> Unit = { modifier ->
         Button(
-            onClick = { setup.startGame(selectedMode, onStartGame) },
+            onClick = { setup.startGame(selectedMode, onStartGame, playerWord) },
             enabled = setup.canStart,
             colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange, contentColor = Color.Black),
             shape = RoundedCornerShape(10.dp),
@@ -122,12 +116,12 @@ fun DesktopGamesScreen(
         ) {
             Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Spiel starten", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.game_setup_start), fontWeight = FontWeight.SemiBold)
         }
     }
 
     // Genau fensterhoch: Spielerliste und Einstellungen scrollen für sich, die Seite selbst nicht
-    DesktopPage(title = "Neues Spiel", minHeight = 0.dp) {
+    DesktopPage(title = stringResource(Res.string.game_setup_title), minHeight = 0.dp) {
         if (compact) {
             // Karten einer Reihe gleich hoch, auch wenn ein Untertitel zweizeilig wird
             modeEntries.chunked(2).forEach { row ->
@@ -240,7 +234,7 @@ private fun ModeCard(entry: ModeEntry, selected: Boolean, onClick: () -> Unit, m
             }
         }
 
-        RulesInfoButton(title = title, rules = entry.rules, modifier = Modifier.align(Alignment.TopEnd).padding(2.dp))
+        RulesInfoButton(title = title, rules = entry.rules.map { stringResource(it) }, modifier = Modifier.align(Alignment.TopEnd).padding(2.dp))
     }
 }
 
@@ -287,29 +281,33 @@ private fun SettingsSection(
     Column(modifier = modifier) {
         when (mode) {
             GameMode.CRICKET -> {
-                section("Variante", true)
+                section(stringResource(Res.string.game_setup_variant), true)
                 tileRow(2) {
-                    SelectTile("Standard", setup.cricketVariant == CricketVariant.STANDARD, { setup.cricketVariant = CricketVariant.STANDARD }, Modifier.weight(1f), "Punkte für dich")
-                    SelectTile("Cut Throat", setup.cricketVariant == CricketVariant.CUT_THROAT, { setup.cricketVariant = CricketVariant.CUT_THROAT }, Modifier.weight(1f), "Punkte an Gegner")
+                    SelectTile(stringResource(Res.string.game_mode_standard), setup.cricketVariant == CricketVariant.STANDARD, { setup.cricketVariant = CricketVariant.STANDARD }, Modifier.weight(1f), stringResource(Res.string.game_setup_cricket_standard_sub))
+                    SelectTile("Cut Throat", setup.cricketVariant == CricketVariant.CUT_THROAT, { setup.cricketVariant = CricketVariant.CUT_THROAT }, Modifier.weight(1f), stringResource(Res.string.game_setup_cricket_cut_throat_sub))
                 }
                 LegsSetting(setup)
             }
             GameMode.ALL_FIVES -> {
-                section("Ziel-Punktzahl", true)
+                section(stringResource(Res.string.game_setup_target_score), true)
                 tileRow(3) {
-                    listOf(50 to "Kurz", 75 to "Standard", 100 to "Lang").forEach { (score, label) ->
+                    listOf(
+                        50 to stringResource(Res.string.game_setup_target_short),
+                        75 to stringResource(Res.string.game_mode_standard),
+                        100 to stringResource(Res.string.game_setup_target_long)
+                    ).forEach { (score, label) ->
                         SelectTile("$score", setup.targetScore == score, { setup.targetScore = score }, Modifier.weight(1f), label)
                     }
                 }
                 LegsSetting(setup)
             }
             GameMode.AROUND_THE_CLOCK -> {
-                section("Variante", true)
+                section(stringResource(Res.string.game_setup_variant), true)
                 tileRow(3) {
                     listOf(
-                        Triple(ATCVariant.STANDARD, "Standard", "Einfach treffen"),
-                        Triple(ATCVariant.DOUBLE, "Doubles", "Nur Doubles"),
-                        Triple(ATCVariant.TRIPLE, "Triples", "Nur Triples")
+                        Triple(ATCVariant.STANDARD, stringResource(Res.string.game_mode_standard), stringResource(Res.string.game_setup_atc_standard_sub)),
+                        Triple(ATCVariant.DOUBLE, "Doubles", stringResource(Res.string.game_setup_atc_doubles_sub)),
+                        Triple(ATCVariant.TRIPLE, "Triples", stringResource(Res.string.game_setup_atc_triples_sub))
                     ).forEach { (variant, label, sub) ->
                         SelectTile(label, setup.atcVariant == variant, { setup.atcVariant = variant }, Modifier.weight(1f), sub)
                     }
@@ -317,23 +315,23 @@ private fun SettingsSection(
                 tileRow(3) {
                     listOf(
                         Triple(ATCVariant.QUICKLY, "Quickly", "S=1, D=2, T=3"),
-                        Triple(ATCVariant.SHANGHAI, "Shanghai", "S, D, T nötig")
+                        Triple(ATCVariant.SHANGHAI, "Shanghai", stringResource(Res.string.game_setup_atc_shanghai_sub))
                     ).forEach { (variant, label, sub) ->
                         SelectTile(label, setup.atcVariant == variant, { setup.atcVariant = variant }, Modifier.weight(1f), sub)
                     }
                     Spacer(Modifier.weight(1f))
                 }
-                section("Optionen", false)
+                section(stringResource(Res.string.game_setup_options), false)
                 tileRow(2) {
-                    SelectTile("Rückwärts", setup.atcReverse, { setup.atcReverse = !setup.atcReverse }, Modifier.weight(1f), "20 → 1")
-                    SelectTile("Mit Bull", setup.atcWithBulls, { setup.atcWithBulls = !setup.atcWithBulls }, Modifier.weight(1f), "Bull am Ende")
+                    SelectTile(stringResource(Res.string.game_setup_atc_reverse), setup.atcReverse, { setup.atcReverse = !setup.atcReverse }, Modifier.weight(1f), "20 → 1")
+                    SelectTile(stringResource(Res.string.game_setup_atc_with_bull), setup.atcWithBulls, { setup.atcWithBulls = !setup.atcWithBulls }, Modifier.weight(1f), stringResource(Res.string.game_setup_atc_bull_sub))
                 }
             }
             else -> {
-                section("Startpunkte", true)
+                section(stringResource(Res.string.game_setup_start_points), true)
                 val compact = LocalCompactLayout.current
                 val customTile: @Composable (Modifier) -> Unit = { m ->
-                    SelectTile(if (compact) "Eigene Startpunkte" else "Eigene", setup.startScore == 0, { setup.startScore = 0 }, m)
+                    SelectTile(stringResource(if (compact) Res.string.game_setup_custom_start_points else Res.string.game_setup_custom), setup.startScore == 0, { setup.startScore = 0 }, m)
                 }
                 tileRow(5) {
                     listOf(101, 301, 501, 701).forEach { score ->
@@ -352,7 +350,7 @@ private fun SettingsSection(
                     OutlinedTextField(
                         value = setup.customScore,
                         onValueChange = { setup.customScore = it.filter(Char::isDigit) },
-                        placeholder = { Text("Eigene Startpunkte, z. B. 1001") },
+                        placeholder = { Text(stringResource(Res.string.game_setup_custom_placeholder)) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -365,10 +363,10 @@ private fun SettingsSection(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
                     )
                 }
-                section("Regeln", false)
+                section(stringResource(Res.string.game_setup_rules), false)
                 tileRow(2) {
-                    SelectTile("Double In", setup.doubleIn, { setup.doubleIn = !setup.doubleIn }, Modifier.weight(1f), "Start mit Double")
-                    SelectTile("Double Out", setup.doubleOut, { setup.doubleOut = !setup.doubleOut }, Modifier.weight(1f), "Sieg mit Double")
+                    SelectTile("Double In", setup.doubleIn, { setup.doubleIn = !setup.doubleIn }, Modifier.weight(1f), stringResource(Res.string.game_setup_double_in_sub))
+                    SelectTile("Double Out", setup.doubleOut, { setup.doubleOut = !setup.doubleOut }, Modifier.weight(1f), stringResource(Res.string.game_setup_double_out_sub))
                 }
                 LegsSetting(setup)
             }
@@ -387,13 +385,15 @@ private fun LegsSetting(setup: PlayerSetupState) {
     )
 }
 
+@Composable
 private fun summary(setup: PlayerSetupState, mode: GameMode): String {
     // Jede Zeile spielt mit; leere Namen werden beim Start zu "Spieler N"
     val players = setup.playerNames.size
-    val playerText = if (players == 1) "1 Spieler" else "$players Spieler"
+    val playerText = if (players == 1) stringResource(Res.string.game_setup_summary_one_player)
+        else stringResource(Res.string.game_setup_summary_players, players)
     val modeText = when (mode) {
         GameMode.CRICKET -> "Cricket"
-        GameMode.ALL_FIVES -> "Durch 5 teilbar · Ziel ${setup.targetScore ?: 50}"
+        GameMode.ALL_FIVES -> stringResource(Res.string.game_setup_summary_all_fives, setup.targetScore ?: 50)
         GameMode.AROUND_THE_CLOCK -> "Around the Clock"
         else -> {
             val score = if (setup.startScore > 0) setup.startScore.toString() else setup.customScore.ifBlank { "501" }

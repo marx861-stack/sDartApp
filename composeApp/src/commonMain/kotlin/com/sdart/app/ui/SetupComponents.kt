@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,7 +43,7 @@ fun ScreenHeader(
         ) {
             Icon(
                 painter = painterResource(Res.drawable.ic_arrow_back),
-                contentDescription = "Zurück",
+                contentDescription = stringResource(Res.string.dash_back),
                 tint = Color.White
             )
         }

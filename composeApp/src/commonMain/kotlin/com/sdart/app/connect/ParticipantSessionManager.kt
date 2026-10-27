@@ -35,7 +35,8 @@ sealed interface ParticipantState {
 
     data class Disconnected(
         val role: DeviceRole,
-        val message: String
+        val kind: DisconnectKind,
+        val detail: String? = null
     ) : ParticipantState
 }
 
@@ -188,7 +189,8 @@ class ParticipantSessionManager(
         if (currentState is ParticipantState.Connected || currentState is ParticipantState.Connecting) {
             _state.value = ParticipantState.Disconnected(
                 role = activeRole,
-                message = if (remote) "Verbindung vom Host beendet." else (reason ?: "Getrennt.")
+                kind = if (remote) DisconnectKind.HOST_CLOSED else DisconnectKind.CLOSED,
+                detail = if (remote) null else reason
             )
         }
     }
@@ -232,7 +234,7 @@ class ParticipantSessionManager(
                 println("[ParticipantSessionManager] Bye received from host.")
                 _state.value = ParticipantState.Disconnected(
                     role = activeRole,
-                    message = "Host hat die Session beendet."
+                    kind = DisconnectKind.SESSION_ENDED
                 )
                 client.disconnect()
             }
@@ -248,7 +250,8 @@ class ParticipantSessionManager(
         if (currentState is ParticipantState.Connecting) {
             _state.value = ParticipantState.Disconnected(
                 role = currentState.role,
-                message = "Verbindungsfehler: ${error.message ?: "Server nicht erreichbar"}"
+                kind = DisconnectKind.ERROR,
+                detail = error.message
             )
         }
     }
@@ -262,3 +265,6 @@ class ParticipantSessionManager(
         return newId
     }
 }
+
+/** Grund für [ParticipantState.Disconnected]; der Anzeigetext wird erst in der Oberfläche aufgelöst. */
+enum class DisconnectKind { HOST_CLOSED, SESSION_ENDED, ERROR, CLOSED }

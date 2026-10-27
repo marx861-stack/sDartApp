@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 import com.sdart.app.ui.theme.GlassBorder
 import com.sdart.app.ui.theme.GlassWhite
@@ -62,7 +63,7 @@ fun PlayerStatsDialog(
                 )
                 if (isWinner) {
                     Text(
-                        text = "Gewinner! 🎉",
+                        text = stringResource(Res.string.game_stats_winner),
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color(0xFF28a745),
                         fontWeight = FontWeight.Bold,
@@ -99,7 +100,7 @@ fun PlayerStatsDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Statistiken",
+                            text = stringResource(Res.string.game_stats_tab_statistics),
                             fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Medium,
                             color = if (selectedTab == 0) Color.White else (if (isDarkTheme) Color.LightGray else Color.DarkGray),
                             fontSize = 13.sp
@@ -115,7 +116,7 @@ fun PlayerStatsDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Heatmap",
+                            text = stringResource(Res.string.game_stats_tab_heatmap),
                             fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Medium,
                             color = if (selectedTab == 1) Color.White else (if (isDarkTheme) Color.LightGray else Color.DarkGray),
                             fontSize = 13.sp
@@ -125,9 +126,9 @@ fun PlayerStatsDialog(
 
                 if (selectedTab == 0) {
                     MainStatCard(
-                        title = "Aktueller Score",
+                        title = stringResource(Res.string.game_stats_current_score),
                         value = if (isWinner) "0" else player.currentScore.toString(),
-                        subtitle = if (isWinner) "Gewonnen!" else "Punkte übrig",
+                        subtitle = if (isWinner) stringResource(Res.string.game_stats_won_exclaim) else stringResource(Res.string.game_stats_points_left),
                         color = if (isWinner) Color(0xFF28a745) else PrimaryOrange,
                         icon = if (isWinner) Res.drawable.ic_trophy else Res.drawable.ic_target,
                         isDarkTheme = isDarkTheme,
@@ -138,7 +139,7 @@ fun PlayerStatsDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val avgScore = PlayerStatistics.getAverageScorePerRound(player)
                         CompactStatCard(
-                            title = "Ø Punkte/Runde",
+                            title = stringResource(Res.string.game_stats_avg_points_round),
                             value = "$avgScore",
                             color = if (isDarkTheme) Color.White else Color(0xFF495057),
                             icon = Res.drawable.ic_chart_bar,
@@ -147,7 +148,7 @@ fun PlayerStatsDialog(
                         )
                         val wonLegs = PlayerStatistics.getWonLegs(player, gameMode)
                         CompactStatCard(
-                            title = "Gewonnene Legs",
+                            title = stringResource(Res.string.game_stats_won_legs),
                             value = "$wonLegs",
                             color = Color(0xFFffc107),
                             icon = Res.drawable.ic_trophy,
@@ -159,7 +160,7 @@ fun PlayerStatsDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val highestRoundScore = PlayerStatistics.getHighestRoundScore(player)
                         CompactStatCard(
-                            title = "Höchste Runde",
+                            title = stringResource(Res.string.game_stats_highest_round),
                             value = "$highestRoundScore",
                             color = Color(0xFF17a2b8),
                             icon = Res.drawable.ic_target,
@@ -176,7 +177,7 @@ fun PlayerStatsDialog(
                             }
                         } else 0
                         CompactStatCard(
-                            title = "Höchster Wurf",
+                            title = stringResource(Res.string.game_stats_highest_throw),
                             value = "$highestSingleThrow",
                             color = Color(0xFF6f42c1),
                             icon = Res.drawable.ic_lightning,
@@ -190,7 +191,7 @@ fun PlayerStatsDialog(
                     
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         CompactStatCard(
-                            title = "Anzahl Runden",
+                            title = stringResource(Res.string.game_stats_round_count),
                             value = "$totalRounds",
                             color = Color(0xFFfd7e14),
                             icon = Res.drawable.ic_refresh,
@@ -198,7 +199,7 @@ fun PlayerStatsDialog(
                             modifier = Modifier.weight(1f)
                         )
                         CompactStatCard(
-                            title = "Anzahl Würfe",
+                            title = stringResource(Res.string.game_stats_throw_count),
                             value = "$totalThrows",
                             color = Color(0xFF20c997),
                             icon = Res.drawable.ic_target,
@@ -233,7 +234,7 @@ fun PlayerStatsDialog(
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "${hitPositions.size} Treffer (${player.dartThrows.size} Darts geworfen)",
+                                text = stringResource(Res.string.game_stats_hits_summary, hitPositions.size, player.dartThrows.size),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = if (isDarkTheme) Color.LightGray else Color(0xFF6c757d)
@@ -246,7 +247,7 @@ fun PlayerStatsDialog(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "Noch keine Würfe für ${player.name} vorhanden",
+                                    text = stringResource(Res.string.game_stats_no_throws, player.name),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = if (isDarkTheme) Color.LightGray else Color(0xFF6c757d),
                                     textAlign = TextAlign.Center
@@ -264,7 +265,7 @@ fun PlayerStatsDialog(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Schließen", fontWeight = FontWeight.Medium, modifier = Modifier.padding(vertical = 4.dp), color = Color.White)
+                Text(stringResource(Res.string.game_stats_close), fontWeight = FontWeight.Medium, modifier = Modifier.padding(vertical = 4.dp), color = Color.White)
             }
         },
         containerColor = if (isDarkTheme) Color(0xFF1E1E1E) else Color.White,
@@ -454,7 +455,7 @@ fun PlayerScoreRow(player: Player, isCurrentPlayer: Boolean, isWinner: Boolean, 
                 )
             }
             Text(
-                text = if (isWinner) "Gewonnen" else player.currentScore.toString(),
+                text = if (isWinner) stringResource(Res.string.game_stats_won) else player.currentScore.toString(),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,

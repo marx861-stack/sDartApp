@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.sdart.app.ui.components.MaxPlayers
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 data class SetupPlayer(val name: String, val isLoaded: Boolean = false)
 
@@ -37,12 +39,13 @@ class PlayerSetupState(initialPlayers: List<SetupPlayer>) {
 
     val canStart: Boolean get() = playerNames.any { it.name.isNotBlank() }
 
+    @Composable
     fun errorMessage(mode: GameMode): String = when {
-        playerNames.isEmpty() -> "Mindestens 1 Spieler erforderlich"
-        playerNames.size > MaxPlayers -> "Maximal $MaxPlayers Spieler erlaubt"
-        mode == GameMode.ALL_FIVES && targetScore == null -> "Bitte wählen Sie eine Ziel-Punktzahl aus"
-        mode == GameMode.ALL_FIVES && playerNames.size != playerNames.distinct().size -> "Spielernamen müssen eindeutig sein"
-        else -> "Fehler beim Starten des Spiels. Bitte versuchen Sie es erneut."
+        playerNames.isEmpty() -> stringResource(Res.string.game_setup_error_min_players)
+        playerNames.size > MaxPlayers -> stringResource(Res.string.game_setup_error_max_players, MaxPlayers)
+        mode == GameMode.ALL_FIVES && targetScore == null -> stringResource(Res.string.game_setup_error_target)
+        mode == GameMode.ALL_FIVES && playerNames.size != playerNames.distinct().size -> stringResource(Res.string.game_setup_error_unique_names)
+        else -> stringResource(Res.string.game_setup_error_generic)
     }
 
     fun addPlayer() {
@@ -72,11 +75,12 @@ class PlayerSetupState(initialPlayers: List<SetupPlayer>) {
      */
     fun startGame(
         mode: GameMode,
-        onStartGame: (List<String>, GameMode, Int, Boolean, Boolean, Int, Boolean, ATCGameState?, CricketConfig?) -> Unit
+        onStartGame: (List<String>, GameMode, Int, Boolean, Boolean, Int, Boolean, ATCGameState?, CricketConfig?) -> Unit,
+        playerWord: String = "Player"
     ) {
         try {
             val validPlayers = playerNames.mapIndexed { i, p ->
-                SetupPlayer(if (p.name.isBlank()) "Spieler ${i + 1}" else p.name.trim(), p.isLoaded)
+                SetupPlayer(if (p.name.isBlank()) "$playerWord ${i + 1}" else p.name.trim(), p.isLoaded)
             }.filter { it.name.isNotBlank() }
             val names = validPlayers.map { it.name }
 
@@ -117,7 +121,7 @@ class PlayerSetupState(initialPlayers: List<SetupPlayer>) {
 }
 
 @Composable
-fun rememberPlayerSetupState(): PlayerSetupState = remember {
+fun rememberPlayerSetupState(playerWord: String = "Player"): PlayerSetupState = remember {
     val saved = AppPreferences.getLastPlayerNames()
     val initialPlayers = if (!saved.isNullOrEmpty()) {
         saved.split("|").map {
@@ -126,7 +130,7 @@ fun rememberPlayerSetupState(): PlayerSetupState = remember {
             else SetupPlayer(it, false)
         }
     } else {
-        listOf(SetupPlayer("Spieler 1", false))
+        listOf(SetupPlayer("$playerWord 1", false))
     }
     PlayerSetupState(initialPlayers)
 }

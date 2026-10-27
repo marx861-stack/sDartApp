@@ -22,6 +22,7 @@ import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.GlassBorder
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 @Composable
@@ -60,7 +61,7 @@ fun TournamentViewScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Kein aktives Turnier vorhanden.",
+                        text = stringResource(Res.string.tour_view_none),
                         color = Color.LightGray,
                         fontSize = 18.sp
                     )
@@ -70,7 +71,7 @@ fun TournamentViewScreen(
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange)
                     ) {
-                        Text("Zum Hauptmenü", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.tour_view_main_menu), color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -116,7 +117,7 @@ fun TournamentViewScreen(
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_mobile_connect),
-                                        contentDescription = "Live-Ticker & QR-Code",
+                                        contentDescription = stringResource(Res.string.tour_view_live_cd),
                                         tint = if (webServer.isRunning) PrimaryOrange else Color(0xCCFFFFFF),
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -134,7 +135,7 @@ fun TournamentViewScreen(
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_trash),
-                                    contentDescription = "Turnier beenden",
+                                    contentDescription = stringResource(Res.string.tour_view_end_cd),
                                     tint = Color(0xCCFFFFFF),
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -188,10 +189,10 @@ fun TournamentViewScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 val modeLabel = when (state.type) {
-                                    TournamentType.SINGLE_ELIMINATION -> "K.O.-System"
-                                    TournamentType.ROUND_ROBIN -> "Liga"
-                                    TournamentType.DOUBLE_ELIMINATION -> "Doppel-K.-o."
-                                    TournamentType.GROUPS_KNOCKOUT -> "Gruppen + K.-o."
+                                    TournamentType.SINGLE_ELIMINATION -> stringResource(Res.string.tour_view_mode_ko)
+                                    TournamentType.ROUND_ROBIN -> stringResource(Res.string.tour_type_league)
+                                    TournamentType.DOUBLE_ELIMINATION -> stringResource(Res.string.tour_type_double)
+                                    TournamentType.GROUPS_KNOCKOUT -> stringResource(Res.string.tour_view_mode_groups)
                                 }
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
@@ -211,7 +212,7 @@ fun TournamentViewScreen(
                                     color = Color(0x0DFFFFFF)
                                 ) {
                                     Text(
-                                        text = "${state.config.mode.name} • Best of ${state.config.legs}",
+                                        text = stringResource(Res.string.tour_view_mode_best_of, state.config.mode.name, state.config.legs),
                                         color = Color(0xB3FFFFFF),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Medium,
@@ -240,7 +241,7 @@ fun TournamentViewScreen(
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = "Sieger: ${state.winner.name}",
+                                            text = stringResource(Res.string.tour_banner_winner, state.winner.name),
                                             color = PrimaryOrange,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold
@@ -249,7 +250,7 @@ fun TournamentViewScreen(
                                 }
                             } else {
                                 Text(
-                                    text = "$completedMatches / $totalMatches gespielt",
+                                    text = stringResource(Res.string.tour_view_played, completedMatches, totalMatches),
                                     color = Color(0x80FFFFFF),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Normal
@@ -374,7 +375,7 @@ fun TournamentViewScreen(
                 shape = RoundedCornerShape(20.dp),
                 title = {
                     Text(
-                        text = "Turnier beenden?",
+                        text = stringResource(Res.string.tour_view_end_title),
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 18.sp
@@ -382,7 +383,7 @@ fun TournamentViewScreen(
                 },
                 text = {
                     Text(
-                        text = "Möchtest du das gesamte Turnier wirklich abbrechen und löschen? Der aktuelle Stand geht dabei verloren.",
+                        text = stringResource(Res.string.tour_view_end_text),
                         color = Color(0xB3FFFFFF),
                         fontSize = 14.sp,
                         lineHeight = 20.sp
@@ -397,7 +398,7 @@ fun TournamentViewScreen(
                         }
                     ) {
                         Text(
-                            text = "Turnier löschen",
+                            text = stringResource(Res.string.tour_view_delete),
                             color = Color(0xFFFF453A),
                             fontWeight = FontWeight.SemiBold
                         )
@@ -408,7 +409,7 @@ fun TournamentViewScreen(
                         onClick = { showExitConfirmDialog = false }
                     ) {
                         Text(
-                            text = "Abbrechen",
+                            text = stringResource(Res.string.tour_cancel),
                             color = Color(0x99FFFFFF),
                             fontWeight = FontWeight.Normal
                         )

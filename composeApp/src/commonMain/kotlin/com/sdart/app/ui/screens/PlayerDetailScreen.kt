@@ -33,6 +33,8 @@ import com.sdart.app.ui.WinLossDonutChart
 import com.sdart.app.ui.CheckoutPyramidChart
 import com.sdart.app.ui.HistoryLineChart
 import com.sdart.app.ui.HitDistributionChart
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 /**
  * Detail-Seite für Spieler-Statistiken: Kennzahlen als Kachelreihen, darunter die Diagramme.
@@ -47,7 +49,7 @@ fun PlayerDetailScreen(
     DesktopPage(title = player.name, fillHeight = false, onBack = onBack) {
         // Auf schmalen Fenstern steht der Zurück-Pfeil im Titel
         if (!compact) {
-            CardLink(text = "Spieler", onClick = onBack, primary = false, modifier = Modifier.padding(bottom = 4.dp))
+            CardLink(text = stringResource(Res.string.main_title_players), onClick = onBack, primary = false, modifier = Modifier.padding(bottom = 4.dp))
         }
         DesktopPlayerStats(player)
     }
@@ -68,7 +70,7 @@ internal fun DesktopPlayerStats(player: SavedPlayer, modifier: Modifier = Modifi
         if (player.totalGames == 0) {
             DashboardCard(title = null, modifier = Modifier.fillMaxWidth(), contentPadding = cardPadding) {
                 Text(
-                    text = "Noch keine Spiele gespielt.\nStatistiken werden nach dem ersten Spiel angezeigt.",
+                    text = stringResource(Res.string.players_detail_no_games),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -89,18 +91,18 @@ internal fun DesktopPlayerStats(player: SavedPlayer, modifier: Modifier = Modifi
         val bestDouble = player.doubleHits.maxByOrNull { it.value }?.key?.let { "D$it" } ?: "-"
 
         val kpis = listOf(
-            "Spiele" to player.totalGames.toString(),
-            "Avg. Score" to avgScore,
-            "First 9 Avg" to first9Avg,
-            "Checkout %" to "$checkoutQuote%",
-            "Siege" to "$winRate%",
-            "Best Double" to bestDouble,
+            stringResource(Res.string.stats_games) to player.totalGames.toString(),
+            stringResource(Res.string.stats_avg_score) to avgScore,
+            stringResource(Res.string.stats_first9_avg) to first9Avg,
+            stringResource(Res.string.stats_checkout_pct) to "$checkoutQuote%",
+            stringResource(Res.string.stats_wins) to "$winRate%",
+            stringResource(Res.string.stats_best_double) to bestDouble,
             "180s" to player.highScores180s.toString(),
             "140+" to player.highScores140s.toString(),
-            "Total Darts" to player.totalDartsThrown.toString(),
-            "Total Busts" to player.totalBusts.toString(),
-            "Max Checkout" to (if (player.bestCheckout > 0) player.bestCheckout.toString() else "-"),
-            "Best Match" to (if (player.bestMatchDarts > 0) "${player.bestMatchDarts} Darts" else "-")
+            stringResource(Res.string.stats_total_darts) to player.totalDartsThrown.toString(),
+            stringResource(Res.string.stats_total_busts) to player.totalBusts.toString(),
+            stringResource(Res.string.stats_max_checkout) to (if (player.bestCheckout > 0) player.bestCheckout.toString() else "-"),
+            stringResource(Res.string.stats_best_match) to (if (player.bestMatchDarts > 0) stringResource(Res.string.stats_darts_count, player.bestMatchDarts) else "-")
         )
         // Spaltenzahl nach verfügbarer Breite, damit Beschriftungen und Werte nicht abgeschnitten werden
         val kpiColumns = when {
@@ -115,12 +117,12 @@ internal fun DesktopPlayerStats(player: SavedPlayer, modifier: Modifier = Modifi
         }
 
         val winLoss: @Composable (Modifier) -> Unit = { m ->
-            DashboardCard(title = "Win / Loss", modifier = m, contentPadding = cardPadding) {
+            DashboardCard(title = stringResource(Res.string.stats_win_loss), modifier = m, contentPadding = cardPadding) {
                 WinLossDonutChart(player.gamesWon, player.totalGames - player.gamesWon, isDark)
             }
         }
         val highScores: @Composable (Modifier) -> Unit = { m ->
-            DashboardCard(title = "High Scores", modifier = m, contentPadding = cardPadding) {
+            DashboardCard(title = stringResource(Res.string.stats_high_scores), modifier = m, contentPadding = cardPadding) {
                 HighScoresBarChart(player.highScores100s, player.highScores140s, player.highScores180s, isDark)
             }
         }
@@ -128,7 +130,7 @@ internal fun DesktopPlayerStats(player: SavedPlayer, modifier: Modifier = Modifi
         val charts = buildList<@Composable (Modifier) -> Unit> {
             if (player.savedDartPositions.isNotEmpty()) {
                 add { m ->
-                    DashboardCard(title = "Hit Heatmap", modifier = m, contentPadding = cardPadding) {
+                    DashboardCard(title = stringResource(Res.string.stats_hit_heatmap), modifier = m, contentPadding = cardPadding) {
                         HeatmapDartboard(
                             hits = player.savedDartPositions.map { Offset(it.x, it.y) },
                             modifier = Modifier.fillMaxWidth().height(320.dp)
@@ -147,7 +149,7 @@ internal fun DesktopPlayerStats(player: SavedPlayer, modifier: Modifier = Modifi
                 add(highScores)
             }
             add { m ->
-                DashboardCard(title = "Average Score", modifier = m, contentPadding = cardPadding) {
+                DashboardCard(title = stringResource(Res.string.stats_average_score), modifier = m, contentPadding = cardPadding) {
                     HistoryLineChart(
                         history = player.gameHistory,
                         isDark = isDark,
@@ -157,7 +159,7 @@ internal fun DesktopPlayerStats(player: SavedPlayer, modifier: Modifier = Modifi
                 }
             }
             add { m ->
-                DashboardCard(title = "Darts Pro Leg (Trend)", modifier = m, contentPadding = cardPadding) {
+                DashboardCard(title = stringResource(Res.string.stats_darts_per_leg_trend), modifier = m, contentPadding = cardPadding) {
                     HistoryLineChart(
                         history = player.gameHistory,
                         isDark = isDark,
@@ -167,13 +169,13 @@ internal fun DesktopPlayerStats(player: SavedPlayer, modifier: Modifier = Modifi
                 }
             }
             add { m ->
-                DashboardCard(title = "Favorite Checkout", modifier = m, contentPadding = cardPadding) {
+                DashboardCard(title = stringResource(Res.string.stats_favorite_checkout), modifier = m, contentPadding = cardPadding) {
                     CheckoutPyramidChart(doubleHits = player.doubleHits, isDark = isDark)
                 }
             }
             if (player.segmentHits.isNotEmpty()) {
                 add { m ->
-                    DashboardCard(title = "Trefferverteilung", modifier = m, contentPadding = cardPadding) {
+                    DashboardCard(title = stringResource(Res.string.stats_hit_distribution), modifier = m, contentPadding = cardPadding) {
                         HitDistributionChart(segmentHits = player.segmentHits, isDark = isDark)
                     }
                 }

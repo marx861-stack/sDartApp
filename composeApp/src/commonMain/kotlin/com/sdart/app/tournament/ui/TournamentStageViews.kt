@@ -24,6 +24,8 @@ import com.sdart.app.tournament.TournamentMatch
 import com.sdart.app.tournament.TournamentState
 import com.sdart.app.tournament.groupLabel
 import com.sdart.app.ui.theme.PrimaryOrange
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 /**
  * Doppel-K.-o.: Gewinnerrunde, Verliererrunde und Finale, umschaltbar über Tabs.
@@ -47,7 +49,7 @@ fun DoubleEliminationView(
 
     Column(modifier = modifier.fillMaxSize()) {
         StageTabs(
-            labels = listOf("Hauptrunde", "Zweite Chance", "Finale"),
+            labels = listOf(stringResource(Res.string.tour_stage_main), stringResource(Res.string.tour_stage_second_chance), stringResource(Res.string.tour_round_final)),
             active = stages.map { stage -> stage.any { it.isReady } },
             selected = selected,
             onSelect = { selected = it }
@@ -59,9 +61,9 @@ fun DoubleEliminationView(
                 onMatchClick = onMatchClick,
                 roundTitle = { round, maxRound ->
                     when (round) {
-                        maxRound -> "Hauptrunden-Finale"
-                        maxRound - 1 -> "Hauptrunden-Halbfinale"
-                        else -> "Hauptrunde $round"
+                        maxRound -> stringResource(Res.string.tour_stage_main_final)
+                        maxRound - 1 -> stringResource(Res.string.tour_stage_main_semifinal)
+                        else -> stringResource(Res.string.tour_stage_main_round, round)
                     }
                 },
                 modifier = Modifier.fillMaxSize()
@@ -69,7 +71,7 @@ fun DoubleEliminationView(
             1 -> RoundColumnsView(
                 matches = losers,
                 roundTitle = { round, maxRound ->
-                    if (round == maxRound) "Zweite Chance · Finale" else "Zweite Chance · Runde $round"
+                    if (round == maxRound) stringResource(Res.string.tour_stage_sc_final) else stringResource(Res.string.tour_stage_sc_round, round)
                 },
                 onMatchClick = onMatchClick,
                 modifier = Modifier.fillMaxSize()
@@ -104,7 +106,7 @@ fun GroupStageView(
 
     Column(modifier = modifier.fillMaxSize()) {
         StageTabs(
-            labels = state.groups.indices.map { "Gruppe ${groupLabel(it)}" } + "K.-o.-Runde",
+            labels = state.groups.indices.map { stringResource(Res.string.tour_stage_group, groupLabel(it)) } + stringResource(Res.string.tour_stage_knockout),
             active = groupMatches.map { matches -> matches.any { it.isReady } } + knockout.any { it.isReady },
             selected = selected,
             onSelect = { selected = it }
@@ -120,8 +122,7 @@ fun GroupStageView(
         } else if (knockout.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Die K.-o.-Runde wird ausgelost, sobald alle Gruppenspiele beendet sind.\n" +
-                        "Pro Gruppe kommen die besten ${state.qualifiersPerGroup} weiter.",
+                    text = stringResource(Res.string.tour_stage_ko_pending, state.qualifiersPerGroup),
                     color = Color(0x99FFFFFF),
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center,
@@ -209,7 +210,7 @@ private fun StageTabs(
 @Composable
 private fun RoundColumnsView(
     matches: List<TournamentMatch>,
-    roundTitle: (Int, Int) -> String,
+    roundTitle: @Composable (Int, Int) -> String,
     onMatchClick: (TournamentMatch) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -290,7 +291,7 @@ private fun GrandFinalView(
         ) {
             finals.sortedBy { it.round }.forEach { match ->
                 Text(
-                    text = if (match.round == 1) "Grand Final" else "Entscheidungsspiel",
+                    text = if (match.round == 1) stringResource(Res.string.tour_stage_grand_final) else stringResource(Res.string.tour_stage_decider),
                     color = Color(0x99FFFFFF),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
@@ -303,7 +304,7 @@ private fun GrandFinalView(
             }
             if (finals.size == 1 && !finals.first().isFinished) {
                 Text(
-                    text = "Gewinnt der Spieler aus der zweiten Chance, folgt ein Entscheidungsspiel.",
+                    text = stringResource(Res.string.tour_stage_grand_hint),
                     color = Color(0x66FFFFFF),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center

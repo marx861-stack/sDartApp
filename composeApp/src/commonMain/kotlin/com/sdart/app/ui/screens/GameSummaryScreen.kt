@@ -25,6 +25,7 @@ import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.PrimaryOrange
 import com.sdart.app.ui.HeatmapDartboard
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 /**
@@ -69,7 +70,7 @@ fun GameSummaryScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = if (isTournament) "Ergebnis übernehmen & zum Turnier" else "Zurück zum Hauptmenü",
+                        text = stringResource(if (isTournament) Res.string.game_summary_apply_tournament else Res.string.game_summary_back_to_menu),
                         fontSize = 18.sp
                     )
                 }
@@ -91,7 +92,7 @@ fun GameSummaryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Spiel beendet",
+                    text = stringResource(Res.string.game_summary_title),
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontWeight = FontWeight.Black,
                         color = Color.White
@@ -100,7 +101,7 @@ fun GameSummaryScreen(
                 )
                 
                 Text(
-                    text = "Spielmodus: ${game?.mode?.name ?: "Unbekannt"}",
+                    text = stringResource(Res.string.game_summary_mode, game?.mode?.name ?: stringResource(Res.string.game_summary_unknown)),
                     style = MaterialTheme.typography.bodyLarge.copy(
                         color = Color.White.copy(alpha = 0.8f)
                     ),
@@ -197,7 +198,7 @@ fun PlayerSummaryCard(player: Player, game: Game, isDark: Boolean, trophyColor: 
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             StatItem("MPR", String.format("%.2f", mpr), isDark)
-                            StatItem("Geschlossen", "$closed/7", isDark)
+                            StatItem(stringResource(Res.string.game_summary_closed), "$closed/7", isDark)
                             StatItem("Legs", "${stats.wonLegs}", isDark)
                         }
                         
@@ -209,7 +210,7 @@ fun PlayerSummaryCard(player: Player, game: Game, isDark: Boolean, trophyColor: 
                         ) {
                             StatItem("Total Marks", "$totalMarks", isDark)
                             StatItem("Darts", "$totalThrows", isDark)
-                            StatItem("Runden", "${stats.totalRounds}", isDark)
+                            StatItem(stringResource(Res.string.game_summary_rounds), "${stats.totalRounds}", isDark)
                         }
                     }
                     GameMode.AROUND_THE_CLOCK -> {
@@ -219,8 +220,8 @@ fun PlayerSummaryCard(player: Player, game: Game, isDark: Boolean, trophyColor: 
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            StatItem("Hits/Runde", String.format("%.2f", hpr), isDark)
-                            StatItem("Präzision", String.format("%.1f%%", (hpr / 3f) * 100), isDark)
+                            StatItem(stringResource(Res.string.game_summary_hits_per_round), String.format("%.2f", hpr), isDark)
+                            StatItem(stringResource(Res.string.game_summary_accuracy), String.format("%.1f%%", (hpr / 3f) * 100), isDark)
                             StatItem("Legs", "${stats.wonLegs}", isDark)
                         }
                         
@@ -231,7 +232,7 @@ fun PlayerSummaryCard(player: Player, game: Game, isDark: Boolean, trophyColor: 
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             StatItem("Total Darts", "$totalThrows", isDark)
-                            StatItem("Runden", "${stats.totalRounds}", isDark)
+                            StatItem(stringResource(Res.string.game_summary_rounds), "${stats.totalRounds}", isDark)
                             StatItem("Best Rnd", "${stats.highestRoundScore}", isDark)
                         }
                     }
@@ -249,7 +250,7 @@ fun PlayerSummaryCard(player: Player, game: Game, isDark: Boolean, trophyColor: 
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            StatItem("Ø/Runde", "$displayAvg", isDark)
+                            StatItem(stringResource(Res.string.game_summary_avg_per_round), "$displayAvg", isDark)
                             StatItem("Best Rnd", "$displayBest", isDark)
                             StatItem("Legs", "${stats.wonLegs}", isDark)
                         }
@@ -261,8 +262,8 @@ fun PlayerSummaryCard(player: Player, game: Game, isDark: Boolean, trophyColor: 
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             StatItem("Total Pts", "$displayTotal", isDark)
-                            StatItem("Runden", "${stats.totalRounds}", isDark)
-                            StatItem("Ø/Pfeil", displayAvgPerThrow, isDark)
+                            StatItem(stringResource(Res.string.game_summary_rounds), "${stats.totalRounds}", isDark)
+                            StatItem(stringResource(Res.string.game_summary_avg_per_dart), displayAvgPerThrow, isDark)
                         }
                     }
                 }
@@ -271,7 +272,7 @@ fun PlayerSummaryCard(player: Player, game: Game, isDark: Boolean, trophyColor: 
             if (trophyColor != null) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_trophy),
-                    contentDescription = "Platzierung",
+                    contentDescription = stringResource(Res.string.game_summary_placement),
                     tint = trophyColor,
                     modifier = Modifier
                         .align(Alignment.TopEnd)

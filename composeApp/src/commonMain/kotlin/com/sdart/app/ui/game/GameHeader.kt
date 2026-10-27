@@ -25,6 +25,8 @@ import com.sdart.app.Player
 import com.sdart.app.domain.player.PlayerStatistics
 import com.sdart.app.format
 import com.sdart.app.domain.CHECKOUT_PATHS
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 @Composable
 fun GameHeader(
@@ -116,12 +118,12 @@ fun GameHeader(
                             )
                             
                             val checkoutInfo = if (game.mode == GameMode.ALL_FIVES || game.mode == GameMode.AROUND_THE_CLOCK) null else when {
-                                player.currentScore == 0 -> "🏆 Spiel gewonnen!"
+                                player.currentScore == 0 -> stringResource(Res.string.game_play_game_won)
                                 player.currentScore in CHECKOUT_PATHS.keys -> {
                                     val paths = CHECKOUT_PATHS[player.currentScore]
                                     "Checkout: ${paths?.firstOrNull() ?: ""}"
                                 }
-                                player.currentScore <= 40 -> "Einfacher Checkout möglich"
+                                player.currentScore <= 40 -> stringResource(Res.string.game_play_easy_checkout)
                                 else -> null
                             }
                             
@@ -144,7 +146,7 @@ fun GameHeader(
                             if (game.mode == GameMode.AROUND_THE_CLOCK) {
                                 val avgHits = PlayerStatistics.getAverageHitsPerRound(player, game.atcConfig)
                                 Text(
-                                    text = "Ø ${avgHits.format(2)} Treffer pro Runde",
+                                    text = stringResource(Res.string.game_play_avg_hits_round, avgHits.format(2)),
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontSize = 12.sp,
                                         color = MaterialTheme.colorScheme.onSurface,
@@ -154,7 +156,7 @@ fun GameHeader(
                             } else {
                                 val avgScore = PlayerStatistics.getAverageScorePerRound(player)
                                 Text(
-                                    text = "Ø ${avgScore} Punkte pro Runde",
+                                    text = stringResource(Res.string.game_play_avg_points_round, avgScore),
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         fontSize = 12.sp,
                                         color = MaterialTheme.colorScheme.onSurface,

@@ -38,6 +38,8 @@ import com.sdart.app.ui.components.DesktopDestination
 import com.sdart.app.ui.components.DesktopScaffold
 import com.sdart.app.ui.components.MobileScaffold
 import com.sdart.app.ui.screens.*
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.MyApplicationTheme
 import com.sdart.app.ui.theme.ditheredBackground
@@ -369,8 +371,8 @@ fun App() {
             if (navManager.showGameExitDialog) {
                 androidx.compose.material3.AlertDialog(
                     onDismissRequest = { navManager.cancelGameExit() },
-                    title = { androidx.compose.material3.Text("Spiel beenden?", color = androidx.compose.ui.graphics.Color.White) },
-                    text = { androidx.compose.material3.Text("Möchtest du das aktuelle Spiel wirklich beenden?", color = androidx.compose.ui.graphics.Color.LightGray) },
+                    title = { androidx.compose.material3.Text(stringResource(Res.string.dash_game_exit_title), color = androidx.compose.ui.graphics.Color.White) },
+                    text = { androidx.compose.material3.Text(stringResource(Res.string.dash_game_exit_text), color = androidx.compose.ui.graphics.Color.LightGray) },
                     confirmButton = {
                         androidx.compose.material3.Button(
                             onClick = {
@@ -384,12 +386,12 @@ fun App() {
                             },
                             colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = com.sdart.app.ui.theme.PrimaryOrange)
                         ) {
-                            androidx.compose.material3.Text("Beenden", color = androidx.compose.ui.graphics.Color.White)
+                            androidx.compose.material3.Text(stringResource(Res.string.dash_game_exit_confirm), color = androidx.compose.ui.graphics.Color.White)
                         }
                     },
                     dismissButton = {
                         androidx.compose.material3.OutlinedButton(onClick = { navManager.cancelGameExit() }) {
-                            androidx.compose.material3.Text("Weiterspielen", color = androidx.compose.ui.graphics.Color.White)
+                            androidx.compose.material3.Text(stringResource(Res.string.dash_game_exit_continue), color = androidx.compose.ui.graphics.Color.White)
                         }
                     },
                     containerColor = androidx.compose.ui.graphics.Color(0xFF262626)

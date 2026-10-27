@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <string name="tour_cancel">Cancel</string>
+    <string name="tour_player_n">Player %1$d</string>
+    <string name="tour_player_prefix">Player</string>
+    <string name="tour_default_name">Dart Tournament</string>
+'
+    <!-- Pending submissions banner -->
+    <string name="tour_banner_web_submission">Report from web</string>
+    <string name="tour_banner_more">(+%1$d more)</string>
+    <string name="tour_banner_winner">Winner: %1$s</string>
+    <string name="tour_banner_reject">Reject</string>
+    <string name="tour_banner_accept">Accept</string>
+'
+    <!-- Celebration -->
+    <string name="tour_celebration_trophy_cd">Tournament winner trophy</string>
+    <string name="tour_celebration_title">TOURNAMENT WINNER</string>
+    <string name="tour_celebration_congrats">Congratulations on winning %1$s!</string>
+    <string name="tour_celebration_back">Back to overview</string>
+'
+    <!-- Bracket -->
+    <string name="tour_round_final">Final</string>
+    <string name="tour_round_semifinal">Semifinal</string>
+    <string name="tour_round_quarterfinal">Quarterfinal</string>
+    <string name="tour_round_n">Round %1$d</string>
+    <string name="tour_bracket_hint">Bracket (swipe horizontally)</string>
+    <string name="tour_bracket_to_tabs">To round tabs</string>
+    <string name="tour_bracket_winner_header">Winner</string>
+    <string name="tour_bracket_view_full">View full bracket →</string>
+    <string name="tour_champion_cd">Champion trophy</string>
+    <string name="tour_champion_label">CHAMPION</string>
+    <string name="tour_match_n">Match %1$d</string>
+    <string name="tour_match_bye">Bye</string>
+    <string name="tour_match_finished">Finished</string>
+    <string name="tour_match_ready">Ready</string>
+    <string name="tour_match_waiting">Waiting</string>
+'
+    <!-- League -->
+    <string name="tour_league_table">Table</string>
+    <string name="tour_league_participants">%1$d participants</string>
+    <string name="tour_league_participants_qualify">%1$d participants · %2$d advance</string>
+    <string name="tour_league_col_player">Player</string>
+    <string name="tour_league_col_played">P</string>
+    <string name="tour_league_col_won">W</string>
+    <string name="tour_league_col_lost">L</string>
+    <string name="tour_league_matches">Matches</string>
+    <string name="tour_league_round_done">%1$d/%2$d finished</string>
+'
+    <!-- Stage views -->
+    <string name="tour_stage_main">Main bracket</string>
+    <string name="tour_stage_second_chance">Second chance</string>
+    <string name="tour_stage_main_final">Main bracket final</string>
+    <string name="tour_stage_main_semifinal">Main bracket semifinal</string>
+    <string name="tour_stage_main_round">Main bracket round %1$d</string>
+    <string name="tour_stage_sc_final">Second chance · Final</string>
+    <string name="tour_stage_sc_round">Second chance · Round %1$d</string>
+    <string name="tour_stage_group">Group %1$s</string>
+    <string name="tour_stage_knockout">Knockout round</string>
+    <string name="tour_stage_ko_pending">The knockout round will be drawn once all group matches are finished.\nThe top %1$d of each group advance.</string>
+    <string name="tour_stage_grand_final">Grand Final</string>
+    <string name="tour_stage_decider">Deciding match</string>
+    <string name="tour_stage_grand_hint">If the player from the second chance wins, a deciding match follows.</string>
+'
+    <!-- Match action dialog -->
+    <string name="tour_dialog_edit_result">Edit result</string>
+    <string name="tour_dialog_match_round">Round %1$d match</string>
+    <string name="tour_dialog_mode_best_of">%1$s • Best of %2$d legs</string>
+    <string name="tour_dialog_play_in_app">🎯 Play in app</string>
+    <string name="tour_dialog_or_manual">OR ENTER MANUALLY</string>
+    <string name="tour_dialog_legs_won">Legs won</string>
+    <string name="tour_dialog_winner">🏆 Winner: %1$s (%2$d : %3$d)</string>
+    <string name="tour_dialog_no_tie">A tie is not possible in darts</string>
+    <string name="tour_dialog_update">Update result</string>
+    <string name="tour_dialog_submit">Record result</string>
+'
+    <!-- Setup -->
+    <string name="tour_setup_title">New tournament</string>
+    <string name="tour_setup_err_name">Please give every player a valid name.</string>
+    <string name="tour_setup_err_min_players">At least 2 players are required.</string>
+    <string name="tour_setup_err_league">League mode requires at least 3 players.</string>
+    <string name="tour_setup_err_double">Double elimination requires at least 3 players.</string>
+    <string name="tour_setup_err_groups">Group stage plus knockout requires at least 6 players.</string>
+    <string name="tour_setup_name">Tournament name</string>
+    <string name="tour_setup_groups">Groups</string>
+    <string name="tour_setup_groups_min">Possible from 6 players</string>
+    <string name="tour_setup_qualifiers">Advancing per group</string>
+    <string name="tour_setup_qual_winner">Group winner</string>
+    <string name="tour_setup_qual_top2">First and second</string>
+    <string name="tour_setup_start_points">Starting points</string>
+    <string name="tour_setup_short">Short</string>
+    <string name="tour_setup_rules">Rules</string>
+    <string name="tour_setup_double_in_desc">Start with a double</string>
+    <string name="tour_setup_double_out_desc">Finish with a double</string>
+    <string name="tour_setup_legs">Legs · Best of</string>
+    <string name="tour_setup_start">Start tournament</string>
+    <string name="tour_group_size_each">%1$d players each</string>
+    <string name="tour_group_size_range">%1$d–%2$d players each</string>
+    <string name="tour_summary_ko">Knockout</string>
+    <string name="tour_summary_groups">%1$d groups + knockout</string>
+    <string name="tour_summary_line">%1$s · %2$s · Best of %3$d · %4$d players</string>
+'
+    <!-- Tournament types -->
+    <string name="tour_type_knockout">Knockout system</string>
+    <string name="tour_type_double">Double elimination</string>
+    <string name="tour_type_groups">Group stage</string>
+    <string name="tour_type_league">League</string>
+    <string name="tour_rules_ko_1">Whoever loses a match is eliminated. The winners advance round by round until the final decides the tournament winner.</string>
+    <string name="tour_rules_ko_2">If the number of participants does not fill a complete bracket, the top seeds get a bye into the second round.</string>
+    <string name="tour_rules_double_1">Your first loss sends you to the second-chance bracket, only the second one eliminates you.</string>
+    <string name="tour_rules_double_2">In the Grand Final, the winner of the main bracket meets the winner of the second-chance bracket. If the player from the second-chance bracket wins, a deciding match follows.</string>
+    <string name="tour_rules_double_3">From 3 players.</string>
+    <string name="tour_rules_groups_1">Players are split evenly into 2, 4 or 8 groups, and everyone plays everyone within their group.</string>
+    <string name="tour_rules_groups_2">The group winners, optionally also the runners-up, advance to the knockout round. Players from the same group avoid meeting again right away.</string>
+    <string name="tour_rules_groups_3">From 6 players, at least 3 per group.</string>
+    <string name="tour_rules_league_1">Everyone plays everyone once.</string>
+    <string name="tour_rules_league_2">The table ranks by wins, then head-to-head, leg difference and average. Whoever is on top at the end wins.</string>
+    <string name="tour_rules_league_3">From 3 players.</string>
+'
+    <!-- Tournament view -->
+    <string name="tour_view_none">No active tournament.</string>
+    <string name="tour_view_main_menu">To main menu</string>
+    <string name="tour_view_live_cd">Live ticker &amp; QR code</string>
+    <string name="tour_view_end_cd">End tournament</string>
+    <string name="tour_view_mode_ko">Knockout system</string>
+    <string name="tour_view_mode_groups">Groups + knockout</string>
+    <string name="tour_view_mode_best_of">%1$s • Best of %2$d</string>
+    <string name="tour_view_played">%1$d / %2$d played</string>
+    <string name="tour_view_end_title">End tournament?</string>
+    <string name="tour_view_end_text">Do you really want to cancel and delete the entire tournament? The current progress will be lost.</string>
+    <string name="tour_view_delete">Delete tournament</string>
+'
+    <!-- Web share dialog -->
+    <string name="tour_share_title">Live ticker &amp; web entry</string>
+    <string name="tour_share_subtitle">Scan with your smartphone camera – no app required!</string>
+    <string name="tour_share_starting">Server starting...</string>
+    <string name="tour_share_allow">Allow score entry</string>
+    <string name="tour_share_allow_desc">Players can report final scores</string>
+    <string name="tour_share_approval">Require host approval</string>
+    <string name="tour_share_approval_desc">Review results before accepting them</string>
+    <string name="tour_share_done">Done</string>
+</resources>

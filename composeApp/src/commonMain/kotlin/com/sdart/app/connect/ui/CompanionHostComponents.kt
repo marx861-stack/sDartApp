@@ -1,5 +1,6 @@
 package com.sdart.app.connect.ui
 
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -147,7 +148,7 @@ private fun HostMainPage(
 
                 Column {
                     Text(
-                        text = "Geräte-Verbindung (Host)",
+                        text = stringResource(Res.string.connect_host_title),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -155,8 +156,8 @@ private fun HostMainPage(
                     )
                     Text(
                         text = when (val state = hostState) {
-                            is HostState.Active -> "● Aktiv (Port ${state.port})"
-                            is HostState.Inactive -> "Inaktiv"
+                            is HostState.Active -> stringResource(Res.string.connect_host_state_active, state.port.toString())
+                            is HostState.Inactive -> stringResource(Res.string.connect_host_state_inactive)
                         },
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = if (hostState is HostState.Active) Color(0xFF4CAF50) else Color.White.copy(alpha = 0.5f),
@@ -207,7 +208,7 @@ private fun HostMainPage(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Verbundene Geräte (${hostState.participants.size})",
+                    text = stringResource(Res.string.connect_connected_devices_count, hostState.participants.size.toString()),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -223,7 +224,7 @@ private fun HostMainPage(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Warte auf Geräte...\nÖffne die S'Dart App auf deinem Handy und wähle 'Geräte verbinden'.",
+                            text = stringResource(Res.string.connect_waiting_phone_hint),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White.copy(alpha = 0.65f),
                                 lineHeight = 18.sp
@@ -269,7 +270,7 @@ private fun HostMainPage(
                     tint = PrimaryOrange
                 )
                 Text(
-                    text = "Gemerkte Geräte: $trustedDevicesCount",
+                    text = stringResource(Res.string.connect_trusted_count, trustedDevicesCount.toString()),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White.copy(alpha = 0.85f),
                         fontWeight = FontWeight.Medium
@@ -278,7 +279,7 @@ private fun HostMainPage(
             }
 
             Text(
-                text = "Verwalten ›",
+                text = stringResource(Res.string.connect_manage),
                 color = PrimaryOrange,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold
@@ -295,7 +296,7 @@ private fun HostMainPage(
                 contentColor = Color.White
             )
         ) {
-            Text("Fertig")
+            Text(stringResource(Res.string.connect_done))
         }
     }
 }
@@ -339,14 +340,14 @@ internal fun PendingAuthorizationCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Neue Verbindungsanfrage",
+                        text = stringResource(Res.string.connect_new_request),
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = PrimaryOrange
                         )
                     )
                     Text(
-                        text = "\"${pending.hello.deviceName}\" (${pending.hello.platform.uppercase()}) möchte sich als ${roleLabel(pending.hello.role)} verbinden.",
+                        text = stringResource(Res.string.connect_request_text, pending.hello.deviceName, pending.hello.platform.uppercase(), roleLabel(pending.hello.role)),
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.9f)
                         )
@@ -367,7 +368,7 @@ internal fun PendingAuthorizationCard(
                     ),
                     border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
                 ) {
-                    Text("Ablehnen")
+                    Text(stringResource(Res.string.connect_decline))
                 }
 
                 Button(
@@ -379,7 +380,7 @@ internal fun PendingAuthorizationCard(
                         contentColor = Color.White
                     )
                 ) {
-                    Text("Zulassen & Merken", fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.connect_allow_remember), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -407,7 +408,8 @@ internal fun CameraSourceSection(
 ) {
     val connectedCameraParticipants = (hostState as? HostState.Active)?.participants?.filter { it.role == DeviceRole.CAMERA } ?: emptyList()
 
-    val cameraSources = remember(vm.availableWebcams, connectedCameraParticipants) {
+    val hostCameraSuffix = stringResource(Res.string.connect_host_camera_suffix)
+    val cameraSources = remember(vm.availableWebcams, connectedCameraParticipants, hostCameraSuffix) {
         val list = mutableListOf<CameraSourceEntry>()
 
         // 1. Alle verfügbaren lokalen Kameras (USB-Webcams am PC / Gerätekamera mobil)
@@ -428,7 +430,7 @@ internal fun CameraSourceSection(
             list.add(
                 CameraSourceEntry(
                     id = "companion_${participant.connectionId}",
-                    title = "${participant.name} (Host-Kamera)",
+                    title = "${participant.name} ($hostCameraSuffix)",
                     icon = Res.drawable.ic_mobile_connect,
                     type = CameraSourceType.COMPANION_STREAM,
                     participantId = participant.connectionId
@@ -473,7 +475,7 @@ internal fun CameraSourceSection(
                     tint = PrimaryOrange
                 )
                 Text(
-                    text = "Kamera-Quelle",
+                    text = stringResource(Res.string.connect_camera_source),
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White.copy(alpha = 0.85f)
@@ -487,7 +489,7 @@ internal fun CameraSourceSection(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_refresh),
-                    contentDescription = "Kamera-Quellen aktualisieren",
+                    contentDescription = stringResource(Res.string.connect_cd_refresh_cameras),
                     tint = Color.White.copy(alpha = 0.65f),
                     modifier = Modifier.size(14.dp)
                 )
@@ -531,7 +533,7 @@ internal fun CameraSourceSection(
                         tint = PrimaryOrange
                     )
                     Text(
-                        text = selectedEntry?.title ?: "Keine Kamera gefunden",
+                        text = selectedEntry?.title ?: stringResource(Res.string.connect_no_camera),
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.Medium,
                             color = if (selectedEntry != null) Color.White else Color.White.copy(alpha = 0.5f)
@@ -592,7 +594,7 @@ internal fun CameraSourceSection(
                                 if (isCurrent) {
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_check_circle),
-                                        contentDescription = "Ausgewählt",
+                                        contentDescription = stringResource(Res.string.connect_cd_selected),
                                         modifier = Modifier.size(14.dp),
                                         tint = PrimaryOrange
                                     )
@@ -659,7 +661,7 @@ private fun TrustedDevicesPage(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_arrow_back),
-                    contentDescription = "Zurück",
+                    contentDescription = stringResource(Res.string.connect_cd_back),
                     modifier = Modifier.size(20.dp),
                     tint = Color.White
                 )
@@ -667,14 +669,14 @@ private fun TrustedDevicesPage(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Gemerkte Geräte",
+                    text = stringResource(Res.string.connect_trusted_devices),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 )
                 Text(
-                    text = "${trustedDevices.size} vertrauenswürdige(s) Gerät(e)",
+                    text = stringResource(Res.string.connect_trusted_devices_count, trustedDevices.size.toString()),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White.copy(alpha = 0.5f)
                     )
@@ -693,7 +695,7 @@ private fun TrustedDevicesPage(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Bisher keine gemerkten Geräte.\n\nSobald sich ein Companion-Gerät verbindet und du 'Zulassen & Merken' wählst, wird es hier dauerhaft hinterlegt.",
+                    text = stringResource(Res.string.connect_trusted_empty),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White.copy(alpha = 0.65f),
                         lineHeight = 18.sp
@@ -733,7 +735,7 @@ private fun TrustedDevicesPage(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Alle entfernen",
+                            text = stringResource(Res.string.connect_remove_all),
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
@@ -752,7 +754,7 @@ private fun TrustedDevicesPage(
                 contentColor = Color.White
             )
         ) {
-            Text("Zurück")
+            Text(stringResource(Res.string.connect_back))
         }
     }
 }
@@ -794,7 +796,7 @@ internal fun TrustedDeviceRow(
         ) {
             Icon(
                 painter = painterResource(Res.drawable.ic_cross_circle),
-                contentDescription = "Entfernen",
+                contentDescription = stringResource(Res.string.connect_cd_remove),
                 modifier = Modifier.size(18.dp),
                 tint = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)
             )
@@ -844,7 +846,7 @@ internal fun ParticipantRow(
                     )
                 )
                 Text(
-                    text = "${roleLabel(participant.role)} • ${participant.remoteAddress}",
+                    text = stringResource(Res.string.connect_role_participant, roleLabel(participant.role), participant.remoteAddress),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 11.sp
@@ -862,7 +864,7 @@ internal fun ParticipantRow(
             ),
             border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.4f))
         ) {
-            Text("Trennen", fontSize = 11.sp)
+            Text(stringResource(Res.string.connect_disconnect_short), fontSize = 11.sp)
         }
     }
 }

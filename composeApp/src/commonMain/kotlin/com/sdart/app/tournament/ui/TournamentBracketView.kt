@@ -28,6 +28,7 @@ import com.sdart.app.tournament.TournamentPlayer
 import com.sdart.app.tournament.TournamentState
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 @Composable
@@ -37,7 +38,7 @@ fun TournamentBracketView(
     onMatchClick: (TournamentMatch) -> Unit,
     modifier: Modifier = Modifier,
     // Eigene Rundentitel (Runde, letzte Runde), z. B. für die Gewinnerrunde im Doppel-K.-o.
-    roundTitle: ((Int, Int) -> String)? = null
+    roundTitle: (@Composable (Int, Int) -> String)? = null
 ) {
     val rounds = remember(state.matches) {
         state.matches.groupBy { it.round }.toSortedMap()
@@ -47,13 +48,14 @@ fun TournamentBracketView(
     var selectedMobileRound by remember { mutableStateOf(1) }
     var mobileViewMode by remember { mutableStateOf(0) } // 0 = Rundenliste, 1 = Turnierbaum
 
+    @Composable
     fun getRoundTitle(round: Int): String {
-        roundTitle?.let { return it(round, maxRound) }
+        if (roundTitle != null) return roundTitle(round, maxRound)
         return when {
-            round == maxRound -> "Finale"
-            round == maxRound - 1 -> "Halbfinale"
-            round == maxRound - 2 -> "Viertelfinale"
-            else -> "Runde $round"
+            round == maxRound -> stringResource(Res.string.tour_round_final)
+            round == maxRound - 1 -> stringResource(Res.string.tour_round_semifinal)
+            round == maxRound - 2 -> stringResource(Res.string.tour_round_quarterfinal)
+            else -> stringResource(Res.string.tour_round_n, round)
         }
     }
 
@@ -119,7 +121,7 @@ fun TournamentBracketView(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Turnierbaum (horizontal wischen)",
+                            text = stringResource(Res.string.tour_bracket_hint),
                             color = Color(0x80FFFFFF),
                             fontSize = 12.sp
                         )
@@ -127,7 +129,7 @@ fun TournamentBracketView(
                             onClick = { mobileViewMode = 0 },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Text("Zu Runden-Tabs", color = PrimaryOrange, fontSize = 12.sp)
+                            Text(stringResource(Res.string.tour_bracket_to_tabs), color = PrimaryOrange, fontSize = 12.sp)
                         }
                     }
                 }
@@ -187,7 +189,7 @@ fun TournamentBracketView(
                                         modifier = Modifier.width(championWidth)
                                     ) {
                                         Text(
-                                            text = "Sieger",
+                                            text = stringResource(Res.string.tour_bracket_winner_header),
                                             style = MaterialTheme.typography.titleSmall.copy(
                                                 color = PrimaryOrange,
                                                 fontWeight = FontWeight.Bold,
@@ -362,7 +364,7 @@ fun TournamentBracketView(
                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "Vollständigen Baum ansehen →",
+                        text = stringResource(Res.string.tour_bracket_view_full),
                         color = PrimaryOrange,
                         fontSize = 11.sp
                     )
@@ -519,14 +521,14 @@ fun ChampionPodiumCard(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_trophy),
-                    contentDescription = "Champion Trophäe",
+                    contentDescription = stringResource(Res.string.tour_champion_cd),
                     tint = PrimaryOrange,
                     modifier = Modifier.size(if (isExtraLarge) 40.dp else if (isLarge) 34.dp else 26.dp)
                 )
             }
             Spacer(modifier = Modifier.height(if (isExtraLarge) 14.dp else if (isLarge) 12.dp else 10.dp))
             Text(
-                text = "CHAMPION",
+                text = stringResource(Res.string.tour_champion_label),
                 color = PrimaryOrange,
                 fontSize = if (isExtraLarge) 13.sp else if (isLarge) 11.5.sp else 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -595,7 +597,7 @@ fun BracketMatchCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Spiel ${match.matchIndexInRound + 1}",
+                    text = stringResource(Res.string.tour_match_n, match.matchIndexInRound + 1),
                     fontSize = if (isExtraLarge) 13.sp else if (isLarge) 11.5.sp else 10.sp,
                     color = Color(0x66FFFFFF),
                     fontWeight = FontWeight.Medium
@@ -605,7 +607,7 @@ fun BracketMatchCard(
                     when {
                         match.isBye -> {
                             Text(
-                                text = "Freilos",
+                                text = stringResource(Res.string.tour_match_bye),
                                 fontSize = if (isExtraLarge) 13.sp else if (isLarge) 11.5.sp else 10.sp,
                                 color = Color(0x66FFFFFF),
                                 fontWeight = FontWeight.Normal
@@ -613,7 +615,7 @@ fun BracketMatchCard(
                         }
                         isFinished -> {
                             Text(
-                                text = "Beendet",
+                                text = stringResource(Res.string.tour_match_finished),
                                 fontSize = if (isExtraLarge) 13.sp else if (isLarge) 11.5.sp else 10.sp,
                                 color = Color(0x80FFFFFF),
                                 fontWeight = FontWeight.Normal
@@ -627,7 +629,7 @@ fun BracketMatchCard(
                             )
                             Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = "Bereit",
+                                text = stringResource(Res.string.tour_match_ready),
                                 fontSize = if (isExtraLarge) 13.sp else if (isLarge) 11.5.sp else 10.sp,
                                 color = PrimaryOrange,
                                 fontWeight = FontWeight.SemiBold
@@ -635,7 +637,7 @@ fun BracketMatchCard(
                         }
                         else -> {
                             Text(
-                                text = "Wartend",
+                                text = stringResource(Res.string.tour_match_waiting),
                                 fontSize = if (isExtraLarge) 13.sp else if (isLarge) 11.5.sp else 10.sp,
                                 color = Color(0x40FFFFFF),
                                 fontWeight = FontWeight.Normal
@@ -650,7 +652,7 @@ fun BracketMatchCard(
             // Spieler 1
             PlayerSlotRow(
                 player = match.player1,
-                fallbackText = if (match.isBye && match.player1 == null) "Freilos" else "TBD",
+                fallbackText = if (match.isBye && match.player1 == null) stringResource(Res.string.tour_match_bye) else "TBD",
                 score = if (isFinished) match.player1Result.legsWon else null,
                 isWinner = isFinished && match.winner?.id == match.player1?.id && match.player1 != null,
                 isLarge = isLarge,
@@ -666,7 +668,7 @@ fun BracketMatchCard(
             // Spieler 2
             PlayerSlotRow(
                 player = match.player2,
-                fallbackText = if (match.isBye && match.player2 == null) "Freilos" else "TBD",
+                fallbackText = if (match.isBye && match.player2 == null) stringResource(Res.string.tour_match_bye) else "TBD",
                 score = if (isFinished) match.player2Result.legsWon else null,
                 isWinner = isFinished && match.winner?.id == match.player2?.id && match.player2 != null,
                 isLarge = isLarge,

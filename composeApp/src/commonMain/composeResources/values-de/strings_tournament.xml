@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <string name="tour_cancel">Abbrechen</string>
+    <string name="tour_player_n">Spieler %1$d</string>
+    <string name="tour_player_prefix">Spieler</string>
+    <string name="tour_default_name">Dart-Turnier</string>
+'
+    <!-- Pending submissions banner -->
+    <string name="tour_banner_web_submission">Meldung aus Web</string>
+    <string name="tour_banner_more">(+%1$d weitere)</string>
+    <string name="tour_banner_winner">Sieger: %1$s</string>
+    <string name="tour_banner_reject">Ablehnen</string>
+    <string name="tour_banner_accept">Übernehmen</string>
+'
+    <!-- Celebration -->
+    <string name="tour_celebration_trophy_cd">Turniersieger Trophäe</string>
+    <string name="tour_celebration_title">TURNIERSIEGER</string>
+    <string name="tour_celebration_congrats">Herzlichen Glückwunsch zum Sieg im %1$s!</string>
+    <string name="tour_celebration_back">Zurück zur Übersicht</string>
+'
+    <!-- Bracket -->
+    <string name="tour_round_final">Finale</string>
+    <string name="tour_round_semifinal">Halbfinale</string>
+    <string name="tour_round_quarterfinal">Viertelfinale</string>
+    <string name="tour_round_n">Runde %1$d</string>
+    <string name="tour_bracket_hint">Turnierbaum (horizontal wischen)</string>
+    <string name="tour_bracket_to_tabs">Zu Runden-Tabs</string>
+    <string name="tour_bracket_winner_header">Sieger</string>
+    <string name="tour_bracket_view_full">Vollständigen Baum ansehen →</string>
+    <string name="tour_champion_cd">Champion Trophäe</string>
+    <string name="tour_champion_label">CHAMPION</string>
+    <string name="tour_match_n">Spiel %1$d</string>
+    <string name="tour_match_bye">Freilos</string>
+    <string name="tour_match_finished">Beendet</string>
+    <string name="tour_match_ready">Bereit</string>
+    <string name="tour_match_waiting">Wartend</string>
+'
+    <!-- League -->
+    <string name="tour_league_table">Tabelle</string>
+    <string name="tour_league_participants">%1$d Teilnehmer</string>
+    <string name="tour_league_participants_qualify">%1$d Teilnehmer · %2$d kommen weiter</string>
+    <string name="tour_league_col_player">Spieler</string>
+    <string name="tour_league_col_played">Sp</string>
+    <string name="tour_league_col_won">S</string>
+    <string name="tour_league_col_lost">N</string>
+    <string name="tour_league_matches">Begegnungen</string>
+    <string name="tour_league_round_done">%1$d/%2$d beendet</string>
+'
+    <!-- Stage views -->
+    <string name="tour_stage_main">Hauptrunde</string>
+    <string name="tour_stage_second_chance">Zweite Chance</string>
+    <string name="tour_stage_main_final">Hauptrunden-Finale</string>
+    <string name="tour_stage_main_semifinal">Hauptrunden-Halbfinale</string>
+    <string name="tour_stage_main_round">Hauptrunde %1$d</string>
+    <string name="tour_stage_sc_final">Zweite Chance · Finale</string>
+    <string name="tour_stage_sc_round">Zweite Chance · Runde %1$d</string>
+    <string name="tour_stage_group">Gruppe %1$s</string>
+    <string name="tour_stage_knockout">K.-o.-Runde</string>
+    <string name="tour_stage_ko_pending">Die K.-o.-Runde wird ausgelost, sobald alle Gruppenspiele beendet sind.\nPro Gruppe kommen die besten %1$d weiter.</string>
+    <string name="tour_stage_grand_final">Grand Final</string>
+    <string name="tour_stage_decider">Entscheidungsspiel</string>
+    <string name="tour_stage_grand_hint">Gewinnt der Spieler aus der zweiten Chance, folgt ein Entscheidungsspiel.</string>
+'
+    <!-- Match action dialog -->
+    <string name="tour_dialog_edit_result">Ergebnis bearbeiten</string>
+    <string name="tour_dialog_match_round">Match Runde %1$d</string>
+    <string name="tour_dialog_mode_best_of">%1$s • Best of %2$d Legs</string>
+    <string name="tour_dialog_play_in_app">🎯 In App spielen</string>
+    <string name="tour_dialog_or_manual">ODER MANUELL ERFASSEN</string>
+    <string name="tour_dialog_legs_won">Gewonnene Legs</string>
+    <string name="tour_dialog_winner">🏆 Sieger: %1$s (%2$d : %3$d)</string>
+    <string name="tour_dialog_no_tie">Unentschieden im Darts nicht möglich</string>
+    <string name="tour_dialog_update">Ergebnis aktualisieren</string>
+    <string name="tour_dialog_submit">Ergebnis erfassen</string>
+'
+    <!-- Setup -->
+    <string name="tour_setup_title">Neues Turnier</string>
+    <string name="tour_setup_err_name">Bitte allen Spielern einen gültigen Namen geben.</string>
+    <string name="tour_setup_err_min_players">Mindestens 2 Spieler erforderlich.</string>
+    <string name="tour_setup_err_league">Für den Jeder-gegen-Jeden-Modus sind mindestens 3 Spieler erforderlich.</string>
+    <string name="tour_setup_err_double">Für Doppel-K.-o. sind mindestens 3 Spieler erforderlich.</string>
+    <string name="tour_setup_err_groups">Für Gruppenphase plus K.-o. sind mindestens 6 Spieler erforderlich.</string>
+    <string name="tour_setup_name">Turniername</string>
+    <string name="tour_setup_groups">Gruppen</string>
+    <string name="tour_setup_groups_min">Ab 6 Spielern möglich</string>
+    <string name="tour_setup_qualifiers">Weiter pro Gruppe</string>
+    <string name="tour_setup_qual_winner">Gruppensieger</string>
+    <string name="tour_setup_qual_top2">Erste und Zweite</string>
+    <string name="tour_setup_start_points">Startpunkte</string>
+    <string name="tour_setup_short">Kurz</string>
+    <string name="tour_setup_rules">Regeln</string>
+    <string name="tour_setup_double_in_desc">Start mit Double</string>
+    <string name="tour_setup_double_out_desc">Sieg mit Double</string>
+    <string name="tour_setup_legs">Legs · Best of</string>
+    <string name="tour_setup_start">Turnier starten</string>
+    <string name="tour_group_size_each">je %1$d Spieler</string>
+    <string name="tour_group_size_range">je %1$d–%2$d Spieler</string>
+    <string name="tour_summary_ko">K.-o.</string>
+    <string name="tour_summary_groups">%1$d Gruppen + K.-o.</string>
+    <string name="tour_summary_line">%1$s · %2$s · Best of %3$d · %4$d Spieler</string>
+'
+    <!-- Tournament types -->
+    <string name="tour_type_knockout">K.-o.-System</string>
+    <string name="tour_type_double">Doppel-K.-o.</string>
+    <string name="tour_type_groups">Gruppenphase</string>
+    <string name="tour_type_league">Liga</string>
+    <string name="tour_rules_ko_1">Wer ein Match verliert, scheidet aus. Die Sieger ziehen Runde für Runde weiter, bis das Finale den Turniersieger bestimmt.</string>
+    <string name="tour_rules_ko_2">Reicht die Teilnehmerzahl nicht für einen vollen Turnierbaum, kommen die oberen Plätze der Setzliste per Freilos in die zweite Runde.</string>
+    <string name="tour_rules_double_1">Die erste Niederlage schickt dich in die Verliererrunde, erst die zweite scheidet aus.</string>
+    <string name="tour_rules_double_2">Im Grand Final trifft der Sieger der Gewinnerrunde auf den Sieger der Verliererrunde. Gewinnt der Spieler aus der Verliererrunde, folgt ein Entscheidungsspiel.</string>
+    <string name="tour_rules_double_3">Ab 3 Spielern.</string>
+    <string name="tour_rules_groups_1">Die Spieler werden gleichmäßig auf 2, 4 oder 8 Gruppen verteilt, in jeder Gruppe spielt jeder gegen jeden.</string>
+    <string name="tour_rules_groups_2">Die Gruppensieger, auf Wunsch auch die Zweiten, ziehen in die K.-o.-Runde ein. Spieler derselben Gruppe treffen dort möglichst nicht gleich wieder aufeinander.</string>
+    <string name="tour_rules_groups_3">Ab 6 Spielern, mindestens 3 pro Gruppe.</string>
+    <string name="tour_rules_league_1">Jeder spielt einmal gegen jeden.</string>
+    <string name="tour_rules_league_2">Die Tabelle ordnet nach Siegen, bei Gleichstand nach direktem Vergleich, Leg-Differenz und Average. Wer am Ende oben steht, gewinnt.</string>
+    <string name="tour_rules_league_3">Ab 3 Spielern.</string>
+'
+    <!-- Tournament view -->
+    <string name="tour_view_none">Kein aktives Turnier vorhanden.</string>
+    <string name="tour_view_main_menu">Zum Hauptmenü</string>
+    <string name="tour_view_live_cd">Live-Ticker &amp; QR-Code</string>
+    <string name="tour_view_end_cd">Turnier beenden</string>
+    <string name="tour_view_mode_ko">K.O.-System</string>
+    <string name="tour_view_mode_groups">Gruppen + K.-o.</string>
+    <string name="tour_view_mode_best_of">%1$s • Best of %2$d</string>
+    <string name="tour_view_played">%1$d / %2$d gespielt</string>
+    <string name="tour_view_end_title">Turnier beenden?</string>
+    <string name="tour_view_end_text">Möchtest du das gesamte Turnier wirklich abbrechen und löschen? Der aktuelle Stand geht dabei verloren.</string>
+    <string name="tour_view_delete">Turnier löschen</string>
+'
+    <!-- Web share dialog -->
+    <string name="tour_share_title">Live-Ticker &amp; Web-Eingabe</string>
+    <string name="tour_share_subtitle">Mit der Smartphone-Kamera scannen – keine App erforderlich!</string>
+    <string name="tour_share_starting">Server wird gestartet...</string>
+    <string name="tour_share_allow">Ergebniseingabe erlauben</string>
+    <string name="tour_share_allow_desc">Spieler können Endstände melden</string>
+    <string name="tour_share_approval">Host-Freigabe anfordern</string>
+    <string name="tour_share_approval_desc">Ergebnisse vor Übernahme prüfen</string>
+    <string name="tour_share_done">Fertig</string>
+</resources>

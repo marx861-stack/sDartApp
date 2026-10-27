@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.tournament.TournamentManager
 import com.sdart.app.ui.theme.PrimaryOrange
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 @Composable
 fun PendingSubmissionsBanner(
@@ -50,14 +52,14 @@ fun PendingSubmissionsBanner(
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "Meldung aus Web",
+                                text = stringResource(Res.string.tour_banner_web_submission),
                                 color = PrimaryOrange,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             if (submissions.size > 1) {
                                 Text(
-                                    text = " (+${submissions.size - 1} weitere)",
+                                    text = " " + stringResource(Res.string.tour_banner_more, submissions.size - 1),
                                     color = Color(0x99FFFFFF),
                                     fontSize = 11.sp
                                 )
@@ -71,7 +73,7 @@ fun PendingSubmissionsBanner(
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "Sieger: ${currentSub.winnerName}",
+                            text = stringResource(Res.string.tour_banner_winner, currentSub.winnerName),
                             color = Color(0xCCFFFFFF),
                             fontSize = 12.sp
                         )
@@ -86,7 +88,7 @@ fun PendingSubmissionsBanner(
                             colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFFF453A)),
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Text("Ablehnen", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(Res.string.tour_banner_reject), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
 
                         Button(
@@ -95,7 +97,7 @@ fun PendingSubmissionsBanner(
                             shape = RoundedCornerShape(10.dp),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                         ) {
-                            Text("Übernehmen", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(Res.string.tour_banner_accept), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

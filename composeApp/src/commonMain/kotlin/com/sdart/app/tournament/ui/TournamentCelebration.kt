@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.sdart.app.tournament.TournamentPlayer
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 @Composable
@@ -56,7 +57,7 @@ fun TournamentCelebrationCard(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_trophy),
-                    contentDescription = "Turniersieger Trophäe",
+                    contentDescription = stringResource(Res.string.tour_celebration_trophy_cd),
                     tint = PrimaryOrange,
                     modifier = Modifier.size(44.dp)
                 )
@@ -65,7 +66,7 @@ fun TournamentCelebrationCard(
             Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "TURNIERSIEGER",
+                text = stringResource(Res.string.tour_celebration_title),
                 style = MaterialTheme.typography.labelMedium.copy(
                     color = PrimaryOrange,
                     fontWeight = FontWeight.SemiBold,
@@ -89,7 +90,7 @@ fun TournamentCelebrationCard(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "Herzlichen Glückwunsch zum Sieg im $tournamentName!",
+                text = stringResource(Res.string.tour_celebration_congrats, tournamentName),
                 color = Color(0x99FFFFFF),
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center,
@@ -107,7 +108,7 @@ fun TournamentCelebrationCard(
                     .height(46.dp)
             ) {
                 Text(
-                    text = "Zurück zur Übersicht",
+                    text = stringResource(Res.string.tour_celebration_back),
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp

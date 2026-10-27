@@ -1,5 +1,8 @@
 package com.sdart.app
 
+import org.jetbrains.compose.resources.getString
+import sdartapp.composeapp.generated.resources.Res
+import sdartapp.composeapp.generated.resources.camera_local_device
 import com.sdart.app.core.detection.ObjectDetection
 
 import android.Manifest
@@ -33,7 +36,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
-actual suspend fun queryAvailableLocalCameras(): List<String> = listOf("Lokale Gerätekamera")
+actual suspend fun queryAvailableLocalCameras(): List<String> = listOf(getString(Res.string.camera_local_device))
 
 /**
  * Android-spezifische Implementierung von CameraVideoFeed.

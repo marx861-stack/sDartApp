@@ -1,5 +1,7 @@
 package com.sdart.app.connect.ui
 
+import sdartapp.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -157,14 +159,14 @@ private fun ScoreboardTopBar(
             )
             Column {
                 Text(
-                    text = gameMode.ifBlank { "Scoreboard aktiv" },
+                    text = gameMode.ifBlank { stringResource(Res.string.connect_scoreboard_active) },
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 )
                 Text(
-                    text = "Live von Host: $hostName" + if (totalLegs > 1) " • Leg $currentLeg/$totalLegs" else "",
+                    text = stringResource(Res.string.connect_live_from_host, hostName) + if (totalLegs > 1) " • Leg $currentLeg/$totalLegs" else "",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White.copy(alpha = 0.65f),
                         fontSize = 12.sp
@@ -179,7 +181,7 @@ private fun ScoreboardTopBar(
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
         ) {
-            Text("Trennen", color = Color.White, fontSize = 12.sp)
+            Text(stringResource(Res.string.connect_disconnect_short), color = Color.White, fontSize = 12.sp)
         }
     }
 }
@@ -218,7 +220,7 @@ private fun ActivePlayerHeroCard(
             ) {
                 Column {
                     Text(
-                        text = if (snapshot.isFinished) "🏆 MATCH-SIEGER" else "AM ZUG",
+                        text = if (snapshot.isFinished) stringResource(Res.string.connect_match_winner) else stringResource(Res.string.connect_on_turn_caps),
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = if (snapshot.isFinished) Color(0xFF4CAF50) else PrimaryOrange,
                             fontWeight = FontWeight.Bold,
@@ -246,7 +248,7 @@ private fun ActivePlayerHeroCard(
                         border = androidx.compose.foundation.BorderStroke(1.dp, GlassBorder)
                     ) {
                         Text(
-                            text = "${activePlayer?.legsWon ?: 0} Legs",
+                            text = stringResource(Res.string.connect_legs_won, (activePlayer?.legsWon ?: 0).toString()),
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.Bold,
@@ -274,13 +276,13 @@ private fun ActivePlayerHeroCard(
 
                 if (snapshot.gameMode.contains("Cricket", ignoreCase = true)) {
                     Text(
-                        text = "Cricket Punkte",
+                        text = stringResource(Res.string.connect_cricket_points),
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.LightGray)
                     )
                 } else if (snapshot.gameMode.contains("Clock", ignoreCase = true)) {
                     val target = snapshot.players.getOrNull(snapshot.currentPlayerIndex)?.atcTarget ?: 1
                     Text(
-                        text = "Aktuelles Ziel: $target",
+                        text = stringResource(Res.string.connect_current_target, target.toString()),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF448AFF)
@@ -288,7 +290,7 @@ private fun ActivePlayerHeroCard(
                     )
                 } else {
                     Text(
-                        text = "Restpunkte",
+                        text = stringResource(Res.string.connect_remaining),
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.LightGray)
                     )
                 }
@@ -307,7 +309,7 @@ private fun ActivePlayerHeroCard(
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4CAF50))
                         ) {
                             Text(
-                                text = "🏆 Spiel gewonnen!",
+                                text = stringResource(Res.string.connect_game_won),
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
@@ -323,7 +325,7 @@ private fun ActivePlayerHeroCard(
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF5252))
                         ) {
                             Text(
-                                text = "💥 Überworfen (Bust)!",
+                                text = stringResource(Res.string.connect_bust),
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
@@ -344,7 +346,7 @@ private fun ActivePlayerHeroCard(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = "🎯 Checkout:",
+                                    text = stringResource(Res.string.connect_checkout_label),
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
@@ -362,7 +364,7 @@ private fun ActivePlayerHeroCard(
                     }
                     else -> {
                         Text(
-                            text = "Aufnahme-Punkte: ${snapshot.currentRoundTotal}",
+                            text = stringResource(Res.string.connect_round_points, snapshot.currentRoundTotal.toString()),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = Color.White.copy(alpha = 0.7f),
                                 fontWeight = FontWeight.SemiBold
@@ -396,7 +398,7 @@ private fun CurrentTurnDartsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Darts dieser Aufnahme",
+                    text = stringResource(Res.string.connect_darts_this_round),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White.copy(alpha = 0.6f),
@@ -404,7 +406,7 @@ private fun CurrentTurnDartsCard(
                     )
                 )
                 Text(
-                    text = "Summe: ${snapshot.currentRoundTotal}",
+                    text = stringResource(Res.string.connect_sum, snapshot.currentRoundTotal.toString()),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = PrimaryOrange,
@@ -449,7 +451,7 @@ private fun CurrentTurnDartsCard(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Pfeil ${i + 1}",
+                                text = stringResource(Res.string.connect_dart_n, (i + 1).toString()),
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     color = Color.White.copy(alpha = 0.6f),
                                     fontSize = 10.sp
@@ -501,7 +503,7 @@ private fun AllPlayersScoreboardCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "SPIELERÜBERSICHT",
+                    text = stringResource(Res.string.connect_player_overview),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White.copy(alpha = 0.6f),
@@ -512,7 +514,7 @@ private fun AllPlayersScoreboardCard(
 
                 if (snapshot.totalLegs > 1) {
                     Text(
-                        text = "LEGS",
+                        text = stringResource(Res.string.connect_legs_caps),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White.copy(alpha = 0.6f),
@@ -605,7 +607,7 @@ private fun PlayerScoreboardRow(
                             color = Color.Black.copy(alpha = 0.4f)
                         ) {
                             Text(
-                                text = "letzte: $last",
+                                text = stringResource(Res.string.connect_last, last.toString()),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 11.sp,
@@ -711,14 +713,14 @@ private fun CompanionScoreboardWaitingView(
                 )
                 Column {
                     Text(
-                        text = "Scoreboard verbunden",
+                        text = stringResource(Res.string.connect_scoreboard_connected),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                     )
                     Text(
-                        text = "Empfängt Daten von: $hostName",
+                        text = stringResource(Res.string.connect_receiving_from, hostName),
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.6f)
                         )
@@ -732,7 +734,7 @@ private fun CompanionScoreboardWaitingView(
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
             ) {
-                Text("Trennen", color = Color.White, fontSize = 12.sp)
+                Text(stringResource(Res.string.connect_disconnect_short), color = Color.White, fontSize = 12.sp)
             }
         }
 
@@ -768,7 +770,7 @@ private fun CompanionScoreboardWaitingView(
                     }
 
                     Text(
-                        text = "Live-Scoreboard bereit",
+                        text = stringResource(Res.string.connect_scoreboard_ready),
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Black,
                             color = Color.White
@@ -777,7 +779,7 @@ private fun CompanionScoreboardWaitingView(
                     )
 
                     Text(
-                        text = "Dieses Gerät ist als Anzeige mit \"$hostName\" gekoppelt.\n\nSobald am Host ein Spiel gestartet wird, spiegelt dieser Bildschirm Punktestand, Würfe und Checkout-Pfade automatisch in Echtzeit wider.",
+                        text = stringResource(Res.string.connect_scoreboard_ready_desc, hostName),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = Color.White.copy(alpha = 0.7f),
                             lineHeight = 22.sp

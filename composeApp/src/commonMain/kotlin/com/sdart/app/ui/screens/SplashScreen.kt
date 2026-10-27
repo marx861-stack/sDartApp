@@ -39,6 +39,8 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import sdartapp.composeapp.generated.resources.Res
 import sdartapp.composeapp.generated.resources.ic_main_logo
+import sdartapp.composeapp.generated.resources.dash_app_logo
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Premium startup animation screen for S'Dart App (KMP).
@@ -111,7 +113,7 @@ fun SplashScreen(
                 // Main Logo (Matches Dark Background for embossed/debossed effect)
                 Icon(
                     painter = painterResource(Res.drawable.ic_main_logo),
-                    contentDescription = "App Logo",
+                    contentDescription = stringResource(Res.string.dash_app_logo),
                     tint = Color(0xFF1A1A1A), // Matches DarkBgStart color
                     modifier = Modifier
                         .size(160.dp)

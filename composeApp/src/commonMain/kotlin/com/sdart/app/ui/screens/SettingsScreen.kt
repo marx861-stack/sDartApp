@@ -48,6 +48,7 @@ import com.mikepenz.aboutlibraries.entity.Library
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,27 +93,27 @@ private fun SettingsContent(
     val compact = LocalCompactLayout.current
     val cardPadding = if (compact) 16.dp else 24.dp
     val toggleCards: @Composable ColumnScope.() -> Unit = {
-        DashboardCard(title = "Audio & Feedback", modifier = Modifier.fillMaxWidth(), contentPadding = cardPadding) {
+        DashboardCard(title = stringResource(Res.string.settings_audio_feedback), modifier = Modifier.fillMaxWidth(), contentPadding = cardPadding) {
             DesktopToggleRow(
                 icon = Res.drawable.ic_sound,
-                title = "Soundeffekte",
-                description = "Töne bei Treffern und Events abspielen",
+                title = stringResource(Res.string.settings_sound_effects),
+                description = stringResource(Res.string.settings_sound_effects_desc),
                 checked = vm.isSoundEnabled,
                 onCheckedChange = { vm.isSoundEnabled = it }
             )
             HorizontalDivider(color = GlassCardBorder)
             DesktopToggleRow(
                 icon = Res.drawable.ic_voice,
-                title = "Voice Caller",
-                description = "Sprachausgabe für Punkte und Ansagen",
+                title = stringResource(Res.string.settings_voice_caller),
+                description = stringResource(Res.string.settings_voice_caller_desc),
                 checked = vm.isVoiceCallerEnabled,
                 onCheckedChange = { vm.isVoiceCallerEnabled = it }
             )
             HorizontalDivider(color = GlassCardBorder)
             DesktopToggleRow(
                 icon = Res.drawable.ic_vibration,
-                title = "Vibration",
-                description = "Haptisches Feedback bei Treffern (Tablets und Handys)",
+                title = stringResource(Res.string.settings_vibration),
+                description = stringResource(Res.string.settings_vibration_desc),
                 checked = vm.isVibrationEnabled,
                 onCheckedChange = { vm.isVibrationEnabled = it }
             )
@@ -123,27 +124,27 @@ private fun SettingsContent(
             enter = fadeIn() + expandVertically(),
             exit = fadeOut() + shrinkVertically()
         ) {
-            DashboardCard(title = "Entwickler-Optionen", modifier = Modifier.fillMaxWidth(), contentPadding = cardPadding) {
+            DashboardCard(title = stringResource(Res.string.settings_developer_options), modifier = Modifier.fillMaxWidth(), contentPadding = cardPadding) {
                 DesktopToggleRow(
                     icon = Res.drawable.ic_developer,
-                    title = "Detection Overlay",
-                    description = "Bounding Boxes der Erkennung anzeigen",
+                    title = stringResource(Res.string.settings_detection_overlay),
+                    description = stringResource(Res.string.settings_detection_overlay_desc),
                     checked = vm.showCameraDetectionOverlay,
                     onCheckedChange = { vm.showCameraDetectionOverlay = it }
                 )
                 HorizontalDivider(color = GlassCardBorder)
                 DesktopToggleRow(
                     icon = Res.drawable.ic_developer,
-                    title = "Dartboard Overlay",
-                    description = "Kalibriertes Dartboard-Gitter anzeigen",
+                    title = stringResource(Res.string.settings_dartboard_overlay),
+                    description = stringResource(Res.string.settings_dartboard_overlay_desc),
                     checked = vm.showDartboardOverlay,
                     onCheckedChange = { vm.showDartboardOverlay = it }
                 )
                 HorizontalDivider(color = GlassCardBorder)
                 DesktopToggleRow(
                     icon = Res.drawable.ic_developer,
-                    title = "Debug HUD",
-                    description = "Inferenzzeit, FPS und Hardware-Status anzeigen",
+                    title = stringResource(Res.string.settings_debug_hud),
+                    description = stringResource(Res.string.settings_debug_hud_desc),
                     checked = vm.showCameraDebugHud,
                     onCheckedChange = { vm.showCameraDebugHud = it }
                 )
@@ -152,7 +153,7 @@ private fun SettingsContent(
     }
 
     // Wenig Inhalt: am Desktop genau fensterhoch, damit die Buttons unten in "Über S'Dart" ohne Scrollen sichtbar sind
-    DesktopPage(title = "Einstellungen", minHeight = 0.dp, onBack = onBack) {
+    DesktopPage(title = stringResource(Res.string.settings), minHeight = 0.dp, onBack = onBack) {
         if (compact) {
             toggleCards()
             AboutCard(
@@ -249,7 +250,7 @@ private fun AboutCard(
 ) {
     val uriHandler = LocalUriHandler.current
     val compact = LocalCompactLayout.current
-    DashboardCard(title = "Über S'Dart", modifier = modifier, contentPadding = if (compact) 16.dp else 24.dp) {
+    DashboardCard(title = stringResource(Res.string.settings_about_title), modifier = modifier, contentPadding = if (compact) 16.dp else 24.dp) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 painter = painterResource(Res.drawable.ic_main_logo),
@@ -267,7 +268,7 @@ private fun AboutCard(
                     )
                 )
                 Text(
-                    text = "Version 1.0.0 (KMP Multiplatform)",
+                    text = stringResource(Res.string.settings_version),
                     style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     modifier = Modifier.clickable(
                         interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
@@ -280,7 +281,7 @@ private fun AboutCard(
 
         if (devModeUnlocked) {
             Text(
-                text = "Entwickler-Modus aktiv",
+                text = stringResource(Res.string.settings_dev_mode_active),
                 style = MaterialTheme.typography.labelMedium.copy(color = PrimaryOrange, fontWeight = FontWeight.SemiBold),
                 modifier = Modifier
                     .padding(top = 12.dp)
@@ -306,8 +307,7 @@ private fun AboutCard(
             )
         }
         Text(
-            text = "Dieses Programm kommt ohne jegliche Gewährleistung. Es ist freie Software und darf " +
-                "unter den Bedingungen der GNU General Public License v3 weitergegeben werden.",
+            text = stringResource(Res.string.settings_warranty),
             style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
             modifier = Modifier.padding(top = 8.dp)
         )
@@ -322,12 +322,12 @@ private fun AboutCard(
                 border = BorderStroke(1.dp, GlassControlBorder),
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)
             ) {
-                Text("Lizenzen anzeigen", color = MaterialTheme.colorScheme.onSurface)
+                Text(stringResource(Res.string.settings_show_licenses), color = MaterialTheme.colorScheme.onSurface)
             }
         }
         val sourceLink: @Composable () -> Unit = {
             CardLink(
-                text = "Quellcode auf GitHub",
+                text = stringResource(Res.string.settings_source_github),
                 onClick = { uriHandler.openUri(APP_SOURCE_URL) }
             )
         }
@@ -372,7 +372,7 @@ fun LicensesDialog(
         title = {
             Column {
                 Text(
-                    text = "Lizenzen",
+                    text = stringResource(Res.string.settings_licenses_title),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -380,7 +380,7 @@ fun LicensesDialog(
                 )
                 libraries?.takeIf { it.isNotEmpty() }?.let {
                     Text(
-                        text = "${it.size} Open-Source-Komponenten · Eintrag antippen für den Lizenztext",
+                        text = stringResource(Res.string.settings_licenses_count, it.size),
                         style = MaterialTheme.typography.bodySmall,
                         color = DarkTextSecondary
                     )
@@ -413,7 +413,7 @@ fun LicensesDialog(
                     if (list.isEmpty()) {
                         item {
                             Text(
-                                text = "Die Lizenzliste der Bibliotheken konnte nicht geladen werden.",
+                                text = stringResource(Res.string.settings_licenses_load_failed),
                                 color = DarkTextSecondary
                             )
                         }
@@ -433,7 +433,7 @@ fun LicensesDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = "Schließen",
+                    text = stringResource(Res.string.settings_close),
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -555,10 +555,11 @@ private fun AppLicenseCard(
     onToggle: () -> Unit
 ) {
     val uriHandler = LocalUriHandler.current
+    val unavailableText = stringResource(Res.string.settings_license_unavailable, APP_SOURCE_URL)
     val licenseText by produceState<String?>(initialValue = null, expanded) {
         if (expanded && value == null) {
             value = runCatching { Res.readBytes("files/app-license.txt").decodeToString() }
-                .getOrElse { "Lizenztext nicht verfügbar. Er steht unter $APP_SOURCE_URL" }
+                .getOrElse { unavailableText }
         }
     }
 
@@ -605,14 +606,13 @@ private fun AppLicenseCard(
         }
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Dieses Programm kommt ohne jegliche Gewährleistung. Es ist freie Software und darf " +
-                "unter den Bedingungen der GNU General Public License v3 weitergegeben werden.",
+            text = stringResource(Res.string.settings_warranty),
             style = MaterialTheme.typography.bodySmall,
             color = DarkTextSecondary
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Quellcode: $APP_SOURCE_URL",
+            text = stringResource(Res.string.settings_source_code_line, APP_SOURCE_URL),
             style = MaterialTheme.typography.bodySmall.copy(
                 color = MaterialTheme.colorScheme.primary,
                 textDecoration = TextDecoration.Underline

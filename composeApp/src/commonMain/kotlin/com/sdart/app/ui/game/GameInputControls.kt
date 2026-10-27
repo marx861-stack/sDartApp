@@ -12,7 +12,13 @@ import com.sdart.app.ui.components.GlassControlBorder
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.Res
+import sdartapp.composeapp.generated.resources.game_play_camera
+import sdartapp.composeapp.generated.resources.game_play_hint_auto
+import sdartapp.composeapp.generated.resources.game_play_hint_camera_active
+import sdartapp.composeapp.generated.resources.game_play_hint_precise
+import sdartapp.composeapp.generated.resources.game_play_undo
 import sdartapp.composeapp.generated.resources.ic_camera_placeholder
 import sdartapp.composeapp.generated.resources.ic_target
 import sdartapp.composeapp.generated.resources.ic_undo
@@ -69,9 +75,9 @@ fun ScoreInputSection(
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(top = 4.dp, start = 4.dp, end = 4.dp, bottom = 4.dp)) {
                 val hintText = when {
-                    showCamera -> "Darts werden automatisch erkannt"
-                    isCameraConnected -> "Kamera aktiv – Darts werden im Hintergrund erkannt"
-                    else -> "Für Präzise Eingabe, lange drücken"
+                    showCamera -> stringResource(Res.string.game_play_hint_auto)
+                    isCameraConnected -> stringResource(Res.string.game_play_hint_camera_active)
+                    else -> stringResource(Res.string.game_play_hint_precise)
                 }
                 Text(
                     text = hintText,
@@ -146,7 +152,7 @@ fun ActionButtonsSection(
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         ActionTile(
-            label = "Rückgängig",
+            label = stringResource(Res.string.game_play_undo),
             icon = Res.drawable.ic_undo,
             onClick = onUndo,
             enabled = enabled,
@@ -156,7 +162,7 @@ fun ActionButtonsSection(
             modifier = Modifier.weight(1f)
         )
         ActionTile(
-            label = if (showCamera) "Board" else "Kamera",
+            label = if (showCamera) "Board" else stringResource(Res.string.game_play_camera),
             icon = if (showCamera) Res.drawable.ic_target else Res.drawable.ic_camera_placeholder,
             onClick = onCameraClick,
             enabled = enabled,

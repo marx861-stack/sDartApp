@@ -27,6 +27,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import com.sdart.app.ui.theme.DarkBgGradient
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 
 @Composable
@@ -35,7 +36,9 @@ fun TournamentSetupScreen(
     onBack: () -> Unit,
     onStartTournament: (name: String, type: TournamentType, config: TournamentGameConfig, players: List<TournamentPlayer>, randomize: Boolean, groupCount: Int, qualifiersPerGroup: Int) -> Unit
 ) {
-    var tournamentName by remember { mutableStateOf("Dart-Turnier") }
+    val defaultTournamentName = stringResource(Res.string.tour_default_name)
+    val playerPrefix = stringResource(Res.string.tour_player_prefix)
+    var tournamentName by remember { mutableStateOf(defaultTournamentName) }
     var tournamentType by remember { mutableStateOf(TournamentType.SINGLE_ELIMINATION) }
     var groupCount by remember { mutableStateOf(2) }
     var qualifiersPerGroup by remember { mutableStateOf(2) }
@@ -49,10 +52,10 @@ fun TournamentSetupScreen(
     var participants by remember {
         mutableStateOf(
             listOf(
-                TournamentPlayer("p1", "Spieler 1"),
-                TournamentPlayer("p2", "Spieler 2"),
-                TournamentPlayer("p3", "Spieler 3"),
-                TournamentPlayer("p4", "Spieler 4")
+                TournamentPlayer("p1", "$playerPrefix 1"),
+                TournamentPlayer("p2", "$playerPrefix 2"),
+                TournamentPlayer("p3", "$playerPrefix 3"),
+                TournamentPlayer("p4", "$playerPrefix 4")
             )
         )
     }
@@ -64,26 +67,32 @@ fun TournamentSetupScreen(
     val groupOptions = groupCountOptions(participants.size)
     val effectiveGroupCount = groupOptions.lastOrNull { it <= groupCount } ?: groupOptions.firstOrNull() ?: groupCount
 
+    val errName = stringResource(Res.string.tour_setup_err_name)
+    val errMinPlayers = stringResource(Res.string.tour_setup_err_min_players)
+    val errLeague = stringResource(Res.string.tour_setup_err_league)
+    val errDouble = stringResource(Res.string.tour_setup_err_double)
+    val errGroups = stringResource(Res.string.tour_setup_err_groups)
+
     val startTournament: () -> Unit = start@{
         val cleanPlayers = participants.map { it.copy(name = it.name.trim()) }
         if (cleanPlayers.any { it.name.isBlank() }) {
-            errorMessage = "Bitte allen Spielern einen gültigen Namen geben."
+            errorMessage = errName
             return@start
         }
         if (cleanPlayers.size < 2) {
-            errorMessage = "Mindestens 2 Spieler erforderlich."
+            errorMessage = errMinPlayers
             return@start
         }
         if (tournamentType == TournamentType.ROUND_ROBIN && cleanPlayers.size < 3) {
-            errorMessage = "Für den Jeder-gegen-Jeden-Modus sind mindestens 3 Spieler erforderlich."
+            errorMessage = errLeague
             return@start
         }
         if (tournamentType == TournamentType.DOUBLE_ELIMINATION && cleanPlayers.size < 3) {
-            errorMessage = "Für Doppel-K.-o. sind mindestens 3 Spieler erforderlich."
+            errorMessage = errDouble
             return@start
         }
         if (tournamentType == TournamentType.GROUPS_KNOCKOUT && groupOptions.isEmpty()) {
-            errorMessage = "Für Gruppenphase plus K.-o. sind mindestens 6 Spieler erforderlich."
+            errorMessage = errGroups
             return@start
         }
 
@@ -96,7 +105,7 @@ fun TournamentSetupScreen(
             cricketVariant = cricketVariant
         )
 
-        onStartTournament(tournamentName, tournamentType, config, cleanPlayers, randomizeOrder, effectiveGroupCount, qualifiersPerGroup)
+        onStartTournament(tournamentName.ifBlank { defaultTournamentName }, tournamentType, config, cleanPlayers, randomizeOrder, effectiveGroupCount, qualifiersPerGroup)
     }
 
     TournamentSetupContent(
@@ -180,6 +189,7 @@ private fun TournamentSetupContent(
     onStart: () -> Unit
 ) {
     val compact = LocalCompactLayout.current
+    val typeOptions = rememberTypeOptions()
     val typeCard: @Composable (TypeOption, Modifier) -> Unit = { option, modifier ->
         TypeCard(
             icon = option.icon,
@@ -201,7 +211,7 @@ private fun TournamentSetupContent(
         )
     }
     val settingsFields: @Composable ColumnScope.() -> Unit = {
-        CardTitle("Turniername")
+        CardTitle(stringResource(Res.string.tour_setup_name))
         OutlinedTextField(
             value = tournamentName,
             onValueChange = onNameChange,
@@ -213,10 +223,10 @@ private fun TournamentSetupContent(
         )
 
         if (tournamentType == TournamentType.GROUPS_KNOCKOUT) {
-            CardTitle("Gruppen", modifier = Modifier.padding(top = 14.dp))
+            CardTitle(stringResource(Res.string.tour_setup_groups), modifier = Modifier.padding(top = 14.dp))
             if (groupOptions.isEmpty()) {
                 Text(
-                    text = "Ab 6 Spielern möglich",
+                    text = stringResource(Res.string.tour_setup_groups_min),
                     style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     modifier = Modifier.padding(bottom = 10.dp)
                 )
@@ -230,34 +240,34 @@ private fun TournamentSetupContent(
                     }
                 }
             }
-            CardTitle("Weiter pro Gruppe", modifier = Modifier.padding(top = 14.dp))
+            CardTitle(stringResource(Res.string.tour_setup_qualifiers), modifier = Modifier.padding(top = 14.dp))
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
             ) {
-                SelectTile("1", qualifiersPerGroup == 1, { onQualifiersChange(1) }, Modifier.weight(1f), "Gruppensieger")
-                SelectTile("2", qualifiersPerGroup == 2, { onQualifiersChange(2) }, Modifier.weight(1f), "Erste und Zweite")
+                SelectTile("1", qualifiersPerGroup == 1, { onQualifiersChange(1) }, Modifier.weight(1f), stringResource(Res.string.tour_setup_qual_winner))
+                SelectTile("2", qualifiersPerGroup == 2, { onQualifiersChange(2) }, Modifier.weight(1f), stringResource(Res.string.tour_setup_qual_top2))
             }
         }
 
-        CardTitle("Startpunkte", modifier = Modifier.padding(top = 14.dp))
+        CardTitle(stringResource(Res.string.tour_setup_start_points), modifier = Modifier.padding(top = 14.dp))
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
         ) {
-            SelectTile("501", gameMode == GameMode.X501, { onGameModeChange(GameMode.X501) }, Modifier.weight(1f), "Standard")
-            SelectTile("301", gameMode == GameMode.X301, { onGameModeChange(GameMode.X301) }, Modifier.weight(1f), "Kurz")
+            SelectTile("501", gameMode == GameMode.X501, { onGameModeChange(GameMode.X501) }, Modifier.weight(1f), stringResource(Res.string.game_mode_standard))
+            SelectTile("301", gameMode == GameMode.X301, { onGameModeChange(GameMode.X301) }, Modifier.weight(1f), stringResource(Res.string.tour_setup_short))
         }
-        CardTitle("Regeln", modifier = Modifier.padding(top = 14.dp))
+        CardTitle(stringResource(Res.string.tour_setup_rules), modifier = Modifier.padding(top = 14.dp))
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
         ) {
-            SelectTile("Double In", doubleIn, { onDoubleInChange(!doubleIn) }, Modifier.weight(1f), "Start mit Double")
-            SelectTile("Double Out", doubleOut, { onDoubleOutChange(!doubleOut) }, Modifier.weight(1f), "Sieg mit Double")
+            SelectTile("Double In", doubleIn, { onDoubleInChange(!doubleIn) }, Modifier.weight(1f), stringResource(Res.string.tour_setup_double_in_desc))
+            SelectTile("Double Out", doubleOut, { onDoubleOutChange(!doubleOut) }, Modifier.weight(1f), stringResource(Res.string.tour_setup_double_out_desc))
         }
 
-        CardTitle("Legs · Best of", modifier = Modifier.padding(top = 14.dp))
+        CardTitle(stringResource(Res.string.tour_setup_legs), modifier = Modifier.padding(top = 14.dp))
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth()
@@ -286,15 +296,15 @@ private fun TournamentSetupContent(
         ) {
             Icon(painterResource(Res.drawable.ic_trophy), contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Turnier starten", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.tour_setup_start), fontWeight = FontWeight.SemiBold)
         }
     }
 
     // Genau fensterhoch: Teilnehmer und Einstellungen scrollen für sich, die Seite selbst nicht
-    DesktopPage(title = "Neues Turnier", minHeight = 0.dp) {
+    DesktopPage(title = stringResource(Res.string.tour_setup_title), minHeight = 0.dp) {
         if (compact) {
             // Karten einer Reihe gleich hoch, auch wenn ein Untertitel zweizeilig wird
-            TypeOptions.chunked(2).forEach { row ->
+            typeOptions.chunked(2).forEach { row ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
@@ -319,7 +329,7 @@ private fun TournamentSetupContent(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                TypeOptions.forEach { option -> typeCard(option, Modifier.weight(1f)) }
+                typeOptions.forEach { option -> typeCard(option, Modifier.weight(1f)) }
             }
 
             DashboardCard(title = null, modifier = Modifier.weight(2.6f).fillMaxHeight()) {
@@ -350,38 +360,33 @@ private fun TournamentSetupContent(
 // Regeln als kurze Absätze, angezeigt über das Info-Symbol der Karte
 private class TypeOption(val icon: DrawableResource, val title: String, val rules: List<String>, val type: TournamentType)
 
-private val TypeOptions = listOf(
+@Composable
+private fun rememberTypeOptions(): List<TypeOption> = listOf(
     TypeOption(
-        Res.drawable.ic_trophy, "K.-o.-System", listOf(
-            "Wer ein Match verliert, scheidet aus. Die Sieger ziehen Runde für Runde weiter, bis das Finale " +
-                "den Turniersieger bestimmt.",
-            "Reicht die Teilnehmerzahl nicht für einen vollen Turnierbaum, kommen die oberen Plätze der " +
-                "Setzliste per Freilos in die zweite Runde."
+        Res.drawable.ic_trophy, stringResource(Res.string.tour_type_knockout), listOf(
+            stringResource(Res.string.tour_rules_ko_1),
+            stringResource(Res.string.tour_rules_ko_2)
         ), TournamentType.SINGLE_ELIMINATION
     ),
     TypeOption(
-        Res.drawable.ic_refresh, "Doppel-K.-o.", listOf(
-            "Die erste Niederlage schickt dich in die Verliererrunde, erst die zweite scheidet aus.",
-            "Im Grand Final trifft der Sieger der Gewinnerrunde auf den Sieger der Verliererrunde. Gewinnt der " +
-                "Spieler aus der Verliererrunde, folgt ein Entscheidungsspiel.",
-            "Ab 3 Spielern."
+        Res.drawable.ic_refresh, stringResource(Res.string.tour_type_double), listOf(
+            stringResource(Res.string.tour_rules_double_1),
+            stringResource(Res.string.tour_rules_double_2),
+            stringResource(Res.string.tour_rules_double_3)
         ), TournamentType.DOUBLE_ELIMINATION
     ),
     TypeOption(
-        Res.drawable.ic_player_management, "Gruppenphase", listOf(
-            "Die Spieler werden gleichmäßig auf 2, 4 oder 8 Gruppen verteilt, in jeder Gruppe spielt jeder " +
-                "gegen jeden.",
-            "Die Gruppensieger, auf Wunsch auch die Zweiten, ziehen in die K.-o.-Runde ein. Spieler derselben " +
-                "Gruppe treffen dort möglichst nicht gleich wieder aufeinander.",
-            "Ab 6 Spielern, mindestens 3 pro Gruppe."
+        Res.drawable.ic_player_management, stringResource(Res.string.tour_type_groups), listOf(
+            stringResource(Res.string.tour_rules_groups_1),
+            stringResource(Res.string.tour_rules_groups_2),
+            stringResource(Res.string.tour_rules_groups_3)
         ), TournamentType.GROUPS_KNOCKOUT
     ),
     TypeOption(
-        Res.drawable.ic_chart_bar, "Liga", listOf(
-            "Jeder spielt einmal gegen jeden.",
-            "Die Tabelle ordnet nach Siegen, bei Gleichstand nach direktem Vergleich, Leg-Differenz und Average. " +
-                "Wer am Ende oben steht, gewinnt.",
-            "Ab 3 Spielern."
+        Res.drawable.ic_chart_bar, stringResource(Res.string.tour_type_league), listOf(
+            stringResource(Res.string.tour_rules_league_1),
+            stringResource(Res.string.tour_rules_league_2),
+            stringResource(Res.string.tour_rules_league_3)
         ), TournamentType.ROUND_ROBIN
     )
 )
@@ -443,12 +448,13 @@ private fun ParticipantsSection(
     onLoadClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val playerPrefix = stringResource(Res.string.tour_player_prefix)
     PlayerListSection(
         players = participants.map { PlayerListEntry(it.name, isLoaded = it.savedPlayerName != null) },
         minPlayers = 2,
         onAdd = {
             val next = participants.size + 1
-            onParticipantsChange(participants + TournamentPlayer("p_$next", "Spieler $next"))
+            onParticipantsChange(participants + TournamentPlayer("p_$next", "$playerPrefix $next"))
         },
         onLoad = onLoadClick,
         onRename = { index, name ->
@@ -470,23 +476,25 @@ private fun desktopFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedBorderColor = GlassControlBorder
 )
 
+@Composable
 private fun tournamentSummary(type: TournamentType, mode: GameMode, legs: Int, doubleOut: Boolean, players: Int, groupCount: Int): String {
     val typeText = when (type) {
-        TournamentType.SINGLE_ELIMINATION -> "K.-o."
-        TournamentType.ROUND_ROBIN -> "Liga"
-        TournamentType.DOUBLE_ELIMINATION -> "Doppel-K.-o."
-        TournamentType.GROUPS_KNOCKOUT -> "$groupCount Gruppen + K.-o."
+        TournamentType.SINGLE_ELIMINATION -> stringResource(Res.string.tour_summary_ko)
+        TournamentType.ROUND_ROBIN -> stringResource(Res.string.tour_type_league)
+        TournamentType.DOUBLE_ELIMINATION -> stringResource(Res.string.tour_type_double)
+        TournamentType.GROUPS_KNOCKOUT -> stringResource(Res.string.tour_summary_groups, groupCount)
     }
     val modeText = "${if (mode == GameMode.X301) 301 else 501} · ${if (doubleOut) "Double Out" else "Single Out"}"
-    return "$typeText · $modeText · Best of $legs · $players Spieler"
+    return stringResource(Res.string.tour_summary_line, typeText, modeText, legs, players)
 }
 
 /** Gruppenzahlen, bei denen jede Gruppe mindestens drei Spieler hat. */
 private fun groupCountOptions(players: Int): List<Int> = listOf(2, 4, 8).filter { players >= it * 3 }
 
 /** Gruppengröße als Text, z. B. "je 4" oder "je 3–4". */
+@Composable
 private fun groupSizeText(players: Int, groups: Int): String {
     val small = players / groups
     val large = (players + groups - 1) / groups
-    return if (small == large) "je $small Spieler" else "je $small–$large Spieler"
+    return if (small == large) stringResource(Res.string.tour_group_size_each, small) else stringResource(Res.string.tour_group_size_range, small, large)
 }

@@ -1,5 +1,6 @@
 package com.sdart.app.connect.ui
 
+import org.jetbrains.compose.resources.stringResource
 import com.sdart.app.ui.theme.ditheredBackground
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -83,17 +84,17 @@ fun CompanionConnectionScreen(
     }
 
     val headerTitle = when (val s = state) {
-        is ParticipantState.Idle -> "Geräte verbinden"
-        is ParticipantState.Searching -> "Gerätesuche"
-        is ParticipantState.Connecting -> "Verbindung"
+        is ParticipantState.Idle -> stringResource(Res.string.connect_title_connect_devices)
+        is ParticipantState.Searching -> stringResource(Res.string.connect_title_device_search)
+        is ParticipantState.Connecting -> stringResource(Res.string.connect_title_connection)
         is ParticipantState.Connected -> when (s.role) {
-            DeviceRole.CAMERA -> "Kamera-Stream"
-            DeviceRole.INPUT -> "Touch-Eingabe"
-            DeviceRole.DISPLAY -> "Zweiter Bildschirm"
-            DeviceRole.HOST -> "Host-Steuerung"
+            DeviceRole.CAMERA -> stringResource(Res.string.connect_title_camera_stream)
+            DeviceRole.INPUT -> stringResource(Res.string.connect_title_touch_input)
+            DeviceRole.DISPLAY -> stringResource(Res.string.connect_title_second_screen)
+            DeviceRole.HOST -> stringResource(Res.string.connect_title_host_control)
         }
-        is ParticipantState.Rejected -> "Verbindung abgelehnt"
-        is ParticipantState.Disconnected -> "Verbindung getrennt"
+        is ParticipantState.Rejected -> stringResource(Res.string.connect_title_rejected)
+        is ParticipantState.Disconnected -> stringResource(Res.string.connect_title_disconnected)
     }
 
     DeviceConnection(
@@ -185,7 +186,7 @@ private fun SearchingView(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Suche Host im WLAN...",
+            text = stringResource(Res.string.connect_searching_host),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -201,7 +202,7 @@ private fun SearchingView(
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
         ) {
             Text(
-                text = "Rolle: ${roleLabel(role)}",
+                text = stringResource(Res.string.connect_role_line, roleLabel(role)),
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
@@ -213,7 +214,7 @@ private fun SearchingView(
         if (hosts.isNotEmpty()) {
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "Gefundene Hosts (${hosts.size}):",
+                text = stringResource(Res.string.connect_found_hosts, hosts.size.toString()),
                 style = MaterialTheme.typography.titleSmall.copy(color = Color.White, fontWeight = FontWeight.Bold)
             )
             Spacer(modifier = Modifier.height(10.dp))
@@ -251,7 +252,7 @@ private fun SearchingView(
                                 )
                                 Text(host.name, color = Color.White, fontWeight = FontWeight.SemiBold)
                             }
-                            Text("Verbinden →", color = PrimaryOrange, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(Res.string.connect_connect_arrow), color = PrimaryOrange, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -266,7 +267,7 @@ private fun SearchingView(
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            Text("Suche abbrechen", color = Color.White)
+            Text(stringResource(Res.string.connect_cancel_search), color = Color.White)
         }
     }
 }
@@ -307,7 +308,7 @@ private fun ConnectingView(
         Spacer(modifier = Modifier.height(28.dp))
 
         Text(
-            text = "Verbinde mit \"${host.name}\"...",
+            text = stringResource(Res.string.connect_connecting_to, host.name),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -318,7 +319,7 @@ private fun ConnectingView(
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "Verbindung wird hergestellt...",
+            text = stringResource(Res.string.connect_connecting),
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.72f)),
             textAlign = TextAlign.Center
         )
@@ -331,7 +332,7 @@ private fun ConnectingView(
             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            Text("Abbrechen", color = Color.White)
+            Text(stringResource(Res.string.connect_cancel), color = Color.White)
         }
     }
 }
@@ -400,7 +401,7 @@ private fun ConnectedView(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Erfolgreich verbunden!",
+            text = stringResource(Res.string.connect_connected_success),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -410,7 +411,7 @@ private fun ConnectedView(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Host: ${state.hostName} • Rolle: ${roleLabel(state.role)}",
+            text = stringResource(Res.string.connect_host_role_line, state.hostName, roleLabel(state.role)),
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.8f))
         )
 
@@ -447,19 +448,19 @@ private fun ConnectedView(
                 ) {
                     Text(
                         text = when (state.role) {
-                            DeviceRole.CAMERA -> "Kamera streamt live an Host"
-                            DeviceRole.DISPLAY -> "Anzeige empfängt Live-Scores"
-                            DeviceRole.INPUT -> "Eingabepad ist aktiv"
-                            DeviceRole.HOST -> "Host aktiv"
+                            DeviceRole.CAMERA -> stringResource(Res.string.connect_status_camera)
+                            DeviceRole.DISPLAY -> stringResource(Res.string.connect_status_display)
+                            DeviceRole.INPUT -> stringResource(Res.string.connect_status_input)
+                            DeviceRole.HOST -> stringResource(Res.string.connect_status_host)
                         },
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
                         text = when (state.role) {
-                            DeviceRole.CAMERA -> "Richte die Kamera stabil auf die Dartscheibe aus. Die Erkennung rechnet in Echtzeit am Host."
-                            DeviceRole.DISPLAY -> "Dieses Gerät spiegelt den Punktestand und Checkout-Empfehlungen in Echtzeit wider."
-                            DeviceRole.INPUT -> "Du kannst Würfe und Korrekturen direkt über dieses Gerät steuern."
+                            DeviceRole.CAMERA -> stringResource(Res.string.connect_desc_camera)
+                            DeviceRole.DISPLAY -> stringResource(Res.string.connect_desc_display)
+                            DeviceRole.INPUT -> stringResource(Res.string.connect_desc_input)
                             DeviceRole.HOST -> ""
                         },
                         style = MaterialTheme.typography.bodySmall.copy(
@@ -479,7 +480,7 @@ private fun ConnectedView(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
         ) {
-            Text("Verbindung trennen", color = Color.White, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.connect_disconnect), color = Color.White, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -575,13 +576,13 @@ private fun CompanionCameraStreamingView(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_camera_placeholder),
-                        contentDescription = "Screen Dimmed",
+                        contentDescription = stringResource(Res.string.connect_screen_dimmed),
                         tint = Color.Gray,
                         modifier = Modifier.size(80.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Energiesparend...",
+                        text = stringResource(Res.string.connect_power_saving),
                         color = Color.Gray,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -598,7 +599,7 @@ private fun CompanionCameraStreamingView(
                 contentAlignment = Alignment.TopCenter
             ) {
                 ScreenHeader(
-                    title = "Kamera-Stream",
+                    title = stringResource(Res.string.connect_title_camera_stream),
                     onBack = onDisconnect,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -700,14 +701,14 @@ private fun CompanionInputView(
                 )
                 Column {
                     Text(
-                        text = snapshot.gameMode.ifBlank { "Eingabe aktiv" },
+                        text = snapshot.gameMode.ifBlank { stringResource(Res.string.connect_input_active) },
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                     )
                     Text(
-                        text = "Verbunden: $hostName" + if (snapshot.totalLegs > 1) " • Leg ${snapshot.currentLeg}/${snapshot.totalLegs}" else "",
+                        text = stringResource(Res.string.connect_connected_to, hostName) + if (snapshot.totalLegs > 1) " • Leg ${snapshot.currentLeg}/${snapshot.totalLegs}" else "",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.65f),
                             fontSize = 11.sp
@@ -722,7 +723,7 @@ private fun CompanionInputView(
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
             ) {
-                Text("Trennen", color = Color.White, fontSize = 12.sp)
+                Text(stringResource(Res.string.connect_disconnect_short), color = Color.White, fontSize = 12.sp)
             }
         }
 
@@ -753,7 +754,7 @@ private fun CompanionInputView(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = if (snapshot.isFinished) "🏆 Sieger" else "Am Zug:",
+                            text = if (snapshot.isFinished) stringResource(Res.string.connect_winner) else stringResource(Res.string.connect_on_turn),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White.copy(alpha = 0.6f)
                             )
@@ -771,10 +772,10 @@ private fun CompanionInputView(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     val statusText = when {
-                        snapshot.isFinished -> "Spiel beendet!"
-                        snapshot.isBust -> "💥 Überworfen (Bust)!"
-                        snapshot.checkoutSuggestion != null -> "🎯 Checkout: ${snapshot.checkoutSuggestion}"
-                        else -> "Runde: ${snapshot.currentRoundTotal} Pkt."
+                        snapshot.isFinished -> stringResource(Res.string.connect_game_over)
+                        snapshot.isBust -> stringResource(Res.string.connect_bust)
+                        snapshot.checkoutSuggestion != null -> stringResource(Res.string.connect_checkout_line, snapshot.checkoutSuggestion.toString())
+                        else -> stringResource(Res.string.connect_round_pts, snapshot.currentRoundTotal.toString())
                     }
                     val statusColor = when {
                         snapshot.isFinished -> Color(0xFF4CAF50)
@@ -843,7 +844,7 @@ private fun CompanionInputView(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Pfeil ${i + 1}",
+                            text = stringResource(Res.string.connect_dart_n, (i + 1).toString()),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White.copy(alpha = 0.6f),
                                 fontSize = 10.sp
@@ -851,7 +852,7 @@ private fun CompanionInputView(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = dart?.label ?: if (isNext) "bereit" else "-",
+                            text = dart?.label ?: if (isNext) stringResource(Res.string.connect_dart_ready) else "-",
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = when {
@@ -946,7 +947,7 @@ private fun CompanionInputView(
                         tint = Color.White
                     )
                     Text(
-                        text = "Undo",
+                        text = stringResource(Res.string.connect_undo),
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -1008,14 +1009,14 @@ private fun CompanionInputWaitingView(
                 )
                 Column {
                     Text(
-                        text = "Eingabe verbunden",
+                        text = stringResource(Res.string.connect_input_connected),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                     )
                     Text(
-                        text = "Verbunden mit: $hostName",
+                        text = stringResource(Res.string.connect_connected_with, hostName),
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.6f)
                         )
@@ -1029,7 +1030,7 @@ private fun CompanionInputWaitingView(
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
             ) {
-                Text("Trennen", color = Color.White, fontSize = 12.sp)
+                Text(stringResource(Res.string.connect_disconnect_short), color = Color.White, fontSize = 12.sp)
             }
         }
 
@@ -1071,7 +1072,7 @@ private fun CompanionInputWaitingView(
                     }
 
                     Text(
-                        text = "Warten auf Spielstart",
+                        text = stringResource(Res.string.connect_waiting_game_start),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Black,
                             color = Color.White
@@ -1080,7 +1081,7 @@ private fun CompanionInputWaitingView(
                     )
 
                     Text(
-                        text = "Auf dem Host ($hostName) ist aktuell kein Spiel aktiv.\n\nSobald am Host ein Spiel gestartet wird, erscheint das Eingabe-Dartboard automatisch auf diesem Gerät.",
+                        text = stringResource(Res.string.connect_waiting_game_start_desc, hostName),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = Color.White.copy(alpha = 0.7f),
                             lineHeight = 20.sp
@@ -1127,7 +1128,7 @@ private fun RejectedView(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Verbindung abgelehnt",
+            text = stringResource(Res.string.connect_title_rejected),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -1138,10 +1139,10 @@ private fun RejectedView(
 
         Text(
             text = when (state.reason) {
-                RejectReason.DECLINED_BY_USER -> "Der Host hat die Verbindungsanfrage abgelehnt."
-                RejectReason.PROTOCOL_MISMATCH -> "App-Versionen stimmen nicht überein."
-                RejectReason.ROLE_NOT_SUPPORTED -> "Diese Rolle wird vom Host nicht unterstützt."
-                RejectReason.ROLE_ALREADY_TAKEN -> "Diese Rolle ist bereits von einem anderen Gerät belegt."
+                RejectReason.DECLINED_BY_USER -> stringResource(Res.string.connect_reject_declined)
+                RejectReason.PROTOCOL_MISMATCH -> stringResource(Res.string.connect_reject_protocol)
+                RejectReason.ROLE_NOT_SUPPORTED -> stringResource(Res.string.connect_reject_role_unsupported)
+                RejectReason.ROLE_ALREADY_TAKEN -> stringResource(Res.string.connect_reject_role_taken)
             },
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.72f)),
             textAlign = TextAlign.Center
@@ -1155,14 +1156,14 @@ private fun RejectedView(
                 shape = RoundedCornerShape(12.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.35f))
             ) {
-                Text("Abbrechen", color = Color.White)
+                Text(stringResource(Res.string.connect_cancel), color = Color.White)
             }
             Button(
                 onClick = onRetry,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange)
             ) {
-                Text("Erneut versuchen", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.connect_retry), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -1202,7 +1203,7 @@ private fun DisconnectedView(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Verbindung unterbrochen",
+            text = stringResource(Res.string.connect_connection_interrupted),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -1212,7 +1213,12 @@ private fun DisconnectedView(
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = state.message,
+            text = when (state.kind) {
+                DisconnectKind.HOST_CLOSED -> stringResource(Res.string.connect_disc_host_closed)
+                DisconnectKind.SESSION_ENDED -> stringResource(Res.string.connect_disc_session_ended)
+                DisconnectKind.ERROR -> stringResource(Res.string.connect_disc_error, state.detail ?: stringResource(Res.string.connect_disc_server_unreachable))
+                DisconnectKind.CLOSED -> state.detail ?: stringResource(Res.string.connect_disc_disconnected)
+            },
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.72f)),
             textAlign = TextAlign.Center
         )
@@ -1225,14 +1231,14 @@ private fun DisconnectedView(
                 shape = RoundedCornerShape(12.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.35f))
             ) {
-                Text("Abbrechen", color = Color.White)
+                Text(stringResource(Res.string.connect_cancel), color = Color.White)
             }
             Button(
                 onClick = onRetry,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange)
             ) {
-                Text("Erneut verbinden", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.connect_reconnect), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -1245,11 +1251,12 @@ internal fun roleIconRes(role: DeviceRole): DrawableResource = when (role) {
     DeviceRole.INPUT -> Res.drawable.ic_role_input
 }
 
+@Composable
 internal fun roleLabel(role: DeviceRole): String = when (role) {
-    DeviceRole.HOST -> "Host"
-    DeviceRole.CAMERA -> "Kamera"
-    DeviceRole.DISPLAY -> "Anzeige"
-    DeviceRole.INPUT -> "Eingabe"
+    DeviceRole.HOST -> stringResource(Res.string.connect_role_host)
+    DeviceRole.CAMERA -> stringResource(Res.string.connect_role_camera)
+    DeviceRole.DISPLAY -> stringResource(Res.string.connect_role_display)
+    DeviceRole.INPUT -> stringResource(Res.string.connect_role_input)
 }
 
 private val ParticipantState.activeRole: DeviceRole?
@@ -1292,12 +1299,12 @@ private fun DeviceConnection(
     if (participantRole != null) {
         // Auf dem Handy führt der Zurück-Pfeil aus dem Ablauf heraus; die Ansichten füllen die Höhe selbst
         DesktopPage(
-            title = if (compact) headerTitle else "Geräte verbinden",
+            title = if (compact) headerTitle else stringResource(Res.string.connect_title_connect_devices),
             onBack = { participantManager.disconnect() },
             compactScroll = false
         ) {
             DashboardCard(
-                title = "${thisDeviceLabel(compact)} als ${roleLabel(participantRole)}",
+                title = stringResource(Res.string.connect_device_as_role, thisDeviceLabel(compact), roleLabel(participantRole)),
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 contentPadding = cardPadding
             ) {
@@ -1327,23 +1334,21 @@ private fun DeviceConnection(
     }
     val connectedCard: @Composable (Modifier) -> Unit = { m ->
         DashboardCard(
-            title = "Verbundene Geräte" + (activeHost?.let { " · ${it.participants.size}" } ?: ""),
+            title = stringResource(Res.string.connect_connected_devices) + (activeHost?.let { " · ${it.participants.size}" } ?: ""),
             modifier = m,
             contentPadding = cardPadding
         ) {
             when {
                 activeHost == null -> EmptyDevicesHint(
-                    title = "Host ist aus",
-                    text = "Starte den Host, damit sich andere Geräte mit diesem PC verbinden können."
+                    title = stringResource(Res.string.connect_host_off),
+                    text = stringResource(Res.string.connect_host_off_desc)
                 )
                 activeHost.participants.isEmpty() -> EmptyDevicesHint(
-                    title = "Warte auf Geräte",
+                    title = stringResource(Res.string.connect_waiting_devices),
                     text = if (compact) {
-                        "Auf dem anderen Gerät \"Geräte verbinden\" öffnen."
+                        stringResource(Res.string.connect_waiting_hint_compact)
                     } else {
-                        "1. S'Dart auf dem anderen Gerät öffnen\n" +
-                            "2. \"Geräte verbinden\" wählen\n" +
-                            "3. Rolle antippen – dieser PC wird im WLAN automatisch gefunden"
+                        stringResource(Res.string.connect_waiting_hint_steps)
                     }
                 )
                 // Auf dem Handy scrollt die ganze Seite, dort reicht eine einfache Spalte
@@ -1373,13 +1378,13 @@ private fun DeviceConnection(
     }
     val trustedCard: @Composable (Modifier) -> Unit = { m ->
         DashboardCard(
-            title = "Gemerkte Geräte · ${trustedDevices.size}",
+            title = stringResource(Res.string.connect_trusted_title, trustedDevices.size.toString()),
             modifier = m,
             contentPadding = cardPadding
         ) {
             if (trustedDevices.isEmpty()) {
                 Text(
-                    text = "Geräte, die du zulässt, verbinden sich beim nächsten Mal ohne Nachfrage.",
+                    text = stringResource(Res.string.connect_trusted_hint),
                     style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                 )
             } else {
@@ -1392,7 +1397,7 @@ private fun DeviceConnection(
                     }
                 }
                 CardLink(
-                    text = "Alle entfernen",
+                    text = stringResource(Res.string.connect_remove_all),
                     onClick = { sessionManager.clearAllTrustedDevices() },
                     primary = false,
                     icon = Res.drawable.ic_trash,
@@ -1402,7 +1407,7 @@ private fun DeviceConnection(
         }
     }
 
-    DesktopPage(title = "Geräte verbinden") {
+    DesktopPage(title = stringResource(Res.string.connect_title_connect_devices)) {
         // Auf dem Handy nur das, was gerade zählt: verbundene Geräte erst bei laufendem Host,
         // gemerkte Geräte erst, wenn es welche gibt
         if (compact) {
@@ -1447,7 +1452,9 @@ private fun DeviceConnection(
 }
 
 /** "Dieser PC" am Desktop, "Dieses Gerät" auf Handy und Tablet. */
-private fun thisDeviceLabel(compact: Boolean): String = if (compact) "Dieses Gerät" else "Dieser PC"
+@Composable
+private fun thisDeviceLabel(compact: Boolean): String =
+    if (compact) stringResource(Res.string.connect_this_device) else stringResource(Res.string.connect_this_pc)
 
 /** Host-Status: aktiv mit Port und Gerätezahl, sonst mit Start-Button. */
 @Composable
@@ -1482,7 +1489,7 @@ private fun HostStatusCard(
             Spacer(Modifier.width(16.dp))
             Column {
                 Text(
-                    text = "${thisDeviceLabel(compact)} als Host",
+                    text = stringResource(Res.string.connect_device_as_host, thisDeviceLabel(compact)),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1498,9 +1505,9 @@ private fun HostStatusCard(
                     Text(
                         text = if (active != null) {
                             val count = active.participants.size
-                            "Aktiv · Port ${active.port} · $count ${if (count == 1) "Gerät" else "Geräte"}"
+                            stringResource(Res.string.connect_host_active_line, active.port.toString(), stringResource(if (count == 1) Res.string.connect_devices_one else Res.string.connect_devices_many, count.toString()))
                         } else {
-                            "Aus"
+                            stringResource(Res.string.connect_off)
                         },
                         style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                     )
@@ -1510,7 +1517,7 @@ private fun HostStatusCard(
 
         if (!compact) {
             Text(
-                text = "Andere Geräte verbinden sich mit diesem PC als Kamera, Scoreboard oder Eingabe.",
+                text = stringResource(Res.string.connect_host_desc),
                 style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 modifier = Modifier.padding(top = 14.dp)
             )
@@ -1526,7 +1533,7 @@ private fun HostStatusCard(
                 border = androidx.compose.foundation.BorderStroke(1.dp, GlassControlBorder),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
             ) {
-                Text("Host beenden", color = MaterialTheme.colorScheme.onSurface)
+                Text(stringResource(Res.string.connect_stop_host), color = MaterialTheme.colorScheme.onSurface)
             }
         } else {
             Button(
@@ -1537,7 +1544,7 @@ private fun HostStatusCard(
             ) {
                 Icon(painterResource(Res.drawable.ic_wifi_search), contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Host starten", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(Res.string.connect_start_host), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -1584,15 +1591,14 @@ private fun ColumnScope.EmptyDevicesHint(title: String, text: String) {
 private fun JoinOtherHostCard(onSelectRole: (DeviceRole) -> Unit, modifier: Modifier = Modifier) {
     val compact = LocalCompactLayout.current
     DashboardCard(
-        title = if (compact) "Mit Host verbinden als" else "Mit einem anderen Host verbinden",
+        title = if (compact) stringResource(Res.string.connect_join_title_compact) else stringResource(Res.string.connect_join_title),
         modifier = modifier,
         contentPadding = if (compact) 16.dp else 24.dp
     ) {
         // Auf dem Handy erklären die Kacheln sich selbst
         if (!compact) {
             Text(
-                text = "Läuft S'Dart schon auf einem anderen Gerät? Wähle, was dieser PC dort übernimmt – " +
-                    "der Host wird im WLAN automatisch gesucht.",
+                text = stringResource(Res.string.connect_join_desc),
                 style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -1602,9 +1608,9 @@ private fun JoinOtherHostCard(onSelectRole: (DeviceRole) -> Unit, modifier: Modi
             horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)
         ) {
             listOf(
-                Triple(DeviceRole.CAMERA, "Kamera", "Treffer erkennen"),
-                Triple(DeviceRole.DISPLAY, "Scoreboard", "Spielstand zeigen"),
-                Triple(DeviceRole.INPUT, "Eingabe", "Punkte eingeben")
+                Triple(DeviceRole.CAMERA, stringResource(Res.string.connect_role_camera), stringResource(Res.string.connect_tile_camera_sub)),
+                Triple(DeviceRole.DISPLAY, stringResource(Res.string.connect_tile_scoreboard), stringResource(Res.string.connect_tile_scoreboard_sub)),
+                Triple(DeviceRole.INPUT, stringResource(Res.string.connect_role_input), stringResource(Res.string.connect_tile_input_sub))
             ).forEach { (role, title, subtitle) ->
                 JoinRoleTile(
                     role = role,
@@ -1665,7 +1671,7 @@ private fun JoinRoleTile(
         // Auf dem Handy ist die ganze Kachel der Knopf, der Link würde die schmalen Kacheln sprengen
         if (!compact) {
             Text(
-                text = "Host suchen →",
+                text = stringResource(Res.string.connect_search_host),
                 style = MaterialTheme.typography.labelLarge.copy(color = PrimaryOrange, fontWeight = FontWeight.SemiBold),
                 modifier = Modifier.padding(top = 10.dp)
             )

@@ -21,6 +21,8 @@ import com.sdart.app.tournament.LeagueStandingRow
 import com.sdart.app.tournament.TournamentMatch
 import com.sdart.app.tournament.TournamentState
 import com.sdart.app.ui.theme.PrimaryOrange
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 @Composable
 fun TournamentLeagueView(
@@ -61,7 +63,7 @@ fun TournamentLeagueView(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Tabelle",
+                            text = stringResource(Res.string.tour_league_table),
                             style = MaterialTheme.typography.titleSmall.copy(
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
@@ -71,9 +73,9 @@ fun TournamentLeagueView(
 
                         Text(
                             text = if (qualifierCount > 0) {
-                                "${standings.size} Teilnehmer · $qualifierCount kommen weiter"
+                                stringResource(Res.string.tour_league_participants_qualify, standings.size, qualifierCount)
                             } else {
-                                "${standings.size} Teilnehmer"
+                                stringResource(Res.string.tour_league_participants, standings.size)
                             },
                             color = Color(0x66FFFFFF),
                             fontSize = 11.sp
@@ -88,10 +90,10 @@ fun TournamentLeagueView(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("#", Modifier.weight(0.08f), color = Color(0x66FFFFFF), fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                        Text("Spieler", Modifier.weight(0.38f), color = Color(0x66FFFFFF), fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                        Text("Sp", Modifier.weight(0.11f), color = Color(0x66FFFFFF), fontSize = 11.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
-                        Text("S", Modifier.weight(0.11f), color = Color(0x66FFFFFF), fontSize = 11.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
-                        Text("N", Modifier.weight(0.11f), color = Color(0x66FFFFFF), fontSize = 11.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
+                        Text(stringResource(Res.string.tour_league_col_player), Modifier.weight(0.38f), color = Color(0x66FFFFFF), fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text(stringResource(Res.string.tour_league_col_played), Modifier.weight(0.11f), color = Color(0x66FFFFFF), fontSize = 11.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
+                        Text(stringResource(Res.string.tour_league_col_won), Modifier.weight(0.11f), color = Color(0x66FFFFFF), fontSize = 11.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
+                        Text(stringResource(Res.string.tour_league_col_lost), Modifier.weight(0.11f), color = Color(0x66FFFFFF), fontSize = 11.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
                         Text("Diff", Modifier.weight(0.11f), color = Color(0x66FFFFFF), fontSize = 11.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium)
                         Text("Ø", Modifier.weight(0.10f), color = Color(0x66FFFFFF), fontSize = 11.sp, textAlign = TextAlign.End, fontWeight = FontWeight.Medium)
                     }
@@ -270,7 +272,7 @@ fun TournamentLeagueView(
         // 2. BEGEGNUNGEN NACH RUNDEN (Gleicher Apple Sports Match Card Look)
         item {
             Text(
-                text = "Begegnungen",
+                text = stringResource(Res.string.tour_league_matches),
                 style = MaterialTheme.typography.titleSmall.copy(
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold,
@@ -293,13 +295,13 @@ fun TournamentLeagueView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Runde $round",
+                        text = stringResource(Res.string.tour_round_n, round),
                         color = Color(0x80FFFFFF),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "$doneCount/${matches.size} beendet",
+                        text = stringResource(Res.string.tour_league_round_done, doneCount, matches.size),
                         color = Color(0x4DFFFFFF),
                         fontSize = 11.sp
                     )

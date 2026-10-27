@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.theme.PrimaryOrange
 import com.sdart.app.tournament.TournamentGameConfig
 import com.sdart.app.tournament.TournamentMatch
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 /**
  * Apple-Sports Dialog zur Spielauswahl und manuellen Ergebniserfassung für den Host.
@@ -41,10 +43,13 @@ fun TournamentMatchActionDialog(
     var p1Legs by remember { mutableStateOf(match.player1Result.legsWon) }
     var p2Legs by remember { mutableStateOf(match.player2Result.legsWon) }
 
+    val p1Fallback = stringResource(Res.string.tour_player_n, 1)
+    val p2Fallback = stringResource(Res.string.tour_player_n, 2)
+
     val hasValidWinner = (p1Legs != p2Legs) && (p1Legs > 0 || p2Legs > 0)
     val winnerName = when {
-        p1Legs > p2Legs -> p1?.name ?: "Spieler 1"
-        p2Legs > p1Legs -> p2?.name ?: "Spieler 2"
+        p1Legs > p2Legs -> p1?.name ?: p1Fallback
+        p2Legs > p1Legs -> p2?.name ?: p2Fallback
         else -> null
     }
 
@@ -55,14 +60,14 @@ fun TournamentMatchActionDialog(
         title = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = if (match.isFinished) "Ergebnis bearbeiten" else "Match Runde ${match.round}",
+                    text = if (match.isFinished) stringResource(Res.string.tour_dialog_edit_result) else stringResource(Res.string.tour_dialog_match_round, match.round),
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${tournamentConfig.mode.name} • Best of $maxLegs Legs",
+                    text = stringResource(Res.string.tour_dialog_mode_best_of, tournamentConfig.mode.name, maxLegs),
                     color = Color(0x99FFFFFF),
                     fontSize = 12.sp
                 )
@@ -111,7 +116,7 @@ fun TournamentMatchActionDialog(
                             }
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = p1?.name ?: "Spieler 1",
+                                text = p1?.name ?: p1Fallback,
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp,
@@ -156,7 +161,7 @@ fun TournamentMatchActionDialog(
                             }
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = p2?.name ?: "Spieler 2",
+                                text = p2?.name ?: p2Fallback,
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp,
@@ -181,7 +186,7 @@ fun TournamentMatchActionDialog(
                             .height(46.dp)
                     ) {
                         Text(
-                            text = "🎯 In App spielen",
+                            text = stringResource(Res.string.tour_dialog_play_in_app),
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp
@@ -202,7 +207,7 @@ fun TournamentMatchActionDialog(
                                 .background(Color(0x22FFFFFF))
                         )
                         Text(
-                            text = " ODER MANUELL ERFASSEN ",
+                            text = " " + stringResource(Res.string.tour_dialog_or_manual) + " ",
                             color = Color(0x66FFFFFF),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -232,7 +237,7 @@ fun TournamentMatchActionDialog(
                             .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
                         Text(
-                            text = "Gewonnene Legs",
+                            text = stringResource(Res.string.tour_dialog_legs_won),
                             color = Color(0x80FFFFFF),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
@@ -241,7 +246,7 @@ fun TournamentMatchActionDialog(
 
                         // Stepper Spieler 1
                         LegStepperRow(
-                            playerName = p1?.name ?: "Spieler 1",
+                            playerName = p1?.name ?: p1Fallback,
                             legs = p1Legs,
                             maxLegs = maxLegs,
                             onLegsChanged = { p1Legs = it }
@@ -251,7 +256,7 @@ fun TournamentMatchActionDialog(
 
                         // Stepper Spieler 2
                         LegStepperRow(
-                            playerName = p2?.name ?: "Spieler 2",
+                            playerName = p2?.name ?: p2Fallback,
                             legs = p2Legs,
                             maxLegs = maxLegs,
                             onLegsChanged = { p2Legs = it }
@@ -264,14 +269,14 @@ fun TournamentMatchActionDialog(
                 // Gewinner-Vorschau oder Warnhinweis
                 if (hasValidWinner && winnerName != null) {
                     Text(
-                        text = "🏆 Sieger: $winnerName ($p1Legs : $p2Legs)",
+                        text = stringResource(Res.string.tour_dialog_winner, winnerName, p1Legs, p2Legs),
                         color = PrimaryOrange,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp
                     )
                 } else if (p1Legs > 0 && p1Legs == p2Legs) {
                     Text(
-                        text = "Unentschieden im Darts nicht möglich",
+                        text = stringResource(Res.string.tour_dialog_no_tie),
                         color = Color(0xFFFF453A),
                         fontSize = 11.sp
                     )
@@ -295,7 +300,7 @@ fun TournamentMatchActionDialog(
                 )
             ) {
                 Text(
-                    text = if (match.isFinished) "Ergebnis aktualisieren" else "Ergebnis erfassen",
+                    text = if (match.isFinished) stringResource(Res.string.tour_dialog_update) else stringResource(Res.string.tour_dialog_submit),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp
                 )
@@ -303,7 +308,7 @@ fun TournamentMatchActionDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Abbrechen", color = Color(0x80FFFFFF), fontSize = 13.sp)
+                Text(stringResource(Res.string.tour_cancel), color = Color(0x80FFFFFF), fontSize = 13.sp)
             }
         }
     )

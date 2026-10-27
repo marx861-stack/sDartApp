@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 /**
  * Dialog zum Laden von gespeicherten Spielern
@@ -61,7 +63,7 @@ fun PlayerLoadDialog(
                     .padding(20.dp)
             ) {
                 Text(
-                    text = "Gespeicherte Spieler",
+                    text = stringResource(Res.string.game_load_title),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -70,7 +72,7 @@ fun PlayerLoadDialog(
                 )
                 
                 Text(
-                    text = "Wähle Spieler für das Spiel aus:",
+                    text = stringResource(Res.string.game_load_subtitle),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = Color.White.copy(alpha = 0.7f)
                     ),
@@ -94,7 +96,7 @@ fun PlayerLoadDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Keine gespeicherten Spieler gefunden",
+                            text = stringResource(Res.string.game_load_empty),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = Color.White.copy(alpha = 0.5f)
                             )
@@ -149,7 +151,7 @@ fun PlayerLoadDialog(
                                             )
                                         )
                                         Text(
-                                            text = "Spiele: ${player.totalGames} | Siege: ${player.gamesWon}",
+                                            text = stringResource(Res.string.game_load_stats, player.totalGames, player.gamesWon),
                                             style = MaterialTheme.typography.bodySmall.copy(
                                                 color = Color.White.copy(alpha = 0.6f)
                                             )
@@ -168,7 +170,7 @@ fun PlayerLoadDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Abbrechen", color = Color.White.copy(alpha = 0.7f))
+                        Text(stringResource(Res.string.game_load_cancel), color = Color.White.copy(alpha = 0.7f))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -181,7 +183,7 @@ fun PlayerLoadDialog(
                             containerColor = com.sdart.app.ui.theme.PrimaryOrange
                         )
                     ) {
-                        Text("Übernehmen (${selectedPlayers.size})")
+                        Text(stringResource(Res.string.game_load_apply, selectedPlayers.size))
                     }
                 }
             }

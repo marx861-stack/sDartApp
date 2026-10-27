@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.theme.PrimaryOrange
 import kotlin.math.cos
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 import kotlin.math.max
 import kotlin.math.sin
 
@@ -105,6 +107,9 @@ fun WinLossDonutChart(
     val textMeasurer = rememberTextMeasurer()
     val total = gamesWon + gamesLost
     val winRatio = if (total > 0) gamesWon.toFloat() / total else 0f
+    val noGamesText = stringResource(Res.string.stats_no_games_played)
+    val winLabelText = stringResource(Res.string.stats_win_count, gamesWon)
+    val lossLabelText = stringResource(Res.string.stats_loss_count, gamesLost)
 
     Box(modifier = modifier.fillMaxWidth().height(100.dp)) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -113,7 +118,7 @@ fun WinLossDonutChart(
 
             if (total == 0) {
                 val noDataText = textMeasurer.measure(
-                    text = "Keine Spiele absolviert",
+                    text = noGamesText,
                     style = TextStyle(color = Color.Gray, fontSize = 16.sp)
                 )
                 drawText(noDataText, topLeft = Offset(w / 2 - noDataText.size.width / 2, h / 2 - noDataText.size.height / 2))
@@ -154,7 +159,7 @@ fun WinLossDonutChart(
 
                 // WIN label above
                 val winLabel = textMeasurer.measure(
-                    text = "WIN: $gamesWon",
+                    text = winLabelText,
                     style = TextStyle(color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 )
                 drawText(winLabel, topLeft = Offset(padding + 15.dp.toPx(), barY - winLabel.size.height - 4.dp.toPx()))
@@ -187,7 +192,7 @@ fun WinLossDonutChart(
 
                 // LOSS label above
                 val lossLabel = textMeasurer.measure(
-                    text = "LOSS: $gamesLost",
+                    text = lossLabelText,
                     style = TextStyle(color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 )
                 drawText(lossLabel, topLeft = Offset(w - padding - 15.dp.toPx() - lossLabel.size.width, barY - lossLabel.size.height - 4.dp.toPx()))
@@ -214,6 +219,8 @@ fun CheckoutPyramidChart(
     modifier: Modifier = Modifier
 ) {
     val textMeasurer = rememberTextMeasurer()
+    val favoriteLabel = stringResource(Res.string.stats_favorite)
+    val checkoutLabel = stringResource(Res.string.stats_checkout)
     val dartboardOrder = listOf(20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5)
     
     val maxHits = max(1, doubleHits.values.maxOrNull() ?: 1)
@@ -295,11 +302,11 @@ fun CheckoutPyramidChart(
             
             // Center Labels
             val favText = textMeasurer.measure(
-                text = "FAVORITE",
+                text = favoriteLabel,
                 style = TextStyle(color = if (isDark) Color.White else Color.Black, fontSize = 10.sp)
             )
             val checkoutText = textMeasurer.measure(
-                text = "CHECKOUT",
+                text = checkoutLabel,
                 style = TextStyle(color = Color.Gray, fontSize = 8.sp, fontWeight = FontWeight.Black)
             )
             
@@ -320,7 +327,7 @@ fun HistoryLineChart(
     if (history.size < 2) {
         Box(modifier = modifier.fillMaxWidth().height(150.dp), contentAlignment = Alignment.Center) {
             Text(
-                text = "Mindestens 2 Spiele für Verlauf",
+                text = stringResource(Res.string.stats_history_min_games),
                 color = Color.Gray,
                 fontSize = 14.sp
             )

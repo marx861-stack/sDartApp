@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import com.sdart.app.tournament.web.QrCodeView
 import com.sdart.app.tournament.web.TournamentWebServer
 import com.sdart.app.ui.theme.PrimaryOrange
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 @Composable
 fun TournamentWebShareDialog(
@@ -34,7 +36,7 @@ fun TournamentWebShareDialog(
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Live-Ticker & Web-Eingabe",
+                    text = stringResource(Res.string.tour_share_title),
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
@@ -42,7 +44,7 @@ fun TournamentWebShareDialog(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Mit der Smartphone-Kamera scannen – keine App erforderlich!",
+                    text = stringResource(Res.string.tour_share_subtitle),
                     color = Color(0x99FFFFFF),
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center
@@ -78,7 +80,7 @@ fun TournamentWebShareDialog(
                             .size(210.dp)
                             .background(Color(0x14FFFFFF), RoundedCornerShape(16.dp))
                     ) {
-                        Text("Server wird gestartet...", color = Color.Gray, fontSize = 13.sp)
+                        Text(stringResource(Res.string.tour_share_starting), color = Color.Gray, fontSize = 13.sp)
                     }
                 }
 
@@ -121,8 +123,8 @@ fun TournamentWebShareDialog(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Ergebniseingabe erlauben", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                Text("Spieler können Endstände melden", color = Color(0x80FFFFFF), fontSize = 11.sp)
+                                Text(stringResource(Res.string.tour_share_allow), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(Res.string.tour_share_allow_desc), color = Color(0x80FFFFFF), fontSize = 11.sp)
                             }
                             Switch(
                                 checked = allowSubmission,
@@ -145,8 +147,8 @@ fun TournamentWebShareDialog(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Host-Freigabe anfordern", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                    Text("Ergebnisse vor Übernahme prüfen", color = Color(0x80FFFFFF), fontSize = 11.sp)
+                                    Text(stringResource(Res.string.tour_share_approval), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(Res.string.tour_share_approval_desc), color = Color(0x80FFFFFF), fontSize = 11.sp)
                                 }
                                 Switch(
                                     checked = requireApproval,
@@ -172,7 +174,7 @@ fun TournamentWebShareDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Fertig", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.tour_share_done), color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     )

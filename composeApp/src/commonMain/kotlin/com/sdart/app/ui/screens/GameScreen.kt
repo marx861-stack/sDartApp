@@ -85,6 +85,7 @@ import com.sdart.app.ui.theme.PrimaryOrange
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.*
 import kotlin.math.*
 
@@ -188,22 +189,28 @@ fun GameScreen(
             val maxWonLegs = game.players.maxOfOrNull { it.wonLegs } ?: 0
             val winners = game.players.filter { it.wonLegs == maxWonLegs }
             if (winners.size > 1) {
-                "Unentschieden: ${winners.joinToString(", ") { it.name }}"
+                stringResource(Res.string.game_play_draw, winners.joinToString(", ") { it.name })
             } else {
-                "${winners.firstOrNull()?.name ?: "Unbekannt"} hat gewonnen!"
+                stringResource(Res.string.game_play_won_single, winners.firstOrNull()?.name ?: stringResource(Res.string.game_play_unknown))
             }
         }
         allPlayersFinished && finishedPlayers.size > 1 -> {
-            "Unentschieden: ${finishedPlayers.joinToString(", ") { it.name }}"
+            stringResource(Res.string.game_play_draw, finishedPlayers.joinToString(", ") { it.name })
         }
         allPlayersFinished && finishedPlayers.size == 1 -> {
-            "${finishedPlayers.first().name} hat gewonnen!"
+            stringResource(Res.string.game_play_won_single, finishedPlayers.first().name)
         }
         newlyFinishedPlayers.isNotEmpty() -> {
-            "${newlyFinishedPlayers.joinToString(", ") { it.name }} ${if (newlyFinishedPlayers.size == 1) "hat" else "haben"} gewonnen!"
+            stringResource(
+                if (newlyFinishedPlayers.size == 1) Res.string.game_play_won_single else Res.string.game_play_won_multi,
+                newlyFinishedPlayers.joinToString(", ") { it.name }
+            )
         }
         finishedPlayers.isNotEmpty() -> {
-            "${finishedPlayers.joinToString(", ") { it.name }} ${if (finishedPlayers.size == 1) "hat" else "haben"} gewonnen!"
+            stringResource(
+                if (finishedPlayers.size == 1) Res.string.game_play_won_single else Res.string.game_play_won_multi,
+                finishedPlayers.joinToString(", ") { it.name }
+            )
         }
         else -> ""
     }
@@ -228,7 +235,7 @@ fun GameScreen(
                 .ditheredBackground(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Spiel wird geladen...", color = Color.White)
+            Text(stringResource(Res.string.game_play_loading), color = Color.White)
         }
         return
     }
@@ -423,7 +430,7 @@ fun GameScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.ArrowBack,
-                                        contentDescription = "Spiel beenden",
+                                        contentDescription = stringResource(Res.string.game_play_end_game),
                                         tint = Color.White
                                     )
                                 }
@@ -457,7 +464,7 @@ fun GameScreen(
                                         ) {
                                             Icon(
                                                 painter = painterResource(Res.drawable.ic_mobile_connect),
-                                                contentDescription = "Geräte-Verbindung",
+                                                contentDescription = stringResource(Res.string.game_play_connect_devices),
                                                 tint = if (participantCount > 0) Color(0xFF4CAF50) else if (isHostActive) PrimaryOrange else Color.White,
                                                 modifier = Modifier.size(22.dp)
                                             )
@@ -652,7 +659,7 @@ fun GameScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ArrowBack,
-                                    contentDescription = "Spiel beenden",
+                                    contentDescription = stringResource(Res.string.game_play_end_game),
                                     tint = Color.White
                                 )
                             }
@@ -686,7 +693,7 @@ fun GameScreen(
                                     ) {
                                         Icon(
                                             painter = painterResource(Res.drawable.ic_mobile_connect),
-                                            contentDescription = "Geräte-Verbindung",
+                                            contentDescription = stringResource(Res.string.game_play_connect_devices),
                                             tint = if (participantCount > 0) Color(0xFF4CAF50) else if (isHostActive) PrimaryOrange else Color.White,
                                             modifier = Modifier.size(22.dp)
                                         )
@@ -844,8 +851,8 @@ fun GameScreen(
         if (showExitDialog) {
             AlertDialog(
                 onDismissRequest = { showExitDialog = false },
-                title = { Text("Spiel beenden?", color = Color.White, fontWeight = FontWeight.Bold) },
-                text = { Text("Möchtest du das aktuelle Spiel wirklich beenden und zum Hauptmenü zurückkehren?", color = Color.LightGray) },
+                title = { Text(stringResource(Res.string.game_play_exit_title), color = Color.White, fontWeight = FontWeight.Bold) },
+                text = { Text(stringResource(Res.string.game_play_exit_message), color = Color.LightGray) },
                 confirmButton = {
                     Button(
                         onClick = {
@@ -854,12 +861,12 @@ fun GameScreen(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange)
                     ) {
-                        Text("Beenden", color = Color.White)
+                        Text(stringResource(Res.string.game_play_exit_confirm), color = Color.White)
                     }
                 },
                 dismissButton = {
                     OutlinedButton(onClick = { showExitDialog = false }) {
-                        Text("Weiterspielen", color = Color.White)
+                        Text(stringResource(Res.string.game_play_exit_continue), color = Color.White)
                     }
                 },
                 containerColor = Color(0xFF262626),

@@ -90,7 +90,7 @@ fun DesktopDashboard(
         return
     }
 
-    DesktopPage(title = "Übersicht") {
+    DesktopPage(title = stringResource(Res.string.nav_overview)) {
         // Die Kachelreihen teilen sich die Fensterhöhe, damit auch große Monitore gefüllt sind
         Row(
             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -207,7 +207,7 @@ private fun CompactTiles(
             val total = tournament.matches.size.coerceAtLeast(1)
             DashboardTile(
                 icon = Res.drawable.ic_trophy,
-                title = "Turnier läuft",
+                title = stringResource(Res.string.dash_tournament_running),
                 value = tournament.name,
                 valueColor = PrimaryOrange,
                 highlighted = true,
@@ -229,23 +229,23 @@ private fun CompactTiles(
                             .background(PrimaryOrange)
                     )
                 }
-                TileDetail("$finished von ${tournament.matches.size} Matches")
+                TileDetail(stringResource(Res.string.dash_tile_matches_progress, finished, tournament.matches.size))
             }
         } else {
             DashboardTile(
                 icon = Res.drawable.ic_trophy,
                 title = stringResource(Res.string.main_title_tournament),
-                value = "Neues Turnier",
+                value = stringResource(Res.string.dash_tile_new_tournament),
                 onClick = onTournamentClick,
                 modifier = Modifier.weight(1f).fillMaxHeight()
             ) {
-                TileDetail("K.-o., Liga oder Gruppen")
+                TileDetail(stringResource(Res.string.dash_tile_tournament_hint))
             }
         }
         DashboardTile(
             icon = Res.drawable.ic_mobile_connect,
-            title = "Geräte",
-            value = if (host != null) "${host.participants.size} verbunden" else "Host aus",
+            title = stringResource(Res.string.nav_devices),
+            value = if (host != null) stringResource(Res.string.dash_tile_connected, host.participants.size) else stringResource(Res.string.dash_tile_host_off),
             onClick = onDevicesClick,
             modifier = Modifier.weight(1f).fillMaxHeight()
         ) {
@@ -257,7 +257,7 @@ private fun CompactTiles(
                         .background(if (host != null) OnlineGreen else GlassControlBorder)
                 )
                 Spacer(Modifier.width(6.dp))
-                TileDetail(if (host != null) "Port ${host.port}" else "Tippen zum Verbinden", topPadding = 0.dp)
+                TileDetail(if (host != null) stringResource(Res.string.dash_tile_port, host.port) else stringResource(Res.string.dash_tile_tap_to_connect), topPadding = 0.dp)
             }
         }
     }
@@ -265,13 +265,13 @@ private fun CompactTiles(
     // Bestenliste über die ganze Breite: die ersten drei mit Verlauf und Schnitt
     DashboardTile(
         icon = Res.drawable.ic_chart_bar,
-        title = "Bestenliste · Ø pro Aufnahme",
-        value = if (ranked.isEmpty()) "Noch leer" else null,
+        title = stringResource(Res.string.dash_leaderboard_title),
+        value = if (ranked.isEmpty()) stringResource(Res.string.dash_leaderboard_empty_value) else null,
         onClick = onPlayersClick,
         modifier = Modifier.fillMaxWidth()
     ) {
         if (ranked.isEmpty()) {
-            TileDetail("Erscheint nach dem ersten Spiel gespeicherter Spieler")
+            TileDetail(stringResource(Res.string.dash_leaderboard_empty_hint))
         } else {
             Spacer(Modifier.height(6.dp))
             ranked.take(3).forEachIndexed { index, player ->
@@ -317,12 +317,12 @@ private fun CompactTiles(
     val bestCheckout = players.maxOfOrNull { it.bestCheckout } ?: 0
     val highestRound = players.maxOfOrNull { it.highestRoundScore } ?: 0
     val fewestDarts = players.map { it.bestMatchDarts }.filter { it > 0 }.minOrNull()
-    CardTitle("Bestwerte aller Spieler", modifier = Modifier.padding(start = 4.dp, top = 6.dp))
+    CardTitle(stringResource(Res.string.dash_highlights_title), modifier = Modifier.padding(start = 4.dp, top = 6.dp))
     listOf(
-        "180er" to total180s.toString(),
-        "Bestes Checkout" to if (bestCheckout > 0) bestCheckout.toString() else "–",
-        "Höchste Aufnahme" to if (highestRound > 0) highestRound.toString() else "–",
-        "Kürzestes Leg" to (fewestDarts?.let { "$it Darts" } ?: "–")
+        stringResource(Res.string.dash_stat_180s) to total180s.toString(),
+        stringResource(Res.string.dash_stat_best_checkout) to if (bestCheckout > 0) bestCheckout.toString() else "–",
+        stringResource(Res.string.dash_stat_highest_round) to if (highestRound > 0) highestRound.toString() else "–",
+        stringResource(Res.string.dash_stat_fewest_darts) to (fewestDarts?.let { stringResource(Res.string.dash_darts_count, it) } ?: "–")
     ).chunked(2).forEach { row ->
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             row.forEach { (label, value) -> StatTile(label, value, Modifier.weight(1f), compact = true) }
@@ -407,7 +407,7 @@ private fun QuickStartCard(
     compact: Boolean = false
 ) {
     val onStart = { if (lastGame != null) onRematchClick(lastGame) else onGamesClick() }
-    DashboardCard(title = "Schnellstart", modifier = modifier, contentPadding = cardPadding(compact)) {
+    DashboardCard(title = stringResource(Res.string.dash_quick_start), modifier = modifier, contentPadding = cardPadding(compact)) {
         // Auf dem Handy steht der Button unter der Beschreibung, damit der Text Platz hat
         if (compact) {
             QuickStartSummary(lastGame, compact = true)
@@ -444,14 +444,14 @@ private fun QuickStartSummary(lastGame: LastGameSetup?, modifier: Modifier = Mod
             )
         } else {
             Text(
-                text = "Noch kein Spiel gespielt",
+                text = stringResource(Res.string.dash_no_game_yet),
                 style = titleStyle.copy(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             )
             Text(
-                text = "Starte dein erstes Spiel.",
+                text = stringResource(Res.string.dash_start_first_game),
                 style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 modifier = Modifier.padding(top = 4.dp)
             )
@@ -476,7 +476,7 @@ private fun QuickStartButton(
         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(6.dp))
         Text(
-            text = if (lastGame != null) "Revanche" else "Spiel starten",
+            text = if (lastGame != null) stringResource(Res.string.dash_rematch) else stringResource(Res.string.dash_start_game),
             fontWeight = FontWeight.SemiBold
         )
     }
@@ -489,7 +489,7 @@ private fun TournamentStatusCard(
     modifier: Modifier = Modifier
 ) {
     DashboardCard(
-        title = if (tournament != null) "Turnier läuft" else stringResource(Res.string.main_title_tournament),
+        title = if (tournament != null) stringResource(Res.string.dash_tournament_running) else stringResource(Res.string.main_title_tournament),
         modifier = modifier,
         highlighted = tournament != null,
         onClick = onClick
@@ -506,7 +506,7 @@ private fun TournamentStatusCard(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = next?.let { "Nächstes: ${it.player1?.name} vs. ${it.player2?.name}" } ?: "Warte auf nächste Runde",
+                text = next?.let { stringResource(Res.string.dash_next_match, it.player1?.name.orEmpty(), it.player2?.name.orEmpty()) } ?: stringResource(Res.string.dash_waiting_next_round),
                 style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -529,7 +529,7 @@ private fun TournamentStatusCard(
                 )
             }
             Text(
-                text = "$finished von ${tournament.matches.size} Matches gespielt",
+                text = stringResource(Res.string.dash_matches_played, finished, tournament.matches.size),
                 style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 modifier = Modifier.padding(top = 6.dp)
             )
@@ -546,7 +546,7 @@ private fun TournamentStatusCard(
             )
             Spacer(Modifier.weight(1f))
             Text(
-                text = "Turnier erstellen →",
+                text = stringResource(Res.string.dash_create_tournament),
                 style = MaterialTheme.typography.labelLarge.copy(color = PrimaryOrange, fontWeight = FontWeight.SemiBold),
                 modifier = Modifier.padding(top = 12.dp)
             )
@@ -565,15 +565,15 @@ private fun LeaderboardCard(
         .sortedByDescending { it.roundAverage() }
         .take(8)
 
-    DashboardCard(title = "Bestenliste · Ø pro Aufnahme", modifier = modifier) {
+    DashboardCard(title = stringResource(Res.string.dash_leaderboard_title), modifier = modifier) {
         if (ranked.isEmpty()) {
             Text(
-                text = "Sobald gespeicherte Spieler ein Spiel beendet haben, erscheinen sie hier.",
+                text = stringResource(Res.string.dash_leaderboard_empty_long),
                 style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
             )
             Spacer(Modifier.weight(1f))
             Text(
-                text = "Spieler verwalten →",
+                text = stringResource(Res.string.dash_manage_players),
                 style = MaterialTheme.typography.labelLarge.copy(color = PrimaryOrange, fontWeight = FontWeight.SemiBold),
                 modifier = Modifier.padding(top = 12.dp).clickable(onClick = onManagePlayersClick)
             )
@@ -631,13 +631,13 @@ private fun DevicesCard(
     onPcConnect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    DashboardCard(title = "Geräte", modifier = modifier) {
+    DashboardCard(title = stringResource(Res.string.nav_devices), modifier = modifier) {
         when (hostState) {
             is HostState.Active -> {
-                StatusLine(online = true, label = "Host aktiv", detail = "Port ${hostState.port}")
+                StatusLine(online = true, label = stringResource(Res.string.dash_host_active), detail = stringResource(Res.string.dash_tile_port, hostState.port))
                 if (hostState.participants.isEmpty()) {
                     Text(
-                        text = "Noch kein Gerät verbunden",
+                        text = stringResource(Res.string.dash_no_device_connected),
                         style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                         modifier = Modifier.padding(top = 6.dp)
                     )
@@ -651,9 +651,9 @@ private fun DevicesCard(
                 }
             }
             HostState.Inactive -> {
-                StatusLine(online = false, label = "Host inaktiv", detail = null)
+                StatusLine(online = false, label = stringResource(Res.string.dash_host_inactive), detail = null)
                 Text(
-                    text = "Starte den Host, damit sich Handys als Kamera oder Eingabe verbinden können.",
+                    text = stringResource(Res.string.dash_host_inactive_hint),
                     style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                     modifier = Modifier.padding(top = 6.dp)
                 )
@@ -665,12 +665,12 @@ private fun DevicesCard(
             modifier = Modifier.padding(top = 12.dp)
         ) {
             Text(
-                text = "Host-Übersicht →",
+                text = stringResource(Res.string.dash_host_overview_link),
                 style = MaterialTheme.typography.labelLarge.copy(color = PrimaryOrange, fontWeight = FontWeight.SemiBold),
                 modifier = Modifier.clickable(onClick = onHostOverviewClick)
             )
             Text(
-                text = "Verbinden →",
+                text = stringResource(Res.string.dash_connect_link),
                 style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                 modifier = Modifier.clickable(onClick = onPcConnect)
             )
@@ -686,12 +686,12 @@ private fun HighlightsCard(players: List<SavedPlayer>) {
     val fewestDarts = players.map { it.bestMatchDarts }.filter { it > 0 }.minOrNull()
 
     val stats = listOf(
-        "180er" to total180s.toString(),
-        "Bestes Checkout" to if (bestCheckout > 0) bestCheckout.toString() else "–",
-        "Höchste Aufnahme" to if (highestRound > 0) highestRound.toString() else "–",
-        "Kürzestes Leg" to (fewestDarts?.let { "$it Darts" } ?: "–")
+        stringResource(Res.string.dash_stat_180s) to total180s.toString(),
+        stringResource(Res.string.dash_stat_best_checkout) to if (bestCheckout > 0) bestCheckout.toString() else "–",
+        stringResource(Res.string.dash_stat_highest_round) to if (highestRound > 0) highestRound.toString() else "–",
+        stringResource(Res.string.dash_stat_fewest_darts) to (fewestDarts?.let { stringResource(Res.string.dash_darts_count, it) } ?: "–")
     )
-    DashboardCard(title = "Bestwerte aller Spieler", modifier = Modifier.fillMaxWidth()) {
+    DashboardCard(title = stringResource(Res.string.dash_highlights_title), modifier = Modifier.fillMaxWidth()) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             stats.forEach { (label, value) -> StatTile(label, value, Modifier.weight(1f)) }
         }
@@ -705,29 +705,32 @@ private fun cardPadding(compact: Boolean) = if (compact) 16.dp else 24.dp
 private fun SavedPlayer.roundAverage(): Float =
     if (totalRounds > 0) totalPoints.toFloat() / totalRounds else 0f
 
+@Composable
 private fun formatOneDecimal(value: Float): String {
     val tenths = (value * 10).toInt()
-    return "${tenths / 10},${tenths % 10}"
+    return "${tenths / 10}${stringResource(Res.string.dash_decimal_separator)}${tenths % 10}"
 }
 
+@Composable
 private fun describeGame(setup: LastGameSetup): String = when (setup.mode) {
-    GameMode.CRICKET -> "Cricket"
-    GameMode.ALL_FIVES -> "All Fives"
-    GameMode.AROUND_THE_CLOCK -> "Around the Clock"
+    GameMode.CRICKET -> stringResource(Res.string.game_mode_cricket)
+    GameMode.ALL_FIVES -> stringResource(Res.string.game_mode_all_fives)
+    GameMode.AROUND_THE_CLOCK -> stringResource(Res.string.game_mode_atc)
     else -> {
         val score = if (setup.customScore > 0) setup.customScore else setup.mode.startScore
-        val out = if (setup.doubleOut) "Double Out" else "Single Out"
-        val legs = if (setup.legs > 1) " · ${setup.legs} Legs" else ""
+        val out = if (setup.doubleOut) stringResource(Res.string.dash_double_out) else stringResource(Res.string.dash_single_out)
+        val legs = if (setup.legs > 1) " · " + stringResource(Res.string.dash_legs_suffix, setup.legs) else ""
         "$score · $out$legs"
     }
 }
 
+@Composable
 private fun relativeDay(millis: Long): String {
     val dayMillis = 24L * 60 * 60 * 1000
     val days = ((currentTimeMillis() - millis) / dayMillis).toInt()
     return when {
-        days <= 0 -> "heute"
-        days == 1 -> "gestern"
-        else -> "vor $days Tagen"
+        days <= 0 -> stringResource(Res.string.dash_today)
+        days == 1 -> stringResource(Res.string.dash_yesterday)
+        else -> stringResource(Res.string.dash_days_ago, days)
     }
 }

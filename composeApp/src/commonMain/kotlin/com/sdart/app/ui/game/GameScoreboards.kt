@@ -40,6 +40,8 @@ import com.sdart.app.domain.CHECKOUT_PATHS
 import com.sdart.app.ui.LocalCompactLayout
 import com.sdart.app.ui.theme.GlassBorder
 import com.sdart.app.ui.theme.PrimaryOrange
+import org.jetbrains.compose.resources.stringResource
+import sdartapp.composeapp.generated.resources.*
 
 @Composable
 fun DesktopCurrentPlayerCard(
@@ -79,12 +81,12 @@ fun DesktopCurrentPlayerCard(
                     )
 
                     val checkoutInfo = if (game.mode == GameMode.ALL_FIVES || game.mode == GameMode.AROUND_THE_CLOCK || game.mode == GameMode.CRICKET) null else when {
-                        player.currentScore == 0 -> "🏆 Spiel gewonnen!"
+                        player.currentScore == 0 -> stringResource(Res.string.game_play_game_won)
                         player.currentScore in CHECKOUT_PATHS.keys -> {
                             val paths = CHECKOUT_PATHS[player.currentScore]
                             "Checkout: ${paths?.firstOrNull() ?: ""}"
                         }
-                        player.currentScore <= 40 -> "Einfacher Checkout möglich"
+                        player.currentScore <= 40 -> stringResource(Res.string.game_play_easy_checkout)
                         else -> null
                     }
 
@@ -108,12 +110,12 @@ fun DesktopCurrentPlayerCard(
 
                     val avgText = if (game.mode == GameMode.AROUND_THE_CLOCK) {
                         val avgHits = PlayerStatistics.getAverageHitsPerRound(player, game.atcConfig)
-                        "Ø ${avgHits.format(2)} Treffer/Runde"
+                        stringResource(Res.string.game_play_avg_hits_short, avgHits.format(2))
                     } else if (game.mode == GameMode.CRICKET) {
                         "MPR ${PlayerStatistics.getCricketMPR(player).format(2)}"
                     } else {
                         val avgScore = PlayerStatistics.getAverageScorePerRound(player)
-                        "Ø ${avgScore} Pkt./Runde"
+                        stringResource(Res.string.game_play_avg_pts_short, avgScore)
                     }
 
                     Text(
@@ -155,7 +157,7 @@ fun DesktopCurrentPlayerCard(
                             )
                         )
                         Text(
-                            text = if (game.mode == GameMode.CRICKET) "PUNKTE" else "REST",
+                            text = stringResource(if (game.mode == GameMode.CRICKET) Res.string.game_play_points_caps else Res.string.game_play_remaining_caps),
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
@@ -223,7 +225,7 @@ fun DesktopPlayerScoreboardTable(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "SPIELER",
+                    text = stringResource(Res.string.game_play_col_player_caps),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White.copy(alpha = 0.5f),
@@ -233,7 +235,7 @@ fun DesktopPlayerScoreboardTable(
                     modifier = Modifier.weight(1.3f)
                 )
                 Text(
-                    text = "SCHNITT",
+                    text = stringResource(Res.string.game_play_col_average_caps),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White.copy(alpha = 0.5f),
@@ -255,7 +257,7 @@ fun DesktopPlayerScoreboardTable(
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "WÜRFE",
+                    text = stringResource(Res.string.game_play_col_darts_caps),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White.copy(alpha = 0.5f),
@@ -266,7 +268,7 @@ fun DesktopPlayerScoreboardTable(
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "REST",
+                    text = stringResource(if (game.mode == GameMode.AROUND_THE_CLOCK) Res.string.game_play_target_caps else Res.string.game_play_remaining_caps),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White.copy(alpha = 0.5f),
@@ -365,11 +367,11 @@ fun DesktopPlayerScoreboardTable(
                                 )
 
                                 val checkoutInfo = if (game.mode == GameMode.ALL_FIVES || game.mode == GameMode.AROUND_THE_CLOCK) null else when {
-                                    player.currentScore == 0 -> "🏆 Gewonnen"
+                                    player.currentScore == 0 -> stringResource(Res.string.game_play_won_short)
                                     player.currentScore in CHECKOUT_PATHS.keys -> {
                                         CHECKOUT_PATHS[player.currentScore]?.firstOrNull()
                                     }
-                                    player.currentScore <= 40 -> "Doppel möglich"
+                                    player.currentScore <= 40 -> stringResource(Res.string.game_play_double_possible)
                                     else -> null
                                 }
 
@@ -466,7 +468,7 @@ fun DesktopPlayerScoreboardTable(
                                 horizontalAlignment = Alignment.End
                             ) {
                                 val scoreDisplay = if (game.mode == GameMode.AROUND_THE_CLOCK) {
-                                    if (player.atcCurrentTarget == 0) "Fin" else "Ziel: ${player.atcCurrentTarget}"
+                                    if (player.atcCurrentTarget == 0) "Fin" else player.atcCurrentTarget.toString()
                                 } else if (game.mode == GameMode.ALL_FIVES) {
                                     (player.currentScore / 5).toString()
                                 } else {
@@ -531,7 +533,7 @@ fun DesktopCurrentTurnPanel(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "AKTUELLE RUNDE",
+                    text = stringResource(Res.string.game_play_current_round_caps),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White.copy(alpha = 0.7f),
@@ -541,7 +543,7 @@ fun DesktopCurrentTurnPanel(
                 )
                 if (roundSum > 0) {
                     Text(
-                        text = "Summe: $roundSum",
+                        text = stringResource(Res.string.game_play_round_total, roundSum),
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = PrimaryOrange,
@@ -672,7 +674,7 @@ fun DesktopCricketScoreboardTable(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("SPIELER", style = headerStyle, modifier = Modifier.weight(1.6f))
+            Text(stringResource(Res.string.game_play_col_player_caps), style = headerStyle, modifier = Modifier.weight(1.6f))
             Text("P.", style = headerStyle, modifier = Modifier.weight(0.8f), textAlign = TextAlign.Center)
             if (showLegs) {
                 Text("LEGS", style = headerStyle, modifier = Modifier.weight(0.6f), textAlign = TextAlign.Center)
@@ -801,7 +803,7 @@ fun CricketScoreTable(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Spieler",
+                text = stringResource(Res.string.game_play_col_player),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,

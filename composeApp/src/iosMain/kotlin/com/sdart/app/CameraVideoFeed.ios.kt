@@ -1,5 +1,8 @@
 package com.sdart.app
 
+import org.jetbrains.compose.resources.getString
+import sdartapp.composeapp.generated.resources.Res
+import sdartapp.composeapp.generated.resources.camera_local_device
 import com.sdart.app.core.detection.ObjectDetection
 
 import androidx.compose.foundation.background
@@ -22,7 +25,7 @@ import com.sdart.app.connect.SessionManager
 /**
  * iOS-spezifischer Stub für CameraVideoFeed (AVFoundation).
  */
-actual suspend fun queryAvailableLocalCameras(): List<String> = listOf("Lokale Gerätekamera")
+actual suspend fun queryAvailableLocalCameras(): List<String> = listOf(getString(Res.string.camera_local_device))
 
 @Composable
 actual fun CameraVideoFeed(

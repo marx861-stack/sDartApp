@@ -36,7 +36,11 @@ import androidx.compose.ui.unit.sp
 import com.sdart.app.ui.theme.PrimaryOrange
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sdartapp.composeapp.generated.resources.Res
+import sdartapp.composeapp.generated.resources.dash_back
+import sdartapp.composeapp.generated.resources.dash_rules_for
+import sdartapp.composeapp.generated.resources.dash_rules_title
 import sdartapp.composeapp.generated.resources.ic_info
 
 /**
@@ -389,7 +393,7 @@ fun RulesInfoButton(title: String, rules: List<String>, modifier: Modifier = Mod
         IconButton(onClick = { expanded = true }, modifier = Modifier.size(28.dp)) {
             Icon(
                 painter = painterResource(Res.drawable.ic_info),
-                contentDescription = "Regeln $title",
+                contentDescription = stringResource(Res.string.dash_rules_for, title),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
                 modifier = Modifier.size(13.dp)
             )
@@ -407,7 +411,7 @@ fun RulesInfoButton(title: String, rules: List<String>, modifier: Modifier = Mod
                 modifier = Modifier.widthIn(max = 300.dp).padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
-                    text = "$title · Regeln",
+                    text = stringResource(Res.string.dash_rules_title, title),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface

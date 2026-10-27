@@ -247,7 +247,7 @@ private fun CompactPage(
                     IconButton(onClick = onBack, modifier = Modifier.offset(x = (-8).dp)) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Zurück",
+                            contentDescription = stringResource(Res.string.dash_back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
