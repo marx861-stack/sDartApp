@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import java.util.Properties
 import java.util.regex.Pattern
 
 plugins {
@@ -126,9 +127,27 @@ android {
         }
     }
     
+    // Release-Signatur: Zugangsdaten stehen nur in local.properties (nicht im Repo).
+    // Ohne diese Einträge (z.B. in der CI) bleibt die Release-APK unsigniert.
+    val releaseProps = Properties().apply {
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+    }
+    val hasReleaseKey = releaseProps.getProperty("release.storeFile") != null
+    if (hasReleaseKey) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseProps.getProperty("release.storeFile"))
+                storePassword = releaseProps.getProperty("release.storePassword")
+                keyAlias = releaseProps.getProperty("release.keyAlias")
+                keyPassword = releaseProps.getProperty("release.keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            if (hasReleaseKey) signingConfig = signingConfigs.getByName("release")
         }
     }
     
@@ -276,8 +295,8 @@ val copyDistributables by tasks.registering(Copy::class) {
     description = "Copies strictly the final 3 release artifacts into root dist/ directory, overwriting older builds."
     
     // 1. Android APK (umbenannt mit Versionsnummer)
-    from(layout.buildDirectory.dir("outputs/apk/debug")) {
-        include("composeApp-debug.apk")
+    from(layout.buildDirectory.dir("outputs/apk/release")) {
+        include("composeApp-release.apk")
         rename { "sDartApp-android-$appVersion.apk" }
     }
     // 2. Desktop JARs (ausschließlich Windows und Linux Standalone UberJars)
@@ -296,6 +315,7 @@ val copyDistributables by tasks.registering(Copy::class) {
     }
     into(rootProject.file("dist"))
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    mustRunAfter("packageRelease", "packageDebug")
 }
 
 val uploadToGoogleDrive by tasks.registering(Exec::class) {
@@ -311,7 +331,7 @@ val uploadToGoogleDrive by tasks.registering(Exec::class) {
     }
 }
 
-tasks.matching { it.name in listOf("packageDebug", "packageUberJarForCurrentOS", "packageLinuxUberJar") }.configureEach {
+tasks.matching { it.name in listOf("packageRelease", "packageUberJarForCurrentOS", "packageLinuxUberJar") }.configureEach {
     finalizedBy(copyDistributables)
 }
 

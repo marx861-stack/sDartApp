@@ -64,3 +64,7 @@ GEMINI.md
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+tools/generate_kokoro_audio.py
+tools/generate_screenshot.ps1
+docs/kmp_migration_architecture.md
+release-keystore/
