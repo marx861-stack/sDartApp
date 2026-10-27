@@ -23,33 +23,77 @@ The app combines classic scorekeeping (X01, Cricket, tournament modes) with came
 
 ## 📸 Screenshots
 
-### Desktop
-
-| | |
-|---|---|
-| ![Overview](docs/screenshots/dashboard.png) | ![New game](docs/screenshots/games.png) |
-| ![Players & statistics](docs/screenshots/players.png) | ![Tournament setup](docs/screenshots/tournament.png) |
-| ![Connect devices](docs/screenshots/connect.png) | ![X01 game](docs/screenshots/game_x01.png) |
-| ![Cricket](docs/screenshots/game_cricket.png) | ![All Fives](docs/screenshots/game_allfives.png) |
-| ![Around the Clock](docs/screenshots/game_atc.png) | ![Game summary](docs/screenshots/game_summary.png) |
-
-### Mobile
-
-<p>
-  <img src="docs/screenshots/m_dashboard.png" width="200" alt="Overview">
-  <img src="docs/screenshots/m_games.png" width="200" alt="New game">
-  <img src="docs/screenshots/m_tournament.png" width="200" alt="Tournament">
-  <img src="docs/screenshots/m_players.png" width="200" alt="Players">
-  <img src="docs/screenshots/m_player_detail.png" width="200" alt="Player details">
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" width="860" alt="s'Dart App overview">
 </p>
 
-<p>
-  <img src="docs/screenshots/m_connect.png" width="200" alt="Connect devices">
-  <img src="docs/screenshots/m_game_x01.png" width="200" alt="X01 game">
-  <img src="docs/screenshots/m_game_cricket.png" width="200" alt="Cricket">
-  <img src="docs/screenshots/m_game_allfives.png" width="200" alt="All Fives">
-  <img src="docs/screenshots/m_game_atc.png" width="200" alt="Around the Clock">
-</p>
+<p align="center"><sub>Desktop overview. The same app runs on Windows, Android and iOS.</sub></p>
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/m_dashboard.png" width="170" alt="Overview"><br><sub>Overview</sub></td>
+    <td align="center"><img src="docs/screenshots/m_games.png" width="170" alt="New game"><br><sub>New game</sub></td>
+    <td align="center"><img src="docs/screenshots/m_tournament.png" width="170" alt="Tournament"><br><sub>Tournament</sub></td>
+    <td align="center"><img src="docs/screenshots/m_players.png" width="170" alt="Players"><br><sub>Players</sub></td>
+    <td align="center"><img src="docs/screenshots/m_player_detail.png" width="170" alt="Player details"><br><sub>Player details</sub></td>
+  </tr>
+</table>
+
+</div>
+
+<details>
+<summary><b>More desktop screens</b></summary>
+<br>
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/players.png" width="420" alt="Players & statistics"><br><sub>Players & statistics</sub></td>
+    <td align="center"><img src="docs/screenshots/tournament.png" width="420" alt="Tournament setup"><br><sub>Tournament setup</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/games.png" width="420" alt="New game"><br><sub>New game</sub></td>
+    <td align="center"><img src="docs/screenshots/connect.png" width="420" alt="Connect devices"><br><sub>Connect devices</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/game_x01.png" width="420" alt="X01 game"><br><sub>X01 game</sub></td>
+    <td align="center"><img src="docs/screenshots/game_cricket.png" width="420" alt="Cricket"><br><sub>Cricket</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/game_allfives.png" width="420" alt="All Fives"><br><sub>All Fives</sub></td>
+    <td align="center"><img src="docs/screenshots/game_atc.png" width="420" alt="Around the Clock"><br><sub>Around the Clock</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/game_summary.png" width="420" alt="Game summary"><br><sub>Game summary</sub></td>
+  </tr>
+</table>
+
+</div>
+
+</details>
+
+<details>
+<summary><b>More mobile screens</b></summary>
+<br>
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/m_connect.png" width="170" alt="Connect devices"><br><sub>Connect devices</sub></td>
+    <td align="center"><img src="docs/screenshots/m_game_x01.png" width="170" alt="X01 game"><br><sub>X01 game</sub></td>
+    <td align="center"><img src="docs/screenshots/m_game_cricket.png" width="170" alt="Cricket"><br><sub>Cricket</sub></td>
+    <td align="center"><img src="docs/screenshots/m_game_allfives.png" width="170" alt="All Fives"><br><sub>All Fives</sub></td>
+    <td align="center"><img src="docs/screenshots/m_game_atc.png" width="170" alt="Around the Clock"><br><sub>Around the Clock</sub></td>
+  </tr>
+</table>
+
+</div>
+
+</details>
 
 ---
 
