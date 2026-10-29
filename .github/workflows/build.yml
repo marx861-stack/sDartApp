@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, master ]
 
+# Minimale Rechte: der Workflow liest nur den Code (wichtig bei Fork-PRs im öffentlichen Repo)
+permissions:
+  contents: read
+
 jobs:
   test-desktop:
     name: Unit Tests & Desktop Build
